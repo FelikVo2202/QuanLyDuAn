@@ -1,5 +1,7 @@
 package vn.edu.uit.is208.salon.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -10,6 +12,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -27,6 +30,7 @@ public class Appointment {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.RESTRICT)
     @JoinColumn(name = "CUSTOMERID", nullable = false)
+    @JsonIgnoreProperties("appointments")
     private Customer customer;
 
     @NotNull
@@ -37,7 +41,8 @@ public class Appointment {
 
     @NotNull
     @Column(name = "APPOINTMENTDATETIME", nullable = false)
-    private Instant appointmentDateTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") // Định dạng lại để Jackson dễ đọc
+    private LocalDateTime appointmentDateTime;
 
     @Size(max = 20)
     @ColumnDefault("'Confirmed'")

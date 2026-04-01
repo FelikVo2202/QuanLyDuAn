@@ -1,5 +1,6 @@
 package vn.edu.uit.is208.salon.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -41,12 +42,13 @@ public class Customer {
     @Column(name = "EMAIL", length = 100)
     private String email;
 
+
     @Size(max = 10)
     @Nationalized
     @Column(name = "GENDER", length = 10)
     private String gender;
-
-    @OneToMany(mappedBy = "customer")
+    @OneToMany(mappedBy = "customer",fetch = FetchType.EAGER)
+    @JsonIgnore
     private Set<Appointment> appointments = new LinkedHashSet<>();
 
 

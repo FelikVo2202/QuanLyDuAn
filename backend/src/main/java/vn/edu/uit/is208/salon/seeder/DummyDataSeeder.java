@@ -18,6 +18,7 @@ import vn.edu.uit.is208.salon.repository.StaffRepository;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -131,7 +132,7 @@ public class DummyDataSeeder implements CommandLineRunner {
 
             long offsetDays = faker.number().numberBetween(-30, 30);
             long offsetHours = faker.number().numberBetween(8, 20);
-            Instant dateTime = Instant.now()
+            LocalDateTime dateTime = LocalDateTime.now()
                     .plus(offsetDays, ChronoUnit.DAYS)
                     .truncatedTo(ChronoUnit.DAYS)
                     .plus(offsetHours, ChronoUnit.HOURS);

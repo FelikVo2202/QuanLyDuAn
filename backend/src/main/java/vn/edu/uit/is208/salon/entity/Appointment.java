@@ -9,7 +9,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -37,7 +37,11 @@ public class Appointment {
 
     @NotNull
     @Column(name = "APPOINTMENTDATETIME", nullable = false)
-    private Instant appointmentDateTime;
+    private LocalDateTime appointmentDateTime;
+
+    @NotNull
+    @Column(name = "ENDDATETIME", nullable = false)
+    private LocalDateTime endDateTime;
 
     @Size(max = 20)
     @ColumnDefault("'Confirmed'")
@@ -48,7 +52,7 @@ public class Appointment {
     @JoinTable(name = "APPOINTMENT_DETAIL",
             joinColumns = @JoinColumn(name = "APPOINTMENTID", referencedColumnName = "APPOINTMENTID"),
             inverseJoinColumns = @JoinColumn(name = "SERVICEID", referencedColumnName = "SERVICEID"))
-    private Set<Service> services = new LinkedHashSet<>();
+    private Set<SalonService> services = new LinkedHashSet<>();
 
 
 }

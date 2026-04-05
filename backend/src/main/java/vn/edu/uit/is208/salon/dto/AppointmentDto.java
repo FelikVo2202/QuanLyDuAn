@@ -3,6 +3,7 @@ package vn.edu.uit.is208.salon.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import vn.edu.uit.is208.salon.constant.AppointmentStatus;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -22,7 +23,7 @@ public class AppointmentDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endDateTime;
 
-    private String status;
+    private AppointmentStatus status;
 
     private Set<SalonServiceDto> services;
 }

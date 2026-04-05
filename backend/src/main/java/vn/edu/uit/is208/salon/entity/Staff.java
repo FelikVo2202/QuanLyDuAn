@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Nationalized;
+import vn.edu.uit.is208.salon.constant.StaffRole;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -32,10 +33,10 @@ public class Staff {
     @Column(name = "LASTNAME", nullable = false, length = 50)
     private String lastName;
 
-    @Size(max = 20)
     @NotNull
+    @Enumerated(EnumType.STRING)
     @Column(name = "ROLE", nullable = false, length = 20)
-    private String role;
+    private StaffRole role;
 
     @Size(max = 50)
     @NotNull

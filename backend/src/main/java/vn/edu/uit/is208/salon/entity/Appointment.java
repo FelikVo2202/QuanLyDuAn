@@ -41,7 +41,7 @@ public class Appointment {
 
     @NotNull
     @Column(name = "APPOINTMENTDATETIME", nullable = false)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") // Định dạng lại để Jackson dễ đọc
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime appointmentDateTime;
 
     @Size(max = 20)

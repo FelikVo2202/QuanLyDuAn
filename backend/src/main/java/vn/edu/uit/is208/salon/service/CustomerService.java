@@ -7,6 +7,7 @@ import vn.edu.uit.is208.salon.dto.CreateCustomerRequest;
 import vn.edu.uit.is208.salon.dto.CustomerResponse;
 import vn.edu.uit.is208.salon.dto.UpdateCustomerRequest;
 import vn.edu.uit.is208.salon.entity.Customer;
+import vn.edu.uit.is208.salon.exception.BusinessRuleException;
 import vn.edu.uit.is208.salon.exception.ResourceNotFoundException;
 import vn.edu.uit.is208.salon.mapper.CustomerMapper;
 import vn.edu.uit.is208.salon.repository.CustomerRepository;
@@ -41,12 +42,15 @@ public class CustomerService {
     public CustomerResponse updateCustomer(Long id, UpdateCustomerRequest request) {
         Customer customer = getCustomer(id);
         customerMapper.updateEntityFromDto(request, customer);
-        return customerMapper.toResponse(customerRepository.save(customer));
+        return customerMapper.toResponse(customer);
     }
 
     @Transactional
     public void deleteCustomer(Long id) {
         Customer customer = getCustomer(id);
+        if (!customer.getAppointments().isEmpty()) {
+            throw new BusinessRuleException("Không thể xóa, khách hàng này đang có lịch hẹn");
+        }
         customerRepository.delete(customer);
     }
 

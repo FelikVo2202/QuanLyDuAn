@@ -135,7 +135,7 @@ public class AppointmentService {
     private @NonNull List<SalonService> getSalonServices(Set<Long> serviceIds) {
         List<SalonService> services = salonServiceRepository.findAllById(serviceIds);
         if (services.size() != serviceIds.size()) {
-            throw new ResourceNotFoundException("Một số dịch vụ bạn chọn không tồn tại!");
+            throw new ResourceNotFoundException("Một số dịch vụ bạn chọn không tồn tại");
         }
         return services;
     }
@@ -150,13 +150,13 @@ public class AppointmentService {
     private void ensureAppointmentIsModifiable(Appointment appointment) {
         AppointmentStatus status = appointment.getStatus();
         if (status == AppointmentStatus.CANCELED || status == AppointmentStatus.DONE) {
-            throw new IllegalStateException("Không thể chỉnh sửa lịch hẹn đã hủy hoặc đã hoàn thành!");
+            throw new IllegalStateException("Không thể chỉnh sửa lịch hẹn đã hủy hoặc đã hoàn thành");
         }
     }
 
     private void validateStylistRole(Staff staff) {
         if (staff.getRole() != StaffRole.STYLIST) {
-            throw new BusinessRuleException("Nhân viên được chọn phải là thợ cắt tóc!");
+            throw new BusinessRuleException("Nhân viên được chọn phải là thợ cắt tóc");
         }
     }
 
@@ -165,11 +165,11 @@ public class AppointmentService {
         LocalTime endTime = endDateTime.toLocalTime();
 
         if (startTime.isBefore(openingTime) || startTime.isAfter(closingTime)) {
-            throw new BusinessRuleException("Salon chỉ nhận khách từ " + openingTime + " đến " + closingTime + ".");
+            throw new BusinessRuleException("Salon chỉ nhận khách từ " + openingTime + " đến " + closingTime);
         }
 
         if (endTime.isAfter(closingTime) || !startDateTime.toLocalDate().isEqual(endDateTime.toLocalDate())) {
-            throw new BusinessRuleException("Thời gian dự kiến kết thúc (" + endTime + ") vượt quá giờ đóng cửa (" + closingTime + ").");
+            throw new BusinessRuleException("Thời gian dự kiến kết thúc (" + endTime + ") vượt quá giờ đóng cửa (" + closingTime + ")");
         }
     }
 
@@ -179,7 +179,7 @@ public class AppointmentService {
                 : appointmentRepository.isStaffBusyForUpdate(staffId, startDateTime, endDateTime, appointmentId);
 
         if (isBusy) {
-            throw new BusinessRuleException("Nhân viên " + staffId + " đã có lịch trong khung giờ này!");
+            throw new BusinessRuleException("Nhân viên " + staffId + " đã có lịch trong khung giờ này");
         }
     }
 }

@@ -1,47 +1,59 @@
 package vn.edu.uit.is208.salon.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.uit.is208.salon.entity.Customer;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import vn.edu.uit.is208.salon.dto.CreateCustomerRequest;
+import vn.edu.uit.is208.salon.dto.CustomerResponse;
+import vn.edu.uit.is208.salon.dto.UpdateCustomerRequest;
 import vn.edu.uit.is208.salon.service.CustomerService;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/customers")
+@RequiredArgsConstructor
 public class CustomerController {
 
-    @Autowired
-    private CustomerService customerService;
+    private final CustomerService customerService;
 
     @GetMapping
-    public List<Customer> getAll() {
-        return customerService.getAllCustomers();
+    public ResponseEntity<List<CustomerResponse>> getAllCustomers() {
+        return ResponseEntity.ok(customerService.getAllCustomers());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<CustomerResponse> getCustomerById(@PathVariable Long id) {
+        return ResponseEntity.ok(customerService.getCustomerById(id));
+    }
 
     @PostMapping
-    public Customer create(@RequestBody Customer customer) {
-        return customerService.saveCustomer(customer);
+    public ResponseEntity<CustomerResponse> createCustomer(@Valid @RequestBody CreateCustomerRequest request) {
+        CustomerResponse createdCustomer = customerService.createCustomer(request);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(createdCustomer.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(createdCustomer);
     }
 
     @PutMapping("/{id}")
-    public Customer update(@PathVariable Long id, @RequestBody Customer details) {
-        Customer customer = customerService.getCustomerById(id);
-        if (customer != null) {
-            customer.setFirstName(details.getFirstName());
-            customer.setLastName(details.getLastName());
-            customer.setEmail(details.getEmail());
-            customer.setPhoneNumber(details.getPhoneNumber());
-            customer.setGender(details.getGender());
-            return customerService.saveCustomer(customer);
-        }
-        return null;
+    public ResponseEntity<CustomerResponse> updateCustomer(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateCustomerRequest request) {
+
+        return ResponseEntity.ok(customerService.updateCustomer(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
         customerService.deleteCustomer(id);
-        return "Đã xóa thành công khách hàng có ID: " + id;
+        return ResponseEntity.noContent().build();
     }
 }

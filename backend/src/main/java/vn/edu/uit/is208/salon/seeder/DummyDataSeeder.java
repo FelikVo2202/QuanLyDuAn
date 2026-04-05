@@ -9,15 +9,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.uit.is208.salon.entity.Appointment;
 import vn.edu.uit.is208.salon.entity.Customer;
-import vn.edu.uit.is208.salon.entity.Service;
+import vn.edu.uit.is208.salon.entity.SalonService;
 import vn.edu.uit.is208.salon.entity.Staff;
 import vn.edu.uit.is208.salon.repository.AppointmentRepository;
 import vn.edu.uit.is208.salon.repository.CustomerRepository;
-import vn.edu.uit.is208.salon.repository.ServiceRepository;
+import vn.edu.uit.is208.salon.repository.SalonServiceRepository;
 import vn.edu.uit.is208.salon.repository.StaffRepository;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -36,11 +35,11 @@ public class DummyDataSeeder implements CommandLineRunner {
             "Quản lý", "Thợ cắt tóc", "Lễ tân"
     );
     private static final List<String> APPOINTMENT_STATUSES = List.of(
-            "Confirmed", "Pending", "Completed", "Cancelled"
+            "Confirmed", "Paid", "Done", "Canceled"
     );
     private final CustomerRepository customerRepository;
     private final StaffRepository staffRepository;
-    private final ServiceRepository serviceRepository;
+    private final SalonServiceRepository salonServiceRepository;
     private final AppointmentRepository appointmentRepository;
     private final PasswordEncoder passwordEncoder;
     private final Faker faker = new Faker(new Locale("vi"));
@@ -57,7 +56,7 @@ public class DummyDataSeeder implements CommandLineRunner {
 
         List<Customer> customers = seedCustomers(20);
         List<Staff> staffList = seedStaff(10);
-        List<Service> services = seedServices();
+        List<SalonService> services = seedServices();
         seedAppointments(30, customers, staffList, services);
 
         System.out.println("[Seeder] Hoàn tất! Đã tạo: "
@@ -102,11 +101,11 @@ public class DummyDataSeeder implements CommandLineRunner {
         return staffRepository.saveAll(staffList);
     }
 
-    private List<Service> seedServices() {
-        List<Service> services = new ArrayList<>();
+    private List<SalonService> seedServices() {
+        List<SalonService> services = new ArrayList<>();
 
         for (String serviceName : SERVICES) {
-            Service service = new Service();
+            SalonService service = new SalonService();
             service.setName(serviceName);
             service.setPrice(BigDecimal.valueOf(
                     faker.number().numberBetween(50_000L, 500_000L)));
@@ -114,13 +113,13 @@ public class DummyDataSeeder implements CommandLineRunner {
             services.add(service);
         }
 
-        return serviceRepository.saveAll(services);
+        return salonServiceRepository.saveAll(services);
     }
 
     private void seedAppointments(int count,
                                   List<Customer> customers,
                                   List<Staff> staffList,
-                                  List<Service> services) {
+                                  List<SalonService> services) {
         List<Appointment> appointments = new ArrayList<>();
         Random rnd = new Random();
 
@@ -137,13 +136,14 @@ public class DummyDataSeeder implements CommandLineRunner {
                     .truncatedTo(ChronoUnit.DAYS)
                     .plus(offsetHours, ChronoUnit.HOURS);
             appointment.setAppointmentDateTime(dateTime);
+            appointment.setEndDateTime(dateTime.plusHours(1));
 
             appointment.setStatus(
                     APPOINTMENT_STATUSES.get(rnd.nextInt(APPOINTMENT_STATUSES.size())));
 
-            Set<Service> chosenServices = new LinkedHashSet<>();
+            Set<SalonService> chosenServices = new LinkedHashSet<>();
             int serviceCount = faker.number().numberBetween(1, 4);
-            List<Service> shuffled = new ArrayList<>(services);
+            List<SalonService> shuffled = new ArrayList<>(services);
             Collections.shuffle(shuffled, rnd);
             chosenServices.addAll(shuffled.subList(0, serviceCount));
             appointment.setServices(chosenServices);

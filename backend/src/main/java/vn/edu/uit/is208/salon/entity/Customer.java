@@ -42,14 +42,10 @@ public class Customer {
     @Column(name = "EMAIL", length = 100)
     private String email;
 
-
     @Size(max = 10)
     @Nationalized
     @Column(name = "GENDER", length = 10)
     private String gender;
-    @OneToMany(mappedBy = "customer",fetch = FetchType.EAGER)
-    @JsonIgnore
+    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
     private Set<Appointment> appointments = new LinkedHashSet<>();
-
-
 }

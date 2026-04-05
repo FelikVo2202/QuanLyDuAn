@@ -1,0 +1,2 @@
+ALTER TABLE Appointment
+    ADD EndDateTime TIMESTAMP NOT NULL;

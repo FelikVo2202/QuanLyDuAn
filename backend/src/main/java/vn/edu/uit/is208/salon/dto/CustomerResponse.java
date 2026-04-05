@@ -19,7 +19,4 @@ public class CustomerResponse {
     private String phoneNumber;
     private String email;
     private String gender;
-
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createdAt;
 }

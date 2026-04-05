@@ -68,6 +68,7 @@ public class AppointmentService {
         return appointmentMapper.toDto(appointment);
     }
 
+    @Transactional
     public AppointmentDto createAppointment(CreateAppointmentRequest request) {
         Customer customer = getCustomer(request.getCustomerId());
         Staff staff = getStaff(request.getStaffId());

@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import vn.edu.uit.is208.salon.constant.AppointmentStatus;
+import vn.edu.uit.is208.salon.constant.StaffRole;
 import vn.edu.uit.is208.salon.entity.Appointment;
 import vn.edu.uit.is208.salon.entity.Customer;
 import vn.edu.uit.is208.salon.entity.SalonService;
@@ -31,11 +33,16 @@ public class DummyDataSeeder implements CommandLineRunner {
             "Gội đầu massage", "Ép tóc", "Phục hồi tóc hư tổn",
             "Tạo kiểu cô dâu", "Cắt tỉa râu", "Duỗi tóc Keratin"
     );
-    private static final List<String> STAFF_ROLES = List.of(
-            "Quản lý", "Thợ cắt tóc", "Lễ tân"
+    private static final List<StaffRole> STAFF_ROLES = List.of(
+            StaffRole.MANAGER,
+            StaffRole.RECEPTIONIST,
+            StaffRole.STYLIST
     );
-    private static final List<String> APPOINTMENT_STATUSES = List.of(
-            "Confirmed", "Paid", "Done", "Canceled"
+    private static final List<AppointmentStatus> APPOINTMENT_STATUSES = List.of(
+            AppointmentStatus.CONFIRMED,
+            AppointmentStatus.PAID,
+            AppointmentStatus.DONE,
+            AppointmentStatus.CANCELED
     );
     private final CustomerRepository customerRepository;
     private final StaffRepository staffRepository;

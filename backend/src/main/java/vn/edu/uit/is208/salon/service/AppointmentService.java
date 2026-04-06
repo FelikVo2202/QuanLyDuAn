@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import vn.edu.uit.is208.salon.constant.AppointmentStatus;
+import vn.edu.uit.is208.salon.constant.StaffRole;
 import vn.edu.uit.is208.salon.dto.AppointmentDto;
 import vn.edu.uit.is208.salon.dto.CreateAppointmentRequest;
 import vn.edu.uit.is208.salon.dto.UpdateAppointmentRequest;
@@ -66,9 +68,11 @@ public class AppointmentService {
         return appointmentMapper.toDto(appointment);
     }
 
+    @Transactional
     public AppointmentDto createAppointment(CreateAppointmentRequest request) {
         Customer customer = getCustomer(request.getCustomerId());
         Staff staff = getStaff(request.getStaffId());
+        validateStylistRole(staff);
         List<SalonService> services = getSalonServices(request.getServiceIds());
         LocalDateTime startDateTime = request.getAppointmentDateTime();
         LocalDateTime endDateTime = calculateEndDateTime(startDateTime, services);
@@ -80,7 +84,7 @@ public class AppointmentService {
         appointment.setStaff(staff);
         appointment.setServices(new LinkedHashSet<>(services));
         appointment.setEndDateTime(endDateTime);
-        appointment.setStatus("Confirmed");
+        appointment.setStatus(AppointmentStatus.CONFIRMED);
 
         return appointmentMapper.toDto(appointmentRepository.save(appointment));
     }
@@ -90,6 +94,7 @@ public class AppointmentService {
         Appointment appointment = getAppointment(id);
         ensureAppointmentIsModifiable(appointment);
         Staff staff = getStaff(request.getStaffId());
+        validateStylistRole(staff);
         List<SalonService> services = getSalonServices(request.getServiceIds());
         LocalDateTime startDateTime = request.getAppointmentDateTime();
         LocalDateTime endDateTime = calculateEndDateTime(startDateTime, services);
@@ -108,7 +113,7 @@ public class AppointmentService {
     @Transactional
     public AppointmentDto cancelAppointment(Long id) {
         Appointment appointment = getAppointment(id);
-        appointment.setStatus("Canceled");
+        appointment.setStatus(AppointmentStatus.CANCELED);
         return appointmentMapper.toDto(appointment);
     }
 
@@ -130,7 +135,7 @@ public class AppointmentService {
     private @NonNull List<SalonService> getSalonServices(Set<Long> serviceIds) {
         List<SalonService> services = salonServiceRepository.findAllById(serviceIds);
         if (services.size() != serviceIds.size()) {
-            throw new ResourceNotFoundException("Một số dịch vụ bạn chọn không tồn tại!");
+            throw new ResourceNotFoundException("Một số dịch vụ bạn chọn không tồn tại");
         }
         return services;
     }
@@ -143,9 +148,15 @@ public class AppointmentService {
     }
 
     private void ensureAppointmentIsModifiable(Appointment appointment) {
-        String status = appointment.getStatus();
-        if ("Canceled".equals(status) || "Done".equals(status)) {
-            throw new IllegalStateException("Không thể chỉnh sửa lịch hẹn đã hủy hoặc đã hoàn thành!");
+        AppointmentStatus status = appointment.getStatus();
+        if (status == AppointmentStatus.CANCELED || status == AppointmentStatus.DONE) {
+            throw new IllegalStateException("Không thể chỉnh sửa lịch hẹn đã hủy hoặc đã hoàn thành");
+        }
+    }
+
+    private void validateStylistRole(Staff staff) {
+        if (staff.getRole() != StaffRole.STYLIST) {
+            throw new BusinessRuleException("Nhân viên được chọn phải là thợ cắt tóc");
         }
     }
 
@@ -154,11 +165,11 @@ public class AppointmentService {
         LocalTime endTime = endDateTime.toLocalTime();
 
         if (startTime.isBefore(openingTime) || startTime.isAfter(closingTime)) {
-            throw new BusinessRuleException("Salon chỉ nhận khách từ " + openingTime + " đến " + closingTime + ".");
+            throw new BusinessRuleException("Salon chỉ nhận khách từ " + openingTime + " đến " + closingTime);
         }
 
         if (endTime.isAfter(closingTime) || !startDateTime.toLocalDate().isEqual(endDateTime.toLocalDate())) {
-            throw new BusinessRuleException("Thời gian dự kiến kết thúc (" + endTime + ") vượt quá giờ đóng cửa (" + closingTime + ").");
+            throw new BusinessRuleException("Thời gian dự kiến kết thúc (" + endTime + ") vượt quá giờ đóng cửa (" + closingTime + ")");
         }
     }
 
@@ -168,7 +179,7 @@ public class AppointmentService {
                 : appointmentRepository.isStaffBusyForUpdate(staffId, startDateTime, endDateTime, appointmentId);
 
         if (isBusy) {
-            throw new BusinessRuleException("Nhân viên " + staffId + " đã có lịch trong khung giờ này!");
+            throw new BusinessRuleException("Nhân viên " + staffId + " đã có lịch trong khung giờ này");
         }
     }
 }

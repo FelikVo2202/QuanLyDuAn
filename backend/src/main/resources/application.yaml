@@ -19,5 +19,10 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE}
 
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION}
+    refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
+
 salon:
   business-hours: { open: "08:00", close: "23:00" }

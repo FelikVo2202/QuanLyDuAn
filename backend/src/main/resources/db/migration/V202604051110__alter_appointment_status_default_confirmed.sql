@@ -1,0 +1,1 @@
+ALTER TABLE Appointment MODIFY Status DEFAULT 'CONFIRMED';

@@ -26,6 +26,10 @@ public class JwtService {
         return generateToken(staff, jwtConfig.getAccessTokenExpiration());
     }
 
+    public String generateRefreshToken(Staff staff) {
+        return generateToken(staff, jwtConfig.getRefreshTokenExpiration());
+    }
+
     private String generateToken(Staff staff, Duration tokenExpiration) {
         return Jwts.builder()
                 .subject(staff.getId().toString())

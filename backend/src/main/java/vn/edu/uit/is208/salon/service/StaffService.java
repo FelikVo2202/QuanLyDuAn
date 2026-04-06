@@ -31,7 +31,7 @@ public class StaffService {
 
     private void validateUsernameUniqueness(String username) {
         if (staffRepository.existsByUsername(username)) {
-            throw new DuplicateResourceException("Tên đăng nhập '" + username + "' đã tồn tại!");
+            throw new DuplicateResourceException("Tên đăng nhập '" + username + "' đã tồn tại");
         }
     }
 }

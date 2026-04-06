@@ -35,9 +35,10 @@ public class AuthService {
         Staff staff = staffPrincipal.staff();
 
         String accessToken = jwtService.generateAccessToken(staff);
+        String refreshToken = jwtService.generateRefreshToken(staff);
         StaffDto staffDto = staffMapper.toDto(staff);
 
-        return new AuthResult(accessToken, staffDto);
+        return new AuthResult(accessToken, refreshToken, staffDto);
     }
 
     public Staff getCurrentStaff() {
@@ -51,5 +52,18 @@ public class AuthService {
 
         return staffRepository.findById(staffId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + staffId));
+    }
+
+    public String refreshAccessToken(String refreshToken) {
+        var claims = jwtService.parseToken(refreshToken);
+        if (claims == null) {
+            throw new AuthenticationCredentialsNotFoundException("Refresh Token không hợp lệ hoặc đã hết hạn");
+        }
+
+        var staffId = Long.valueOf(claims.getSubject());
+        Staff staff = staffRepository.findById(staffId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + staffId));
+
+        return jwtService.generateAccessToken(staff);
     }
 }

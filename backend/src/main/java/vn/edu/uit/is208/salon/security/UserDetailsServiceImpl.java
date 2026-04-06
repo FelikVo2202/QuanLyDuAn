@@ -1,4 +1,4 @@
-package vn.edu.uit.is208.salon.service;
+package vn.edu.uit.is208.salon.security;
 
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
@@ -22,6 +22,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         Staff staff = staffRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản: " + username));
 
-        return new User(staff.getUsername(), staff.getPasswordHash(), Collections.emptyList());
+        return new StaffPrincipal(staff);
     }
 }

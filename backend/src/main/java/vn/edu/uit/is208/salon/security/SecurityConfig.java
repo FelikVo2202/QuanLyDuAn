@@ -1,4 +1,4 @@
-package vn.edu.uit.is208.salon.config;
+package vn.edu.uit.is208.salon.security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

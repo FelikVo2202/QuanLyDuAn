@@ -16,10 +16,12 @@ CREATE TABLE Product (
 );
 
 CREATE TABLE Service_Recipe (
+    -- REMOVED: RecipeID
     ServiceID NUMBER NOT NULL, 
     ProductID NUMBER NOT NULL,
     QuantityConsumed NUMBER(10, 2) NOT NULL, 
     
+    -- NEW: Composite Primary Key enforces strict uniqueness
     PRIMARY KEY (ServiceID, ProductID),
     CONSTRAINT fk_recipe_service FOREIGN KEY (ServiceID) REFERENCES Service(ServiceID),
     CONSTRAINT fk_recipe_product FOREIGN KEY (ProductID) REFERENCES Product(ProductID)
@@ -61,6 +63,8 @@ CREATE TABLE Bill_Detail (
     ProductID NUMBER, 
     Quantity NUMBER NOT NULL,
     UnitPrice NUMBER(10, 2) NOT NULL, 
+    
+    -- NEW: Virtual Column. Oracle handles the math automatically.
     LineTotal NUMBER(10, 2) GENERATED ALWAYS AS (Quantity * UnitPrice) VIRTUAL, 
     
     CONSTRAINT fk_bd_bill FOREIGN KEY (BillID) REFERENCES Bill(BillID),
@@ -73,3 +77,97 @@ CREATE TABLE Bill_Detail (
         (ServiceID IS NULL AND ProductID IS NOT NULL)
     )
 );
+
+
+CREATE OR REPLACE TRIGGER trg_deduct_inventory_on_bill
+AFTER UPDATE OF PaymentStatus ON Bill -- Optimized Trigger Hook
+FOR EACH ROW
+WHEN (NEW.PaymentStatus = 'Paid' AND OLD.PaymentStatus != 'Paid')
+BEGIN
+    INSERT INTO INVENTORY_LEDGER (ProductID, ChangeAmount, TransactionType, ReferenceID)
+    SELECT PRODUCTID, -QUANTITY, 'RetailSale', BillID
+    FROM BILL_DETAIL
+    WHERE BillID = :NEW.BillID AND
+    ProductID IS NOT NULL AND
+    QUANTITY > 0; -- ADDED: Only deduct if quantity is greater than 0
+
+    INSERT INTO INVENTORY_LEDGER (ProductID, ChangeAmount, TransactionType, ReferenceID)
+    SELECT sr.PRODUCTID, -(sr.QUANTITYCONSUMED * bd.QUANTITY), 'ServiceUse', bd.BILLID
+    FROM BILL_DETAIL bd
+    JOIN SERVICE_RECIPE sr ON sr.SERVICEID = bd.SERVICEID 
+    WHERE BillID = :NEW.BillID AND bd.SERVICEID IS NOT NULL AND bd.QUANTITY > 0; -- ADDED: Only deduct if quantity is greater than 0
+
+
+EXCEPTION
+    WHEN OTHERS THEN 
+    RAISE_APPLICATION_ERROR(-20008, 'Inventory deduction failed for Bill ' || :NEW.BillID || ': ' || SQLERRM);
+END;
+/
+
+
+CREATE OR REPLACE TRIGGER trg_prevent_edit_paid_bill
+AFTER UPDATE ON Bill 
+FOR EACH ROW
+WHEN (OLD.PaymentStatus = 'Paid')
+BEGIN
+    RAISE_APPLICATION_ERROR(-20009, 'Cannot edit a bill that has already been paid. Bill ID: ' || :OLD.BillID);
+END;
+/
+
+CREATE OR REPLACE PROCEDURE sp_calculate_bill_total (
+    p_BillID IN NUMBER,
+    p_Total OUT NUMBER
+)
+IS
+    v_rows_updated NUMBER;
+BEGIN
+    -- 1. Extra validation to prevent null input
+    IF p_BillID IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20010, 'Bill ID cannot be null');
+    END IF;
+
+    -- 2. Calculate and update in one atomic transaction
+    UPDATE BILL
+    SET TotalAmount = (
+        SELECT NVL(SUM(LineTotal), 0)
+        FROM BILL_DETAIL
+        WHERE BillID = p_BillID
+    )
+    WHERE BillID = p_BillID
+    RETURNING TotalAmount INTO p_Total;
+    
+    -- 3. Check if update actually hit a row
+    v_rows_updated := SQL%ROWCOUNT;
+    
+    IF v_rows_updated = 0 THEN
+        RAISE_APPLICATION_ERROR(-20011, 'Bill ' || p_BillID || ' does not exist');
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR in sp_calculate_bill_total');
+        DBMS_OUTPUT.PUT_LINE('BillID: ' || p_BillID);
+        DBMS_OUTPUT.PUT_LINE('Error Code: ' || SQLCODE);
+        DBMS_OUTPUT.PUT_LINE('Error Message: ' || SQLERRM);
+        DBMS_OUTPUT.PUT_LINE('Backtrace: ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE);
+        RAISE;
+END;
+/
+
+-- Test with non-existent bill
+BEGIN
+    sp_calculate_bill_total(99999); -- Should raise error
+END;
+-- Expected: ORA-20011: Bill 99999 does not exist
+
+-- Test with existing bill
+BEGIN
+    sp_calculate_bill_total(123); -- Should succeed
+END;
+-- Expected: Success, no error
+DROP PROCEDURE sp_calculate_bill_total;
+
+
+
+
+

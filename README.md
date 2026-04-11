@@ -44,15 +44,14 @@ Mở terminal tại thư mục gốc > `docker-compose up -d` để tạo databa
 2. Chọn **Create data source > Oracle**
 3. Nếu thấy thông báo **"Missing driver files"** > nhấn Download để tải driver
 4. Điền thông tin kết nối:
-    - **URL**: copy từ `src/main/resources/application.yaml`
-    - **Username / Password**: copy từ file `.env`
+    - **URL / Username / Password**: copy từ file `.env`
 5. Nhấn **Test Connection** để kiểm tra > **OK**
 
 ---
 
 #### Bước 3: Chạy & Kiểm tra
 1. Chạy bằng nút hình tam giác màu xanh lá.
-2. Truy cập: [http://localhost:8080/](http://localhost:8080/) (Thấy trang **"Whitelabel Error Page"** là được.)
+2. Truy cập: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) (Thấy danh sách các API là thành công.)
 
 ---
 

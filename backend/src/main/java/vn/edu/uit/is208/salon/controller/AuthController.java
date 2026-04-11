@@ -12,6 +12,8 @@ import vn.edu.uit.is208.salon.mapper.StaffMapper;
 import vn.edu.uit.is208.salon.security.JwtConfig;
 import vn.edu.uit.is208.salon.service.AuthService;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -48,4 +50,18 @@ public class AuthController {
         return ResponseEntity.ok(new TokenResponse(authService.refreshAccessToken(refreshToken)));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/auth/refresh")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .body(Map.of("message", "Đăng xuất thành công"));
+    }
 }

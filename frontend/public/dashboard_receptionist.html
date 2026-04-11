@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receptionist Dashboard - GOUTSALON</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #fae3c8;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 260px;
+      background: #fae3c8;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      padding: 28px 24px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #362e1b;
+      border-bottom: 1px solid #e8d0b4;
+      margin-bottom: 24px;
+    }
+    .logo span {
+      color: #eab308;
+    }
+
+    .nav-item {
+      padding: 12px 24px;
+      margin: 4px 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #8b6b4a;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .nav-item:hover {
+      background: #e8d0b4;
+      color: #362e1b;
+    }
+
+    .nav-item.active {
+      background: #d7a157;
+      color: #362e1b;
+    }
+
+    .logout {
+      margin-top: auto;
+      padding: 16px 24px;
+      cursor: pointer;
+      color: #8b6b4a;
+      font-weight: 500;
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 36px;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #362e1b;
+    }
+    .header p {
+      font-size: 14px;
+      color: #8b6b4a;
+      margin-top: 4px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: white;
+      padding: 8px 20px 8px 12px;
+      border-radius: 60px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .user-avatar {
+      width: 48px;
+      height: 48px;
+      background: #eab308;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #362e1b;
+      font-size: 18px;
+    }
+    .user-name h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #362e1b;
+    }
+    .user-name p {
+      font-size: 11px;
+      color: #8b6b4a;
+      margin: 0;
+    }
+
+    /* SEARCH BAR */
+    .search-bar {
+      margin-bottom: 28px;
+    }
+    .search-bar input {
+      width: 300px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 40px;
+      font-size: 14px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      outline: none;
+    }
+    .search-bar input:focus {
+      outline: 2px solid #eab308;
+    }
+
+    /* STATS CARDS */
+    .stats-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      flex: 1;
+      background: white;
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .stat-card .stat-value {
+      font-size: 36px;
+      font-weight: 800;
+      color: #362e1b;
+    }
+    .stat-card .stat-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #8b6b4a;
+      margin-top: 8px;
+    }
+
+    /* APPOINTMENTS TABLE */
+    .appointments-section {
+      background: white;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #362e1b;
+      margin-bottom: 20px;
+    }
+    .appointment-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .appointment-table th {
+      text-align: left;
+      padding: 12px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b6b4a;
+      border-bottom: 1px solid #f0e0d0;
+    }
+    .appointment-table td {
+      padding: 16px 8px;
+      font-size: 13px;
+      border-bottom: 1px solid #f5ede4;
+      vertical-align: middle;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .status-walkin {
+      background: #eab30820;
+      color: #d4a000;
+    }
+    .status-booked {
+      background: #22c55e20;
+      color: #16a34a;
+    }
+    .price {
+      font-weight: 700;
+      color: #362e1b;
+    }
+    .stylist-name {
+      font-weight: 600;
+      color: #eab308;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #aaa;
+    }
+
+    @media (max-width: 1000px) {
+      .main { padding: 20px; }
+      .stats-row { flex-direction: column; }
+      .appointment-table { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">GOUTSALON<span>✦</span></div>
+    <a href="dashboard_receptionist.html" class="nav-item active">📊 Dashboard</a>
+    <a href="schedule.html" class="nav-item">📅 Schedule</a>
+    <a href="#" class="nav-item">📦 Inventory</a>
+    <a href="customers.html" class="nav-item">👥 Customers</a>
+    <div class="logout" onclick="logout()">🚪 Đăng xuất</div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div class="header">
+      <div>
+        <h1>Receptionist Dashboard</h1>
+        <p>Today's overview & all stylist appointments</p>
+      </div>
+      <div class="user-info">
+        <div class="user-avatar">👩</div>
+        <div class="user-name">
+          <h4 id="userName">Receptionist</h4>
+          <p>Receptionist</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="🔍 Search by customer or stylist..." onkeyup="filterAppointments()">
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="totalCustomers">0</div>
+        <div class="stat-title">Total Customers (Today)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalServices">0</div>
+        <div class="stat-title">Total Services</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="remainingAppointments">0</div>
+        <div class="stat-title">Remaining Appointments</div>
+      </div>
+    </div>
+
+    <!-- Appointments List -->
+    <div class="appointments-section">
+      <div class="section-title">📋 Next Appointments (All Stylists)</div>
+      <div id="appointmentsTable">
+        <!-- dynamic table -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== KIỂM TRA ĐĂNG NHẬP ==========
+const user = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+if (!user) {
+  window.location.href = 'login.html';
+}
+const userData = JSON.parse(user);
+document.getElementById('userName').innerText = userData.username || 'Receptionist';
+
+function logout() {
+  localStorage.removeItem('salonUser');
+  sessionStorage.removeItem('salonUser');
+  window.location.href = 'login.html';
+}
+
+// ========== CẬP NHẬT LINK DASHBOARD THEO ROLE ==========
+const userRole = userData.role;
+const dashboardLink = document.querySelector('.sidebar a[href*="dashboard"]');
+if (dashboardLink) {
+  if (userRole === 'admin') dashboardLink.href = 'dashboard.html';
+  else if (userRole === 'stylist') dashboardLink.href = 'dashboard_stylist.html';
+  else dashboardLink.href = 'dashboard_receptionist.html';
+}
+// =======================================================
+
+// ========== DỮ LIỆU LỊCH HẸN (TẤT CẢ STYLIST) ==========
+let allAppointments = [
+  { 
+    id: 1, 
+    customer: "Nguyen Thi Thanh Thuy", 
+    time: "08:00", 
+    status: "WALK-IN", 
+    price: 2100000, 
+    service: "Hairwash & Dye", 
+    duration: "2h30",
+    stylist: "Thanh Lam"
+  },
+  { 
+    id: 2, 
+    customer: "Tran Thi Xuan", 
+    time: "09:30", 
+    status: "BOOKED", 
+    price: 100000, 
+    service: "Haircut", 
+    duration: "30m",
+    stylist: "Adam"
+  },
+  { 
+    id: 3, 
+    customer: "Nguyen Hai Minh", 
+    time: "11:30", 
+    status: "BOOKED", 
+    price: 2500000, 
+    service: "Hair repair", 
+    duration: "3h",
+    stylist: "Eva"
+  },
+  { 
+    id: 4, 
+    customer: "Le Thi Mai", 
+    time: "14:00", 
+    status: "BOOKED", 
+    price: 550000, 
+    service: "Haircut & Blow-dry", 
+    duration: "1h",
+    stylist: "Liam"
+  },
+  { 
+    id: 5, 
+    customer: "Pham Van Hoang", 
+    time: "15:30", 
+    status: "WALK-IN", 
+    price: 350000, 
+    service: "Beard Trim", 
+    duration: "30m",
+    stylist: "Mason"
+  },
+  { 
+    id: 6, 
+    customer: "Vu Thi Lan", 
+    time: "17:00", 
+    status: "BOOKED", 
+    price: 1200000, 
+    service: "Keratin Treatment", 
+    duration: "2h",
+    stylist: "Sophia"
+  },
+  { 
+    id: 7, 
+    customer: "Hoang Duc Anh", 
+    time: "10:00", 
+    status: "BOOKED", 
+    price: 450000, 
+    service: "Haircut & Wash", 
+    duration: "45m",
+    stylist: "Emma"
+  },
+  { 
+    id: 8, 
+    customer: "Phuong Linh", 
+    time: "13:00", 
+    status: "WALK-IN", 
+    price: 880000, 
+    service: "Nail Art", 
+    duration: "1h30",
+    stylist: "Olivia"
+  }
+];
+
+// Hàm lấy giờ hiện tại
+function getCurrentHour() {
+  const now = new Date();
+  return now.getHours() + now.getMinutes() / 60;
+}
+
+// Lấy danh sách lịch hẹn còn lại (chưa qua)
+function getUpcomingAppointments() {
+  const currentHour = getCurrentHour();
+  const timeMap = {
+    "08:00": 8, "09:30": 9.5, "10:00": 10, "11:30": 11.5, 
+    "13:00": 13, "14:00": 14, "15:30": 15.5, "17:00": 17
+  };
+  return allAppointments.filter(app => {
+    const appHour = timeMap[app.time];
+    return appHour > currentHour;
+  });
+}
+
+// Cập nhật số liệu thống kê
+function updateStats() {
+  const upcoming = getUpcomingAppointments();
+  const totalCust = allAppointments.length;
+  const totalServ = allAppointments.length;
+  const remaining = upcoming.length;
+  
+  document.getElementById('totalCustomers').innerText = totalCust;
+  document.getElementById('totalServices').innerText = totalServ;
+  document.getElementById('remainingAppointments').innerText = remaining;
+}
+
+// Format tiền VND
+function formatVND(price) {
+  return price.toLocaleString('vi-VN') + 'đ';
+}
+
+// Render bảng lịch hẹn
+function renderAppointments(filterText = '') {
+  const container = document.getElementById('appointmentsTable');
+  let filtered = [...allAppointments];
+  
+  if (filterText) {
+    filtered = filtered.filter(app => 
+      app.customer.toLowerCase().includes(filterText.toLowerCase()) ||
+      app.stylist.toLowerCase().includes(filterText.toLowerCase())
+    );
+  }
+  
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state">✨ No appointments found</div>';
+    return;
+  }
+  
+  const html = `
+    <table class="appointment-table">
+      <thead>
+        <tr><th>Time</th><th>Status</th><th>Customer</th><th>Service</th><th>Duration</th><th>Stylist</th><th>Price</th></tr>
+      </thead>
+      <tbody>
+        ${filtered.map(app => `
+          <tr>
+            <td style="font-weight: 600;">${app.time}</td>
+            <td><span class="status-badge ${app.status === 'WALK-IN' ? 'status-walkin' : 'status-booked'}">${app.status}</span></td>
+            <td><strong>${app.customer}</strong></td>
+            <td>✂️ ${app.service}</td>
+            <td>⏱ ${app.duration}</td>
+            <td><span class="stylist-name">${app.stylist}</span></td>
+            <td class="price">${formatVND(app.price)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+  container.innerHTML = html;
+}
+
+// Lọc theo tìm kiếm
+function filterAppointments() {
+  const searchValue = document.getElementById('searchInput').value;
+  renderAppointments(searchValue);
+}
+
+// Khởi tạo dashboard
+function init() {
+  updateStats();
+  renderAppointments();
+  
+  // Cập nhật real-time mỗi phút
+  setInterval(() => {
+    updateStats();
+    filterAppointments();
+  }, 60000);
+}
+
+init();
+</script>
+</body>
+</html>

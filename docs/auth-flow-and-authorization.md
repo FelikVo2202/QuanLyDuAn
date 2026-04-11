@@ -6,13 +6,13 @@
 
 ## 📋 Tổng quan Authentication Flow
 
-| Bước | Trạng thái             | Mô tả                                              |
-|------|------------------------|----------------------------------------------------|
-| 1    | Chưa đăng nhập         | Gọi API login, nhận `accessToken` + `refreshToken` |
-| 2    | Đã đăng nhập           | Gọi các API khác với `accessToken` trong header    |
-| 3    | `accessToken`  hết hạn | Server trả `401 Unauthorized` khi gọi các API      |
-| 4    | Silent Refresh         | Đổi `accessToken` mới bằng `refreshToken`          |
-| 5    | `refreshToken` hết hạn | Xóa `accessToken`, điều hướng về trang login       |
+| Bước | Trạng thái             | Mô tả                                                        |
+|------|------------------------|--------------------------------------------------------------|
+| 1    | Chưa đăng nhập         | Gọi API login, nhận `accessToken` + `refreshToken`           |
+| 2    | Đã đăng nhập           | Gọi các API khác với `accessToken` trong header              |
+| 3    | `accessToken`  hết hạn | Server trả `401 Unauthorized` khi gọi các API                |
+| 4    | Silent Refresh         | Đổi `accessToken` mới bằng `refreshToken`                    |
+| 5    | `refreshToken` hết hạn | Gọi API logout, xóa `accessToken`, điều hướng về trang login |
 
 ---
 
@@ -21,6 +21,8 @@
 > ⚠️ Khi chưa đăng nhập, mọi API khác đều bị chặn `401 Unauthorized`
 
 **Request**
+
+💡 Bắt buộc dùng { withCredentials: true } để trình duyệt tự gửi Cookie lên.
 
 ```
 POST /api/auth/login
@@ -40,9 +42,9 @@ POST /api/auth/login
 | Body (JSON) | `accessToken` + thông tin nhân viên                       |
 | Cookie (ẩn) | `refreshToken` — Server tự gắn vào trình duyệt (HttpOnly) |
 
-**✅ Frontend cần làm:**
+**✅ Cần:**
 
-1. Lưu `accessToken` vào LocalStorage
+1. Lưu `accessToken` vào biến JavaScript
 2. Bỏ qua `refreshToken` — trình duyệt tự quản lý
 
 ---
@@ -65,8 +67,6 @@ GET /api/auth/me
 
 ---
 
----
-
 ### Bước 3 · Access Token hết hạn
 
 > 🕐 `accessToken` mặc định **hết hạn sau 15 phút**
@@ -77,9 +77,11 @@ Khi gửi request với token cũ, Server trả về `401 Unauthorized`
 
 ### Bước 4 · Làm mới Token (Silent Refresh)
 
-> ❗ Khi nhận `401`, **không đẩy người dùng về trang Login ngay** — thử đổi token ngầm trước.
+> ❗ Khi nhận `401`, **không đẩy người dùng về trang Login ngay** — thử đổi token ngầm trước bằng Axios Interceptor.
 
 **Request**
+
+💡 Bắt buộc dùng { withCredentials: true } để trình duyệt tự gửi Cookie lên.
 
 ```
 POST /api/auth/refresh
@@ -97,12 +99,22 @@ POST /api/auth/refresh
 
 ---
 
-### Bước 5 · Kết thúc phiên làm việc
+### Bước 5 · Kết thúc phiên làm việc (Đăng xuất hoặc Refresh thất bại)
 
-Khi `/refresh` cũng thất bại:
+**Request**
 
-1. Xóa `accessToken` khỏi LocalStorage
-2. Chuyển hướng người dùng về `/login`
+💡 Bắt buộc dùng { withCredentials: true } để trình duyệt tự gửi Cookie lên.
+
+```
+POST /api/auth/logout
+```
+
+**Response `200 OK`**
+
+**✅ Cần:**
+
+1. Xóa biến accessToken (gán bằng chuỗi rỗng)
+2. Chuyển hướng người dùng về trang `/login`
 
 ---
 
@@ -112,6 +124,7 @@ Khi `/refresh` cũng thất bại:
 |-------------------|--------|---------------------|------------------------|
 | Đăng nhập         | `POST` | `/api/auth/login`   | Không                  |
 | Làm mới token     | `POST` | `/api/auth/refresh` | Không (Cookie)         |
+| Đăng xuất         | `POST` | `/api/auth/logout`  | Không (Cookie)         |
 | Thông tin cá nhân | `GET`  | `/api/auth/me`      | `Bearer <accessToken>` |
 
 ## 📋 Phân quyền
@@ -120,7 +133,7 @@ Khi `/refresh` cũng thất bại:
 
 - Quyền của nhân viên được mã hóa trong `accessToken`
 - Khi server đọc `accessToken` được gửi kèm trong API header nó sẽ biết staff đang gửi API có quyền gì
-- Từ đó server hoặc cho phép staff gọi API hoặc chặn lại, trả về `403 Fobidden`
+- Từ đó server hoặc cho phép staff gọi API hoặc chặn lại, trả về `403 Forbidden`
 
 **Public:**
 
@@ -128,14 +141,13 @@ Khi `/refresh` cũng thất bại:
 |--------|---------------------|
 | `POST` | `/api/auth/login`   |
 | `POST` | `/api/auth/refresh` |
+| `POST` | `/api/auth/logout`  |
 
 **Private:**
 
 | Method   | Endpoint                     | STYLIST | RECEPTIONIST | MANAGER |
 |----------|------------------------------|:-------:|:------------:|:-------:|
-| `POST`   | `/api/auth/login`            |    ✅    |      ✅       |    ✅    |
-| `POST`   | `/api/auth/refresh`          |    ✅    |      ✅       |    ✅    |
-| `POST`   | `/api/staffs/**`             |    ❌    |      ❌       |    ✅    |
+| `*`      | `/api/staffs/**`             |    ❌    |      ❌       |    ✅    |
 | `DELETE` | `/api/customers/**`          |    ❌    |      ❌       |    ✅    |
 | `POST`   | `/api/appointments/**`       |    ❌    |      ✅       |    ✅    |
 | `PATCH`  | `/api/appointments/*/cancel` |    ❌    |      ✅       |    ✅    |

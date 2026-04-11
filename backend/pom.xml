@@ -32,6 +32,8 @@
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
         <net.datafaker.version>2.5.4</net.datafaker.version>
         <jjwt.version>0.13.0</jjwt.version>
+        <springdoc-openapi.version>3.0.2</springdoc-openapi.version>
+        <springboot4-dotenv.version>5.1.0</springboot4-dotenv.version>
     </properties>
     <dependencies>
         <dependency>
@@ -108,6 +110,16 @@
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
             <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc-openapi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>springboot4-dotenv</artifactId>
+            <version>${springboot4-dotenv.version}</version>
         </dependency>
     </dependencies>
 

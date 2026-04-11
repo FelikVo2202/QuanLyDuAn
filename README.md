@@ -36,11 +36,8 @@ Mở terminal tại thư mục gốc > `docker-compose up -d` để tạo databa
 1. Vào **Settings > Build, Execution, Deployment > Compiler > Annotation Processors**
 2. Tick chọn ✅ **Enable annotation processing**
 
-##### 2.3 Nạp biến môi trường
+##### 2.3 Thiết lập biến môi trường
 1. Copy file `.env.example` và đổi tên bản sao thành `.env`. (Các biến giữ nguyên giá trị mặc định hoặc đổi tùy thích.)
-2. Nhấn vào **tên file main** ở góc trên bên phải > **Edit Configurations**
-3. Chọn **Modify options > Environment variables**
-4. Trỏ đến file **`.env`** đã tạo ở Bước 1
 
 ##### 2.4 Kết nối Database
 1. Mở tab **Database** ở góc phải màn hình

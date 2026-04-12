@@ -152,3 +152,76 @@ POST /api/auth/logout
 | `POST`   | `/api/appointments/**`       |    ❌    |      ✅       |    ✅    |
 | `PATCH`  | `/api/appointments/*/cancel` |    ❌    |      ✅       |    ✅    |
 | `*`      | Các API còn lại              |    ✅    |      ✅       |    ✅    |
+
+## 🚀 Hướng dẫn Test API trên giao diện Scalar
+
+Scalar cung cấp Client tích hợp sẵn để bạn test nhanh các API. Dưới đây là luồng thao tác:
+
+### 0. Khởi động
+
+Sau khi chạy backend, mở [http://localhost:8080/scalar](http://localhost:8080/scalar)
+
+### 1. Lấy Access Token
+
+- Lấy username/password:
+    - password: `123456`
+    - username: IntelliJ > Thanh công cụ bên phải > Database 🛢️ > SALON_APP > tables > đúp chuột STAFF > Thấy danh sách
+      nhân viên > Copy một cái username của MANAGER
+- Mở endpoint `POST /api/auth/login` trên Scalar.
+- Bấm **Test Request**
+- Nhập Request Body chứa username/password rồi bấm **Send**
+- Trong khung Response Body, copy toàn bộ chuỗi `accessToken`.
+
+> **Lưu ý:** `refreshToken` đã được set ngầm vào Cookie của trình duyệt, bạn không cần bận tâm.
+
+### 2. Gắn Token để gọi API Private
+
+- Lên đầu trang Scalar
+- Paste `accessToken` vào Authentication > Bearer Token để Scalar tự điền `Authorization: Bearer <accessToken>` vào
+  Header cho toàn bộ API (đỡ phải nhập thủ công mỗi lần gọi API)
+
+> **Lưu ý:** Chỉ dán mã token, **KHÔNG** cần tự gõ chữ `Bearer` vì Scalar sẽ tự động nối vào header.
+
+### 3. Test gọi API
+
+Sau khi đã gắn Token thành công, bạn có thể bắt đầu test các API trong hệ thống.
+
+* **Bước 3.1: Chọn API & Mở giao diện Test**
+    * Chọn một endpoint bất kỳ từ menu bên trái (Ví dụ: `GET /api/customers` hoặc `POST /api/appointments`).
+    * Bấm nút **Test Request** để mở khung giao diện Client tích hợp.
+
+
+* **Bước 3.2: Chuẩn bị Dữ liệu (Parameters & Body)**
+
+  Tùy thuộc vào từng API, bạn sẽ cần (hoặc không cần) truyền thêm dữ liệu. Hãy chú ý các ô sau trên Scalar:
+    * **Không cần nhập gì cả:** Rất nhiều API chỉ cần gọi là chạy (Ví dụ: `GET /api/auth/me` hoặc lấy danh sách cơ bản).
+      Nếu không thấy ô nhập liệu nào bắt buộc, bạn có thể bỏ qua bước này và bấm Send luôn.
+    * **Path Variables:** Các biến bắt buộc nằm trực tiếp trong URL (Ví dụ: với `/api/customers/{id}`, bạn cần nhập giá
+      trị thực tế thay cho `id`).
+    * **Request Body:** Dữ liệu định dạng JSON gửi lên server (thường dùng với `POST`, `PUT`, `PATCH`). *Mẹo: Scalar
+      thường đã sinh sẵn một cục JSON mẫu, bạn chỉ cần sửa lại các giá trị cho đúng thực tế.*
+    * **Query Parameters:** Các tham số dùng trên URL để lọc, tìm kiếm hoặc phân trang.
+      *💡 Ví dụ với API `GET /api/appointments`:*
+
+      | `startDate`     | `endDate`    | Kết quả trả về                                      |
+      |-----------------|--------------|-----------------------------------------------------|
+      | ❌ Bỏ trống      | ❌ Bỏ trống   | Các cuộc hẹn của **hôm nay**                        |
+      | ✅ Có nhập       | ❌ Bỏ trống   | Các cuộc hẹn **chính xác trong ngày** `startDate`   |
+      | ❌ Bỏ trống      | ✅ Có nhập    | Các cuộc hẹn từ **hôm nay** đến `endDate`           |
+      | ✅ Có nhập       | ✅ Có nhập    | Các cuộc hẹn từ **`startDate`** đến **`endDate`**   |
+
+* **Bước 3.3: Gửi Request & Đọc Kết quả**
+    * Bấm nút **Send** để thực thi.
+    * Nhìn xuống khu vực **Response** để kiểm tra mã trạng thái (HTTP Status Code) và kết luận:
+        * ✅ `200 OK` / `201 Created`: Gọi thành công! Nếu đây là API Private, chứng tỏ Token của bạn hợp lệ và tài khoản
+          đủ quyền (Role).
+        * ❌ `400 Bad Request`: Dữ liệu bạn nhập vào bị sai (sai định dạng, thiếu field bắt buộc, hoặc vi phạm validate).
+          Hãy đọc dòng thông báo lỗi trong body để sửa lại.
+        * 🚫 `401 Unauthorized`: Token bị thiếu, bị sai hoặc đã hết hạn. Bạn cần làm mới token (bằng cách refresh hoặc
+          login)
+        * ⛔ `403 Forbidden`: Token hợp lệ nhưng tài khoản của bạn **không đủ quyền** thực hiện hành động này (Ví dụ: Lấy
+          account Stylist đi xóa thông tin Customer).
+        * 💥 `500 Internal Server Error`: Lỗi chưa được cover. Quay lại IntelliJ xem log lỗi.
+      > **Lưu ý:** Quen rồi thì vào `backend/src/main/resources/application.yaml` chỉnh
+      access-token-expiration: 15m lên lâu lâu thay vì 15m để tập trung code khỏi phải đổi token hoài. Nhưng nhớ đưa về
+      15m trước khi tạo Pull Request.

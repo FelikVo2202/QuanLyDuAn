@@ -51,7 +51,7 @@ Mở terminal tại thư mục gốc > `docker-compose up -d` để tạo databa
 
 #### Bước 3: Chạy & Kiểm tra
 1. Chạy bằng nút hình tam giác màu xanh lá.
-2. Truy cập: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) (Thấy danh sách các API là thành công.)
+2. Truy cập: [http://localhost:8080/scalar](http://localhost:8080/scalar) (Thấy danh sách các API là thành công.)
 
 ---
 

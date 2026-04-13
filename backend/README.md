@@ -1,0 +1,68 @@
+## ⚙️ Backend
+
+Hướng dẫn chạy backend và database cho dev trên IDE IntelliJ
+
+---
+
+### 🛠 Yêu cầu cài đặt
+
+* **Tải [IntelliJ IDEA Ultimate](https://www.jetbrains.com/idea/download/)** > [Đăng ký bản quyền miễn phí](https://www.jetbrains.com/shop/eform/students) > *Mở app > Icon bánh răng > Manage Subscription > Activate*
+* **Tải [Docker Desktop](https://www.docker.com/products/docker-desktop/)** (Chạy database Oracle)
+
+---
+
+### 🚀 Hướng dẫn chạy
+
+#### Bước 1: Chạy database Oracle
+
+Mở terminal tại thư mục gốc > `docker-compose up -d` để tạo database (Lần đầu hơi lâu tý)
+
+---
+
+#### Bước 2: Cấu hình IntelliJ
+
+##### 2.0 Cài đặt JDK
+1. Mở code
+2. Vào **File > Project Structure > SDK > Download JDK**
+3. Chọn Version: **21** > Vendor: **Eclipse Temurin** > Download
+
+##### 2.1 Maven Project
+- Nếu icon của file `/backend/pom.xml` không chuyển thành chữ m: Right click > Add as Maven Project
+
+##### 2.2 Bật Annotation Processing
+1. Vào **Settings > Build, Execution, Deployment > Compiler > Annotation Processors**
+2. Tick chọn ✅ **Enable annotation processing**
+
+##### 2.3 Thiết lập biến môi trường
+1. Copy file `.env.example` và đổi tên bản sao thành `.env`. (Các biến giữ nguyên giá trị mặc định hoặc đổi tùy thích.)
+
+##### 2.4 Kết nối Database
+1. Mở tab **Database** ở góc phải màn hình
+2. Chọn **Create data source > Oracle**
+3. Nếu thấy thông báo **"Missing driver files"** > nhấn Download để tải driver
+4. Điền thông tin kết nối:
+    - **URL / Username / Password**: copy từ file `.env`
+5. Nhấn **Test Connection** để kiểm tra > **OK**
+
+---
+
+#### Bước 3: Chạy & Kiểm tra
+1. Chạy bằng nút hình tam giác màu xanh lá.
+2. Truy cập: [http://localhost:8080/scalar](http://localhost:8080/scalar) (Thấy danh sách các API là thành công.)
+
+---
+
+### 🛢️ Làm việc với database
+
+#### 🟢 Không mất dữ liệu
+
+* **Vào code:** Mở Docker Desktop > Mở code > `docker compose up -d`
+* **Tạm nghỉ ngắn:** `docker compose stop` > `docker compose start`
+* **Trước khi tắt máy:** `docker compose down`
+* **Thu hồi tài nguyên (Khi cần làm tác vụ nặng khác):** `docker compose down` > Right click Docker dưới khay hệ thống > **Quit Docker Desktop** > `wsl --shutdown`
+
+---
+
+#### 🔴 Mất dữ liệu
+
+* **Database lỗi:** `docker compose down -v` > `docker compose up -d`

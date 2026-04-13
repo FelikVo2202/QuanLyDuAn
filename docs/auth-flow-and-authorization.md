@@ -1,6 +1,6 @@
 # 🔐 Authentication Flow & Authorization
 
-> Mô tả cách **Frontend – Backend** phối hợp qua bộ API Auth và bảng phân quyền API
+> Mô tả cách **Frontend – Backend** phối hợp qua bộ API Auth, bảng phân quyền API và hướng dẫn Test API trên giao diện Scalar
 
 ---
 
@@ -30,8 +30,8 @@ POST /api/auth/login
 
 ```json
 {
-  "username": "taimv2405",
-  "password": "123456789"
+  "username": "manager",
+  "password": "123456"
 }
 ```
 
@@ -222,6 +222,7 @@ Sau khi đã gắn Token thành công, bạn có thể bắt đầu test các AP
         * ⛔ `403 Forbidden`: Token hợp lệ nhưng tài khoản của bạn **không đủ quyền** thực hiện hành động này (Ví dụ: Lấy
           account Stylist đi xóa thông tin Customer).
         * 💥 `500 Internal Server Error`: Lỗi chưa được cover. Quay lại IntelliJ xem log lỗi.
+      
       > **Lưu ý:** Quen rồi thì vào `backend/src/main/resources/application.yaml` chỉnh
-      access-token-expiration: 15m lên lâu lâu thay vì 15m để tập trung code khỏi phải đổi token hoài. Nhưng nhớ đưa về
+      access-token-expiration lên lâu lâu thay vì 15m để tập trung code khỏi phải đổi token hoài. Nhưng nhớ đưa về
       15m trước khi tạo Pull Request.

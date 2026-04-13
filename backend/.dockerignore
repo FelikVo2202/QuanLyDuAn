@@ -1,0 +1,48 @@
+# Build output
+target/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.eclipse
+.settings/
+.classpath
+.project
+
+# Maven wrapper jar
+.mvn/wrapper/maven-wrapper.jar
+
+# Windows Maven wrapper
+mvnw.cmd
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs & misc
+*.md
+README*
+CHANGELOG*
+LICENSE
+
+# Docker itself
+Dockerfile*
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Test reports
+**/surefire-reports/
+**/failsafe-reports/
+
+# Env files
+.env
+.env.*

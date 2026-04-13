@@ -92,10 +92,36 @@ public class DummyDataSeeder implements CommandLineRunner {
 
     private List<Staff> seedStaff(int count) {
         List<Staff> staffList = new ArrayList<>();
-
         String encodedPassword = passwordEncoder.encode("123456");
 
-        for (int i = 0; i < count; i++) {
+        // 1. Tạo các tài khoản test mặc định
+        Staff manager = new Staff();
+        manager.setFirstName("Admin");
+        manager.setLastName("Manager");
+        manager.setRole(StaffRole.MANAGER);
+        manager.setUsername("manager");
+        manager.setPasswordHash(encodedPassword);
+        staffList.add(manager);
+
+        Staff receptionist = new Staff();
+        receptionist.setFirstName("Nhân viên");
+        receptionist.setLastName("Lễ tân");
+        receptionist.setRole(StaffRole.RECEPTIONIST);
+        receptionist.setUsername("receptionist");
+        receptionist.setPasswordHash(encodedPassword);
+        staffList.add(receptionist);
+
+        Staff stylist = new Staff();
+        stylist.setFirstName("Thợ");
+        stylist.setLastName("Cắt tóc");
+        stylist.setRole(StaffRole.STYLIST);
+        stylist.setUsername("stylist");
+        stylist.setPasswordHash(encodedPassword);
+        staffList.add(stylist);
+
+        // 2. Tạo thêm các nhân viên random để đủ số lượng (trừ đi 3 tài khoản đã tạo ở trên)
+        int randomCount = Math.max(0, count - 3);
+        for (int i = 0; i < randomCount; i++) {
             Staff staff = new Staff();
             staff.setFirstName(faker.name().firstName());
             staff.setLastName(faker.name().lastName());

@@ -35,7 +35,7 @@ public class JwtService {
                 .subject(staff.getId().toString())
                 .claim("role", staff.getRole().name())
                 .issuedAt(new Date())
-                .expiration(Date.from(Instant.now().plus(jwtConfig.getAccessTokenExpiration())))
+                .expiration(Date.from(Instant.now().plus(tokenExpiration)))
                 .signWith(secretKey)
                 .compact();
     }

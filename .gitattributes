@@ -1,0 +1,72 @@
+# Automatically detect text files and normalize them to LF in the repository.
+* text=auto eol=lf
+
+# Force LF so scripts work properly in Docker (Linux).
+*.sh            text eol=lf
+mvnw            text eol=lf
+Dockerfile* text eol=lf
+*.Dockerfile    text eol=lf
+.dockerignore   text eol=lf
+
+# Force CRLF so files run correctly on Windows.
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+mvnw.cmd        text eol=crlf
+
+# Spring Boot / Java / Oracle SQL
+*.java          text
+*.xml           text
+*.properties    text
+*.yaml          text
+*.yml           text
+*.sql           text
+*.gradle        text
+*.groovy        text
+
+# Web / UI / Data
+*.html          text
+*.css           text
+*.js            text
+*.ts            text
+*.json          text
+*.svg           text
+*.csv           text
+
+# Documentation & Git
+*.md            text
+*.txt           text
+.env* text
+.gitignore      text
+.gitattributes  text
+.editorconfig   text
+
+# Java/Spring compiled
+*.class         binary
+*.jar           binary
+*.war           binary
+*.ear           binary
+
+# Media & Fonts
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.woff          binary
+*.woff2         binary
+*.ttf           binary
+*.eot           binary
+
+# Archive
+*.zip           binary
+*.tar.gz        binary
+*.rar           binary
+*.pdf           binary
+
+# Keystore & Certificates
+*.jks           binary
+*.p12           binary
+*.pfx           binary
+*.pem           text eol=lf
+*.crt           text eol=lf
+*.key           text eol=lf

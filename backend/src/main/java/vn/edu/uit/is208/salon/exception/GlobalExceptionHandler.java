@@ -4,13 +4,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import tools.jackson.databind.exc.InvalidFormatException;
 import vn.edu.uit.is208.salon.dto.ErrorResponse;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -89,6 +93,42 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        String message = "Dữ liệu JSON đầu vào không hợp lệ hoặc sai định dạng";
+
+        if (ex.getCause() instanceof InvalidFormatException invalidFormatException) {
+            if (invalidFormatException.getTargetType() != null && invalidFormatException.getTargetType().isEnum()) {
+                message = String.format("Giá trị '%s' không hợp lệ. Các giá trị được chấp nhận là: %s",
+                        invalidFormatException.getValue(),
+                        Arrays.toString(invalidFormatException.getTargetType().getEnumConstants()));
+            }
+        }
+
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+
+        Class<?> type = ex.getRequiredType();
+        String message = String.format("Tham số '%s' có giá trị '%s' không hợp lệ", ex.getName(), ex.getValue());
+
+        if (type != null && type.isEnum()) {
+            message = String.format("Giá trị '%s' cho tham số '%s' không hợp lệ. Các giá trị được chấp nhận là: %s",
+                    ex.getValue(),
+                    ex.getName(),
+                    Arrays.toString(type.getEnumConstants()));
+        }
+
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)

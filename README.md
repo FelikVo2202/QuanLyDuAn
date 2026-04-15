@@ -30,9 +30,11 @@ QuanLyDuAn/
 │   ├── Dockerfile          # Cấu hình build image cho Backend (Multi-stage)
 │   ├── pom.xml             # Maven dependencies
 │   └── README.md           # Hướng dẫn setup và chạy Backend trên IntelliJ
+├── Database/               # Database schema và document
 ├── docs/                   # Tài liệu kỹ thuật
 ├── frontend/               # Mã nguồn Giao diện (HTML, CSS, JS)
 ├── .env.example            # File mẫu chứa các biến môi trường
+├── .gitattributes          # Cấu hình cách Git xử lý file
 ├── .gitignore              # Cấu hình các file/thư mục bị Git bỏ qua
 ├── docker-compose.yml      # Cấu hình chạy toàn bộ hệ thống
 └── README.md               # Tài liệu hướng dẫn (Bạn đang đọc nó)
@@ -98,10 +100,10 @@ Sau khi các dịch vụ báo trạng thái **Up**, bạn có thể truy cập h
 
 | Dịch vụ | Đường dẫn truy cập | Chú thích |
 |---|---|---|
-| Giao diện Web (Frontend) | http://localhost | Cổng 80 - Chạy bằng Nginx |
+| Giao diện Web (Frontend) | http://localhost:3000 | Chạy bằng Nginx |
 | API Backend | http://localhost:8080/api/... | Các endpoint của hệ thống |
 | Tài liệu API (Scalar) | http://localhost:8080/scalar | Tài liệu kỹ thuật tự động tạo |
-| Kết nối Database (DBeaver) | `jdbc:oracle:thin:@localhost:1521/FREEPDB1` | Dùng user/pass trong file `.env` |
+| Kết nối Database (DBeaver) | `jdbc:oracle:thin:@localhost:1522/XEPDB1` | Dùng user/pass trong file `.env` |
 
 ### 🔑 Tài khoản test mặc định
 Sử dụng các tài khoản sau để đăng nhập vào hệ thống Web hoặc test API:

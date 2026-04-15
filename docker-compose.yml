@@ -1,8 +1,10 @@
 services:
   oracle:
-    image: gvenzl/oracle-free:23-slim-faststart
+    image: gvenzl/oracle-xe:21-slim-faststart
+    platform: linux/amd64
+    shm_size: "1g"
     ports:
-      - "1521:1521"
+      - "1522:1521"
     environment:
       ORACLE_PASSWORD: ${ORACLE_PASSWORD}
       APP_USER: ${DB_USERNAME}
@@ -23,7 +25,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle:1521/FREEPDB1
+      - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle:1521/XEPDB1
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
 
@@ -40,9 +42,9 @@ services:
   frontend:
     image: nginx:alpine
     ports:
-      - "80:80"
+      - "3000:80"
     volumes:
-      - ./frontend:/usr/share/nginx/html:ro
+      - ./frontend/public:/usr/share/nginx/html:ro
     depends_on:
       - backend
     profiles:

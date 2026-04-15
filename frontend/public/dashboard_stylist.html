@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stylist Dashboard - GXUTSALON</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #fae3c8;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* SIDEBAR */
+     .sidebar {
+      width: 240px;
+      background: #fae3c8;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      padding: 28px 24px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #362e1b;
+      border-bottom: 1px solid #2a2a2a;
+      margin-bottom: 24px;
+    }
+    .logo span {
+      color: #eab308;
+    }
+    .nav-item {
+      padding: 12px 24px;
+      margin: 4px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #a0a0a0;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-item.active {
+      background: #d7a157;
+      color: #362e1b;
+    }
+    .nav-item:hover:not(.active) {
+      background: #2a2a2a;
+      color: white;
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 36px;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .header p {
+      font-size: 14px;
+      color: #888;
+      margin-top: 4px;
+    }
+    .stylist-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: white;
+      padding: 8px 20px 8px 12px;
+      border-radius: 60px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .stylist-avatar {
+      width: 48px;
+      height: 48px;
+      background: #eab308;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #1a1a1a;
+      font-size: 18px;
+    }
+    .stylist-name h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #32271a;
+    }
+    .stylist-name p {
+      font-size: 11px;
+      color: #32271a;
+      margin: 0;
+    }
+
+    /* STATS CARDS */
+    .stats-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      flex: 1;
+      background: white;
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: transform 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+    }
+    .stat-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+    .stat-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 36px;
+      font-weight: 800;
+      color: #32271a;
+    }
+    .stat-trend {
+      font-size: 12px;
+      color: #3c38f2;
+      margin-top: 8px;
+    }
+
+    /* 2 CỘT */
+    .two-columns {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    .column {
+      flex: 1;
+      background: white;
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .column h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #32271a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* APPOINTMENT LIST */
+    .appointment-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .appointment-time {
+      background: #fef3c7;
+      padding: 6px 12px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #32271a;
+      min-width: 70px;
+      text-align: center;
+    }
+    .appointment-info {
+      flex: 1;
+      margin-left: 14px;
+    }
+    .appointment-name {
+      font-weight: 700;
+      font-size: 14px;
+      color: #32271a;
+    }
+    .appointment-service {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+    .appointment-status {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 30px;
+      background: #e5e7eb;
+      color: #555;
+    }
+    .status-upcoming {
+      background: #06fd543f;
+      color: #05bf24;
+    }
+
+    /* PROGRESS CIRCLE */
+    .performance-circle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .circle {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: conic-gradient(#eab308 0deg, #f0f0f0 0deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .circle-inner {
+      width: 110px;
+      height: 110px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .circle-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: #eab308;
+    }
+    .circle-label {
+      font-size: 11px;
+      color: #888;
+    }
+    .performance-stats {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .perf-stat {
+      text-align: center;
+    }
+    .perf-number {
+      font-size: 20px;
+      font-weight: 800;
+      color: #1a1a1a;
+    }
+    .perf-text {
+      font-size: 10px;
+      color: #888;
+    }
+
+    /* REMAINING APPOINTMENTS BAR */
+    .remaining-bar {
+      margin-top: 16px;
+    }
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 6px;
+      color: #555;
+    }
+    .bar-track {
+      height: 8px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: #eab308;
+      border-radius: 10px;
+      width: 0%;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #aaa;
+      font-size: 13px;
+    }
+
+    @media (max-width: 1000px) {
+      .main { padding: 20px; }
+      .two-columns { flex-direction: column; }
+      .stats-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">GOUTSALON<span>✦</span></div>
+    <a href="dashboard_stylist.html" class="nav-item active">📊 Dashboard</a>
+    <a href="schedule.html" class="nav-item">📅 Schedule</a>
+    <a href="#" class="nav-item">📦 Inventory</a>
+    <a href="#" class="nav-item">👥 Customers</a>
+    <div onclick="logout()" style="margin-top: auto; padding: 16px 24px; cursor: pointer; color: #8b6b4a; font-weight: 500;">🚪 Đăng xuất</div>
+  </div>
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div class="header">
+      <div>
+        <h1>Stylist Dashboard</h1>
+        <p>Today's overview & performance</p>
+      </div>
+      <div class="stylist-info">
+        <div class="stylist-avatar">👩</div>
+        <div class="stylist-name">
+          <h4>Olivia</h4>
+          <p>Stylist</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-title">Total Customers</div>
+        <div class="stat-value" id="totalCustomers">0</div>
+        <div class="stat-trend">↑ +23% vs last month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-title">Remaining Appointments</div>
+        <div class="stat-value" id="remainingAppointments">0</div>
+        <div class="stat-trend">Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-title">Completed (This Month)</div>
+        <div class="stat-value" id="completedCount">0</div>
+        <div class="stat-trend">+12% vs last month</div>
+      </div>
+    </div>
+
+    <!-- 2 CỘT: Appointments + Performance -->
+    <div class="two-columns">
+      <!-- Upcoming Appointments Today -->
+      <div class="column">
+        <h3>📋 Today's Appointments</h3>
+        <div id="appointmentList">
+          <!-- dynamic -->
+        </div>
+      </div>
+
+      <!-- Performance Rate -->
+      <div class="column">
+        <h3>🎯 Performance Rate</h3>
+        <div class="performance-circle">
+          <div class="circle" id="performanceCircle">
+            <div class="circle-inner">
+              <span class="circle-value" id="perfPercent">0</span>
+              <span class="circle-label">%</span>
+            </div>
+          </div>
+          <div class="performance-stats">
+            <div class="perf-stat">
+              <div class="perf-number" id="targetAchieved">0</div>
+              <div class="perf-text">Target achieved</div>
+            </div>
+            <div class="perf-stat">
+              <div class="perf-number" id="monthTarget">120</div>
+              <div class="perf-text">Monthly target</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="remaining-bar">
+          <div class="bar-label">
+            <span>📅 Remaining today</span>
+            <span id="remainingText">0/0</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" id="remainingFill" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+
+  // MOCK DATA FOR STYLIST (Livia Bator)
+  const stylistId = "stylist_1";
+  
+  // Appointments data
+  let appointments = [
+    { id: 1, customer: "Minh Anh", service: "Haircut", time: "09:00", status: "upcoming", duration: 1 },
+    { id: 2, customer: "Thanh Tú", service: "Hairdye", time: "11:00", status: "upcoming", duration: 2 },
+    { id: 3, customer: "Hoàng Nam", service: "Hairwash", time: "14:00", status: "upcoming", duration: 0.5 },
+    { id: 4, customer: "Linh Chi", service: "Hairdye", time: "15:30", status: "upcoming", duration: 1.5 },
+    { id: 5, customer: "Đức Anh", service: "Haircut", time: "17:00", status: "upcoming", duration: 1 }
+  ];
+  
+  // Completed appointments this month (mock)
+  let completedThisMonth = 78;
+  // Total customers this month (unique)
+  let totalCustomersMonth = 5;
+  // Monthly target
+  const MONTH_TARGET = 120;
+  
+  // Current time to determine remaining appointments
+  function getCurrentHour() {
+    const now = new Date();
+    return now.getHours() + now.getMinutes() / 60;
+  }
+  
+  // Get upcoming appointments (not passed yet)
+  function getUpcomingAppointments() {
+    const currentHour = getCurrentHour();
+    const timeMap = {
+      "09:00": 9, "11:00": 11, "14:00": 14, "15:30": 15.5, "17:00": 17
+    };
+    return appointments.filter(app => {
+      const appHour = timeMap[app.time];
+      return appHour > currentHour;
+    });
+  }
+  
+  // Get remaining appointments count for today
+  function getRemainingCount() {
+    return getUpcomingAppointments().length;
+  }
+  
+  // Calculate performance rate (% of monthly target achieved)
+  function getPerformanceRate() {
+    return Math.min(100, Math.round((completedThisMonth / MONTH_TARGET) * 100));
+  }
+  
+  // Update UI
+  function updateDashboard() {
+    // Update stat cards
+    document.getElementById("totalCustomers").innerText = totalCustomersMonth;
+    const remaining = getRemainingCount();
+    document.getElementById("remainingAppointments").innerText = remaining;
+    document.getElementById("completedCount").innerText = completedThisMonth;
+    
+    // Update appointment list
+    const upcomingApps = getUpcomingAppointments();
+    const appListDiv = document.getElementById("appointmentList");
+    
+    if (upcomingApps.length === 0) {
+      appListDiv.innerHTML = `<div class="empty-state">✨ No more appointments today!<br>Take a break 🎉</div>`;
+    } else {
+      appListDiv.innerHTML = upcomingApps.map(app => `
+        <div class="appointment-item">
+          <div class="appointment-time">${app.time}</div>
+          <div class="appointment-info">
+            <div class="appointment-name">${app.customer}</div>
+            <div class="appointment-service">✂️ ${app.service}</div>
+          </div>
+          <div class="appointment-status status-upcoming">Upcoming</div>
+        </div>
+      `).join('');
+    }
+    
+    // Performance circle
+    const perfRate = getPerformanceRate();
+    document.getElementById("perfPercent").innerText = perfRate;
+    document.getElementById("targetAchieved").innerText = completedThisMonth;
+    document.getElementById("monthTarget").innerText = MONTH_TARGET;
+    
+    // Update conic gradient
+    const circle = document.getElementById("performanceCircle");
+    const angle = (perfRate / 100) * 360;
+    circle.style.background = `conic-gradient(#eab308 ${angle}deg, #f0f0f0 ${angle}deg)`;
+    
+    // Update remaining bar
+    const totalToday = appointments.length;
+    const remainingCount = remaining;
+    const completedToday = totalToday - remainingCount;
+    const fillPercent = totalToday > 0 ? (completedToday / totalToday) * 100 : 0;
+    document.getElementById("remainingFill").style.width = `${fillPercent}%`;
+    document.getElementById("remainingText").innerHTML = `${completedToday}/${totalToday} completed`;
+  }
+  
+  // Simulate real-time update (optional: every minute)
+  function startRealTimeUpdate() {
+    updateDashboard();
+    setInterval(() => {
+      updateDashboard();
+    }, 60000); // update every minute
+  }
+  
+  // Initialize
+  startRealTimeUpdate();
+  
+  // Add click to mark appointment as completed (optional feature)
+  function markAsCompleted(appointmentId) {
+    const app = appointments.find(a => a.id === appointmentId);
+    if (app && app.status === 'upcoming') {
+      app.status = 'completed';
+      completedThisMonth++;
+      totalCustomersMonth++;
+      updateDashboard();
+    }
+  }
+  
+  // Expose for debugging (optional)
+  window.markAsCompleted = markAsCompleted;
+
+// ========== KIỂM TRA ĐĂNG NHẬP ==========
+const user = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+if (!user) {
+  window.location.href = 'login.html';
+}
+const userData = JSON.parse(user);
+
+// Cập nhật tên stylist
+const nameEl = document.querySelector('.stylist-name h4');
+if (nameEl) nameEl.innerText = userData.username || 'Olivia';
+
+function logout() {
+  localStorage.removeItem('salonUser');
+  sessionStorage.removeItem('salonUser');
+  window.location.href = 'login.html';
+}
+// ========================================
+
+// Phần code dashboard stylist hiện tại giữ nguyên...
+</script>
+</body>
+</html>

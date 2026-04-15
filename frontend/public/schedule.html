@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>GOUTSALON | Lịch hẹn</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #ffecd5;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* LAYOUT CHÍNH */
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* SIDEBAR TRÁI - GUTSALON style */
+    .sidebar {
+      width: 260px;
+      background: #fae3c8;
+      color: #362e1b;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+     .logo {
+      padding: 28px 24px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #362e1b;
+      border-bottom: 1px solid #2a2a2a;
+      margin-bottom: 24px;
+    }
+    .logo span {
+      color: #eab308;
+    }
+
+
+    .logo small {
+      font-size: 10px;
+      color: #64748b;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .nav-item {
+      padding: 12px 24px;
+      margin: 4px 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #b89494;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      background: #1e293b;
+      color: #f1f5f9;
+    }
+
+    .nav-item.active {
+      background: #d7a157;
+      color: #1a1a1a;
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #fde0c6;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      padding: 16px 28px;
+      background: #fae3c8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .page-title h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #34281d;
+    }
+
+    .page-title p {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* VIEW SWITCHER (Today | Week | Month | Day) */
+    .view-switcher {
+      display: flex;
+      gap: 6px;
+      background: #f3f4f6;
+      padding: 3px;
+      border-radius: 30px;
+    
+    }
+
+    .view-btn {
+      padding: 5px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      border-radius: 30px;
+      cursor: pointer;
+      color: #475569;
+    }
+
+    .view-btn.active {
+      background: white;
+      color: #a3713f;
+      box-shadow: none;
+    }
+
+    /* CALENDAR CARD */
+    .calendar-container {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: auto;
+      padding: 20px 24px;
+      background: #f8fafc;
+    }
+
+    .calendar-card {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      overflow-x: auto;
+      min-width: 720px;
+    }
+
+    /* HEADER: staff avatars */
+    .calendar-header {
+      display: grid;
+      grid-template-columns: 80px repeat(5, 1fr);
+      border-bottom: 1px solid #e5e7eb;
+      background: white;
+      border-radius: 24px 24px 0 0;
+    }
+
+    .staff-card {
+      text-align: center;
+      padding: 16px 8px;
+      border-right: 1px solid #f1f5f9;
+    }
+
+    .staff-card img {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #c48c47;
+    }
+
+    .staff-name {
+      font-weight: 600;
+      font-size: 13px;
+      margin-top: 8px;
+      color: #362e1b;
+    }
+
+    .staff-role {
+      font-size: 10px;
+      color: #94a3b8;
+    }
+
+    /* BODY */
+    .calendar-body {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+    }
+
+    /* Time column */
+    .time-col {
+      background: #ffffff;
+      border-right: 1px solid #f1f5f9;
+    }
+
+    .time-slot {
+      height: 70px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748b;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* GRID container */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-auto-rows: 70px;
+      position: relative;
+      background: #fff;
+    }
+
+    .grid-cell {
+      border-bottom: 1px solid #e5e7eb;
+      border-right: 1px solid #e5e7eb;
+      background: white;
+      cursor: crosshair;
+      transition: background 0.1s;
+    }
+
+    .grid-cell:hover {
+      background: #fefce8;
+    }
+
+    /* EVENT STYLES */
+    .event {
+      background: #fffaf0;
+      border-left: 3px solid #ababab;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin: 2px 4px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #78350f;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      cursor: grab;
+      z-index: 10;
+      transition: 0.05s linear;
+      overflow: hidden;
+    }
+
+    .event strong {
+      font-size: 13px;
+      color: #1f2937;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event .service {
+      font-size: 11px;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+
+    .temp-drag {
+      background: #eab308aa;
+      border-left: 4px solid #ca8a04;
+      opacity: 0.7;
+      pointer-events: none;
+      backdrop-filter: blur(2px);
+    }
+
+    /* Reset button */
+    .reset-btn {
+      margin-top: 16px;
+      padding: 8px 20px;
+      background: #fff1f0;
+      border: none;
+      border-radius: 40px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #dc2626;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .reset-btn:hover {
+      background: #fee2e2;
+    }
+
+    .bottom-bar {
+      padding: 12px 24px;
+      display: flex;
+      justify-content: flex-end;
+      background: #f8fafc;
+    }
+    .modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+  .hidden {
+    display: none;
+  }
+
+  .modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    width: 320px;
+  }
+
+  .modal-content input,
+  .modal-content select {
+    width: 100%;
+    margin: 6px 0 12px;
+    padding: 6px;
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  #addServiceBtn {
+    margin-bottom: 12px;
+  }
+  .event {
+  color: white;
+  border-radius: 10px;
+  padding: 6px;
+  font-size: 12px;
+}
+
+/* 💧 Hairwash */
+.event.hairwash {
+  background: #a9e5ff; /* xanh da trời */
+}
+
+/* ✂️ Haircut */
+.event.haircut {
+  background: #98e3c8; /* xanh lá */
+}
+
+/* 💇 Hairstyle */
+.event.hairstyle {
+  background: #cfc0ff; /* tím */
+}
+
+/* 🔥 Multiple */
+.event.multiple {
+  background: linear-gradient(135deg, #ffdc9f, #fc8686);
+}
+
+.event.completed {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.event.ongoing {
+  outline: 2px solid #facc15;
+}
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar GUTSALON -->
+<div class="sidebar">
+  <div class="logo">GOUTSALON<span>✦</span></div>
+  <a href="dashboard_receptionist.html" class="nav-item">📊 Dashboard</a>
+  <a href="schedule.html" class="nav-item active">📅 Schedule</a>
+  <a href="#" class="nav-item">📦 Inventory</a>
+  <a href="customers.html" class="nav-item">👥 Customers</a>
+  <div class="logout" onclick="logout()">🚪 Đăng xuất</div>
+</div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title">
+        <h2>Schedule calendar</h2>
+        <p>Drag & drop to create appointments</p>
+      </div>
+      <div class="view-switcher">
+        <button class="view-btn active">Today</button>
+        <button class="view-btn">Week</button>
+        <button class="view-btn">Month</button>
+        <button class="view-btn">Day</button>
+      </div>
+    </div>
+
+    <div class="calendar-container">
+      <div class="calendar-card">
+        <!-- Header staff avatars -->
+        <div class="calendar-header">
+          <div></div>
+          <div class="staff-card"><img src="https://i.pravatar.cc/60?img=7"><div class="staff-name">Emma</div><div class="staff-role">Stylist</div></div>
+          <div class="staff-card"><img src="https://i.pravatar.cc/60?img=9"><div class="staff-name">Liam</div><div class="staff-role">Colorist</div></div>
+          <div class="staff-card"><img src="https://i.pravatar.cc/60?img=15"><div class="staff-name">Sophia</div><div class="staff-role">Nail</div></div>
+          <div class="staff-card"><img src="https://i.pravatar.cc/60?img=20"><div class="staff-name">Mason</div><div class="staff-role">Barber</div></div>
+          <div class="staff-card"><img src="https://i.pravatar.cc/60?img=32"><div class="staff-name">Olivia</div><div class="staff-role">Makeup</div></div>
+        </div>
+
+        <!-- Body: time + grid -->
+        <div class="calendar-body">
+          <div class="time-col">
+            <div class="time-slot">08:00</div>
+            <div class="time-slot">09:00</div>
+            <div class="time-slot">10:00</div>
+            <div class="time-slot">11:00</div>
+            <div class="time-slot">12:00</div>
+            <div class="time-slot">13:00</div>
+            <div class="time-slot">14:00</div>
+            <div class="time-slot">15:00</div>
+            <div class="time-slot">16:00</div>
+            <div class="time-slot">17:00</div>
+            <div class="time-slot">18:00</div>
+            <div class="time-slot">19:00</div>
+            <div class="time-slot">20:00</div>
+          </div>
+          <div id="calendar-grid" class="grid"></div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <button id="resetBtn" class="reset-btn">🗑 Reset all bookings</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="eventModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Edit Appointment</h3>
+
+    <label>Customer Name</label>
+    <input id="inputName" type="text" />
+
+    <label>Stylist</label>
+    <select id="inputStylist">
+      <option>Emma</option>
+      <option>Liam</option>
+      <option>Sophia</option>
+      <option>Mason</option>
+      <option>Olivia</option>
+    </select>
+
+    <label>Services</label>
+    <div id="servicesContainer"></div>
+    <button id="addServiceBtn">+ Add more services</button>
+
+    <div class="modal-actions">
+      <button id="saveBtn">Save</button>
+      <button id="closeBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+<script>
+  
+  // -------------------- CONFIG --------------------
+  const gridEl = document.getElementById("calendar-grid");
+  const ROWS = 13;      // 08:00 -> 20:00 (13 slots)
+  const COLS = 5;       // 5 nhân viên
+  let cellHeight = 70;
+  let isDragging = false;
+  let startRow = null;
+  let startCol = null;
+  let tempDiv = null;
+  let currentEditingEvent = null;
+
+  // ========== KIỂM TRA ĐĂNG NHẬP ==========
+const user = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+if (!user) {
+  window.location.href = 'login.html';
+}
+const userData = JSON.parse(user);
+console.log('Logged in as:', userData.username, '- Role:', userData.role);
+
+// Hàm đăng xuất
+function logout() {
+  localStorage.removeItem('salonUser');
+  sessionStorage.removeItem('salonUser');
+  window.location.href = 'login.html';
+}
+// ========================================
+
+  //------------------EVENT STATUS----------------
+  function getEventStatus(booking) {
+  const now = new Date();
+
+  const startHour = 7 + booking.row;
+  const endHour = startHour + booking.duration;
+
+  const startTime = new Date();
+  startTime.setHours(startHour, 0, 0, 0);
+
+  const endTime = new Date();
+  endTime.setHours(endHour, 0, 0, 0);
+
+  if (now > endTime) return "completed";
+  if (now >= startTime && now <= endTime) return "ongoing";
+  return "upcoming";
+}
+  
+  // -------------------- GENERATE GRID CELLS --------------------
+  function generateGrid() {
+    gridEl.innerHTML = "";
+    for (let row = 1; row <= ROWS; row++) {
+      for (let col = 1; col <= COLS; col++) {
+        const cell = document.createElement("div");
+        cell.className = "grid-cell";
+        cell.dataset.row = row;
+        cell.dataset.col = col;
+
+        cell.style.gridRow = row;
+        cell.style.gridColumn = col;
+        gridEl.appendChild(cell);
+      }
+    }
+  }
+  //----------------------MODAL LOGIC----------------------
+  const modal = document.getElementById("eventModal");
+  const inputName = document.getElementById("inputName");
+  const inputStylist = document.getElementById("inputStylist");
+  const servicesContainer = document.getElementById("servicesContainer");
+
+  function openModal(eventDiv, booking) {
+    currentEditingEvent = { eventDiv, booking };
+
+    inputName.value = booking.customerName || "";
+    inputStylist.value = ["Emma","Liam","Sophia","Mason","Olivia"][booking.col-1];
+
+    servicesContainer.innerHTML = "";
+
+    const services = booking.services || [booking.service];
+
+    services.forEach(s => addServiceInput(s));
+
+    modal.classList.remove("hidden");
+  }
+  //---------------------SERVICE INPUT-----------------
+  function addServiceInput(value = "") {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = value;
+    servicesContainer.appendChild(input);
+  }
+
+  document.getElementById("addServiceBtn").onclick = () => {
+    addServiceInput();
+  };
+
+  //--------------------COLORS OF EVENTS------------------
+  function getServiceType(booking) {
+  if (booking.services && booking.services.length > 1) {
+    return "multiple";
+  }
+
+  const service = (booking.services && booking.services[0]) || booking.service || "";
+
+  const s = service.toLowerCase();
+
+  if (s.includes("wash")) return "hairwash";
+  if (s.includes("cut")) return "haircut";
+  if (s.includes("style")) return "hairstyle";
+
+  return "haircut"; // default
+}
+
+  // -------------------- RENDER EVENT (booking card) --------------------
+  function renderEvent(booking) {
+  const { row, col, duration, customerName, service } = booking;
+  if (!row || !col || !duration) return;
+
+  const eventDiv = document.createElement("div");
+  eventDiv.className = "event";
+
+  const status = getEventStatus(booking);
+  eventDiv.classList.add(status);
+
+  const type = getServiceType(booking);
+  eventDiv.classList.add(type);
+
+  eventDiv.style.gridColumn = col;
+  eventDiv.style.gridRow = `${row} / span ${duration}`;
+
+  const startHour = 7 + row;
+  const endHour = startHour + duration;
+
+  // ✅ FIX: xử lý nhiều services
+  const displayService = booking.services
+    ? booking.services.slice(0, 2).join(", ")
+    : (service || "");
+
+  eventDiv.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <strong>${customerName || ""}</strong>
+      <span class="delete-btn" style="cursor:pointer;">✖</span>
+    </div>
+
+    <div class="service">
+      <span> ${displayService}</span>
+      <span>${startHour}:00 → ${endHour}:00</span>
+    </div>
+
+    ${booking.services && booking.services.length > 2 
+      ? `<div style="font-size:10px;color:#92400e">+ Add more services</div>` 
+      : ""}
+  `;
+
+  //  click mở modal
+  eventDiv.onclick = (e) => {
+    e.stopPropagation();
+    openModal(eventDiv, booking);
+  };
+
+  //  delete button 
+  const deleteBtn = eventDiv.querySelector(".delete-btn");
+
+  deleteBtn.onclick = (e) => {
+    e.stopPropagation();
+
+    if (!confirm("Delete this booking?")) return;
+
+    eventDiv.remove();
+
+    let all = JSON.parse(localStorage.getItem("bookings") || "[]");
+    all = all.filter(b => b.createdAt !== booking.createdAt);
+    localStorage.setItem("bookings", JSON.stringify(all));
+  };
+
+  gridEl.appendChild(eventDiv);
+}
+
+  // -------------------- CHECK OVERLAP --------------------
+  function hasOverlap(newBooking, existingBookings) {
+    return existingBookings.some(b => {
+      if (b.col !== newBooking.col) return false;
+      const bStart = b.row;
+      const bEnd = b.row + b.duration - 1;
+      const nStart = newBooking.row;
+      const nEnd = newBooking.row + newBooking.duration - 1;
+      return (nStart <= bEnd && nEnd >= bStart);
+    });
+  }
+
+  // -------------------- SAVE TO LOCALSTORAGE --------------------
+  function addBooking(booking) {
+    const bookings = JSON.parse(localStorage.getItem("bookings") || "[]");
+    if (hasOverlap(booking, bookings)) {
+      alert("⚠️ Overlap! This time slot is already booked.");
+      return false;
+    }
+    bookings.push(booking);
+    localStorage.setItem("bookings", JSON.stringify(bookings));
+    renderEvent(booking);
+    return true;
+  }
+
+  function loadAllBookings() {
+    const allEvents = document.querySelectorAll(".event");
+    allEvents.forEach(ev => ev.remove());
+    const bookings = JSON.parse(localStorage.getItem("bookings") || "[]");
+    bookings.forEach(b => renderEvent(b));
+  }
+
+  function resetAll() {
+    if (confirm("Delete all appointments?")) {
+      localStorage.removeItem("bookings");
+      loadAllBookings();
+    }
+  }
+
+  // -------------------- GET CELL UNDER CURSOR (chính xác) --------------------
+  function getGridPosition(clientX, clientY) {
+  const rect = gridEl.getBoundingClientRect();
+
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+
+  let col = Math.floor(x / cellWidth) + 1;
+  let row = Math.floor(y / cellHeight) + 1;
+
+  col = Math.max(1, Math.min(COLS, col));
+  row = Math.max(1, Math.min(ROWS, row));
+
+  return { row, col };
+}
+  //--------------------SAVE DATA-----------------
+  document.getElementById("saveBtn").onclick = () => {
+  if (!currentEditingEvent) return;
+
+  const { booking } = currentEditingEvent;
+
+  const services = Array.from(servicesContainer.querySelectorAll("input"))
+    .map(i => i.value)
+    .filter(v => v);
+
+  booking.customerName = inputName.value;
+  booking.services = services;
+
+  // update storage
+  let all = JSON.parse(localStorage.getItem("bookings") || "[]");
+  all = all.map(b => b.createdAt === booking.createdAt ? booking : b);
+  localStorage.setItem("bookings", JSON.stringify(all));
+
+  // reload toàn bộ UI
+  loadAllBookings();
+
+  closeModal();
+};
+function closeModal() {
+  modal.classList.add("hidden");
+  currentEditingEvent = null;
+}
+
+document.getElementById("closeBtn").onclick = closeModal;
+
+
+  // -------------------- DRAG & DROP HANDLERS --------------------
+  function onMouseDown(e) {
+  const cell = e.target.closest(".grid-cell");
+  if (!cell || e.target.closest(".event")) return;
+
+  isDragging = true;
+  startRow = parseInt(cell.dataset.row);
+  startCol = parseInt(cell.dataset.col);
+
+  tempDiv = document.createElement("div");
+  tempDiv.className = "event temp-drag";
+  tempDiv.style.gridColumn = startCol;
+  tempDiv.style.gridRow = startRow;
+  tempDiv.innerHTML = `<strong>➕ Drag down</strong><div class="service">Set duration</div>`;
+  gridEl.appendChild(tempDiv);
+
+  // GẮN Ở ĐÂY (QUAN TRỌNG)
+  window.addEventListener("mousemove", onMouseMove);
+  window.addEventListener("mouseup", onMouseUp);
+  document.body.classList.add("dragging");
+}
+
+  function onMouseMove(e) {
+  if (!isDragging || !tempDiv) return;
+
+  const { row: currentRow } = getGridPosition(e.clientX, e.clientY);
+
+  let row = currentRow;
+  if (row < startRow) row = startRow;
+
+  let duration = row - startRow + 1;
+  const maxSpan = ROWS - startRow + 1;
+  duration = Math.min(duration, maxSpan);
+
+  tempDiv.style.gridRow = `${startRow} / span ${duration}`;
+
+  const endHour = 7 + startRow + duration - 1;
+  tempDiv.innerHTML = `
+    <strong>📅 ${duration}h booking</strong>
+    <div class="service">${7 + startRow}:00 → ${endHour}:00</div>
+  `;
+}
+
+  function onMouseUp(e) {
+  if (!isDragging || !tempDiv) {
+    cleanupDrag();
+    return;
+  }
+
+  const { row: endRowRaw } = getGridPosition(e.clientX, e.clientY);
+
+  const endRow = endRowRaw >= startRow ? endRowRaw : startRow;
+
+  let duration = endRow - startRow + 1;
+  duration = Math.min(duration, ROWS - startRow + 1);
+
+  const newBooking = {
+    row: startRow,
+    col: startCol,
+    duration: duration,
+    customerName: "",
+    service: "",
+    createdAt: Date.now()
+  };
+
+  addBooking(newBooking);
+  setTimeout(() => {
+    const lastEvent = document.querySelector(".event:last-child");
+    openModal(lastEvent, newBooking);
+  }, 0);
+  cleanupDrag();
+}
+
+  function cleanupDrag() {
+    if (tempDiv) {
+      tempDiv.remove();
+      tempDiv = null;
+    }
+    isDragging = false;
+    startRow = null;
+    startCol = null;
+    window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("mouseup", onMouseUp);
+    document.body.classList.remove("dragging");
+  }
+
+  function attachGlobalDragEvents() {
+    gridEl.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }
+
+  // -------------------- INIT APP --------------------
+  function init() {
+  generateGrid();
+
+  // đo cell thật
+  const firstCell = document.querySelector(".grid-cell");
+  if (firstCell) {
+    const rect = firstCell.getBoundingClientRect();
+    cellHeight = rect.height;
+    cellWidth = rect.width;
+  }
+
+  attachGlobalDragEvents();
+  loadAllBookings();
+  document.getElementById("resetBtn").addEventListener("click", resetAll);
+  setInterval(() => {
+    loadAllBookings();
+  }, 60000);
+}
+
+  init();
+// Cập nhật link dashboard theo role
+const userRole = JSON.parse(localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser')).role;
+const dashboardLink = document.querySelector('.sidebar a[href*="dashboard"]');
+if (dashboardLink) {
+  if (userRole === 'admin') dashboardLink.href = 'dashboard.html';
+  else if (userRole === 'stylist') dashboardLink.href = 'dashboard_stylist.html';
+  else dashboardLink.href = 'dashboard_receptionist.html';
+}
+</script>
+</body>
+</html>

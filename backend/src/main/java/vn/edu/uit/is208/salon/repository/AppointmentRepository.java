@@ -45,4 +45,18 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("startDateTime") LocalDateTime startDateTime,
             @Param("endDateTime") LocalDateTime endDateTime,
             @Param("excludeAppointmentId") Long excludeAppointmentId);
+
+    @Query("""
+                SELECT DISTINCT a
+                FROM Appointment a
+                JOIN FETCH a.customer
+                JOIN FETCH a.staff
+                LEFT JOIN FETCH a.services
+                WHERE a.staff.id = :staffId
+                AND a.appointmentDateTime >= :startDateTime AND a.appointmentDateTime < :endDateTime
+            """)
+    List<Appointment> findAllByStaffIdAndDayRange(
+            @Param("staffId") Long staffId,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime);
 }

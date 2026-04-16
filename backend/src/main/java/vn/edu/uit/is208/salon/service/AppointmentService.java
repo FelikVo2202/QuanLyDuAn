@@ -48,7 +48,7 @@ public class AppointmentService {
         }
     }
 
-    public List<AppointmentDto> getAllAppointments(LocalDate startDate, LocalDate endDate) {
+    public List<AppointmentDto> getAllAppointments(LocalDate startDate, LocalDate endDate, Staff staff) {
         LocalDate resolvedStartDate = (startDate != null) ? startDate : LocalDate.now();
         LocalDate resolvedEndDate = (endDate != null) ? endDate : resolvedStartDate;
 
@@ -57,7 +57,15 @@ public class AppointmentService {
         LocalDateTime startDateTime = resolvedStartDate.atStartOfDay();
         LocalDateTime endDateTime = resolvedEndDate.plusDays(1).atStartOfDay();
 
-        return appointmentRepository.findAllByDayRange(startDateTime, endDateTime)
+        List<Appointment> appointments;
+        if (staff != null && staff.getRole() == StaffRole.STYLIST) {
+            appointments = appointmentRepository.findAllByStaffIdAndDayRange(
+                    staff.getId(), startDateTime, endDateTime);
+        } else {
+            appointments = appointmentRepository.findAllByDayRange(startDateTime, endDateTime);
+        }
+
+        return appointments
                 .stream()
                 .map(appointmentMapper::toDto)
                 .toList();

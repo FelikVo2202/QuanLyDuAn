@@ -7,14 +7,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import vn.edu.uit.is208.salon.constant.StaffRole;
+import vn.edu.uit.is208.salon.entity.Staff;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -38,10 +38,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        Long staffId = Long.parseLong(claims.getSubject());
+        String roleStr = claims.get("role", String.class);
+
+        Staff jwtStaff = new Staff();
+        jwtStaff.setId(staffId);
+        jwtStaff.setRole(StaffRole.valueOf(roleStr));
+
+        StaffPrincipal principal = new StaffPrincipal(jwtStaff);
+
         var authentication = new UsernamePasswordAuthenticationToken(
-                claims.getSubject(),
+                principal,
                 null,
-                List.of(new SimpleGrantedAuthority("ROLE_" + claims.get("role")))
+                principal.getAuthorities()
         );
 
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

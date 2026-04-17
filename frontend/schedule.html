@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>GOUTSALON | Lịch hẹn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -14,7 +16,7 @@
 
     body {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #ffecd5;
+      background: #fdf0d9;
       height: 100vh;
       overflow: hidden;
     }
@@ -28,7 +30,7 @@
     /* SIDEBAR TRÁI - GUTSALON style */
     .sidebar {
       width: 260px;
-      background: #fae3c8;
+      background: #fdf0d9;
       color: #362e1b;
       display: flex;
       flex-direction: column;
@@ -63,10 +65,11 @@
       align-items: center;
       gap: 12px;
       font-size: 14px;
-      font-weight: 500;
-      color: #b89494;
+      font-weight: 700;
+      color: #4e3927;
       transition: all 0.2s;
       cursor: pointer;
+      text-decoration: none;
     }
 
     .nav-item:hover {
@@ -75,8 +78,8 @@
     }
 
     .nav-item.active {
-      background: #d7a157;
-      color: #1a1a1a;
+      background: #f5e3c2;
+      color: #4e3927;
     }
 
     /* MAIN CONTENT */
@@ -91,32 +94,127 @@
     /* TOPBAR */
     .topbar {
       padding: 16px 28px;
-      background: #fae3c8;
+      background: #fdf0d9;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
+    .search-bar {
+      margin-bottom: 20px;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 10px 16px;
+      border: 1px solid #ddd;
+      border-radius: 30px;
+      font-size: 14px;
+      outline: none;
+      background: #f9f9f9;
+    }
+
+    .search-bar input:focus {
+      border-color: #1a73e8;
+      background: white;
+    }
+
     .page-title h2 {
-      font-size: 20px;
+      font-size: 26px;
       font-weight: 600;
-      color: #34281d;
+      color: #271e16;
     }
 
     .page-title p {
       font-size: 13px;
-      color: #64748b;
+      color: #8b7d64;
       margin-top: 2px;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #8b7d64;
+    }
+
+    .breadcrumb span {
+      color: #8b7d64;
+    }
+
+    .breadcrumb .separator {
+      font-size: 10px;
+      color: #c48c47;
+    }
+
+    .breadcrumb .active {
+      color: #2e70ff;
+      font-weight: 600;
+    }
+    /* SEARCH BAR */
+    .search-bar {
+      flex: 1;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 10px 18px;
+      border: 1px solid #fff9ee;
+      border-radius: 12px;
+      font-size: 13px;
+      outline: none;
+      background:#fff9ee ;
+      transition: all 0.2s;
+    }
+
+    .search-bar input:focus {
+      border-color: #c48c47;
+      box-shadow: 0 0 0 2px rgba(196, 140, 71, 0.1);
+    }
+    /*ACCOUNT */
+    .stylist-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #fff9ee;
+      padding: 8px 20px 8px 12px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .stylist-avatar {
+      width: 48px;
+      height: 48px;
+      background: #eab308;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #1a1a1a;
+      font-size: 18px;
+    }
+    .stylist-name h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #4e3927;
+    }
+    .stylist-name p {
+      font-size: 11px;
+      color: #4e3927;
+      margin: 0;
     }
 
     /* VIEW SWITCHER (Today | Week | Month | Day) */
     .view-switcher {
       display: flex;
       gap: 6px;
-      background: #f3f4f6;
+      background: #ffffff;
       padding: 3px;
       border-radius: 30px;
-    
+      justify-content: flex-end;
     }
 
     .view-btn {
@@ -201,7 +299,7 @@
     }
 
     .time-slot {
-      height: 70px;
+      height: 110px;
       display: flex;
       align-items: flex-start;
       justify-content: center;
@@ -216,7 +314,7 @@
     .grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      grid-auto-rows: 70px;
+      grid-auto-rows: 110px;
       position: relative;
       background: #fff;
     }
@@ -234,25 +332,10 @@
     }
 
     /* EVENT STYLES */
-    .event {
-      background: #fffaf0;
-      border-left: 3px solid #ababab;
-      border-radius: 6px;
-      padding: 6px 10px;
-      margin: 2px 4px;
-      font-size: 11px;
-      font-weight: 500;
-      color: #78350f;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      cursor: grab;
-      z-index: 10;
-      transition: 0.05s linear;
-      overflow: hidden;
-    }
-
+    
     .event strong {
       font-size: 13px;
-      color: #1f2937;
+      color: #4e3927;
       display: block;
       white-space: nowrap;
       overflow: hidden;
@@ -268,8 +351,8 @@
     }
 
     .temp-drag {
-      background: #eab308aa;
-      border-left: 4px solid #ca8a04;
+      background: #edededaa;
+      border-left: 4px solid #7d7d7d;
       opacity: 0.7;
       pointer-events: none;
       backdrop-filter: blur(2px);
@@ -302,32 +385,68 @@
       background: #f8fafc;
     }
     .modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+  .modal-actions button {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
+#saveBtn {
+  background: linear-gradient(135deg, #e0d3a2, #ffdda1);
+  color: #1a1a1a;
+  box-shadow: 0 4px 10px rgba(250, 204, 21, 0.3);
+}
   .hidden {
     display: none;
   }
 
   .modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 16px;
-    width: 320px;
-  }
+  background: #fff9ee;
+  padding: 24px;
+  border-radius: 20px;
+
+  width: 90%;
+  max-width: 480px;
+
+  max-height: 90vh;
+  overflow-y: auto;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
 
   .modal-content input,
-  .modal-content select {
-    width: 100%;
-    margin: 6px 0 12px;
-    padding: 6px;
-  }
+.modal-content select {
+  width: 100%;
+  margin: 6px 0 12px;
+  padding: 10px 12px;
+
+  border: 1px solid #ffffff;
+  border-radius: 12px;
+
+  background: #fff;
+  font-size: 13px;
+
+  transition: all 0.2s ease;
+}
+
+.modal-content input:focus,
+.modal-content select:focus {
+  outline: none;
+  border-color: #c48c47;
+  box-shadow: 0 0 0 2px rgba(196, 140, 71, 0.15);
+}
 
   .modal-actions {
     display: flex;
@@ -336,74 +455,174 @@
   }
 
   #addServiceBtn {
-    margin-bottom: 12px;
-  }
-  .event {
-  color: white;
-  border-radius: 10px;
-  padding: 6px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px dashed #c48c47;
+  background: #fff9ee;
+  color: #a3713f;
+  cursor: pointer;
   font-size: 12px;
 }
 
-/* 💧 Hairwash */
-.event.hairwash {
-  background: #a9e5ff; /* xanh da trời */
+#addServiceBtn:hover {
+  background: #fef3c7;
+}
+/* ===== NEW EVENT STYLE ===== */
+.event {
+  border-radius: 14px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  background: #ecfdf5;
+  border: 2px solid #22c55e;
+
+  font-size: 12px;
+  overflow: hidden;
 }
 
-/* ✂️ Haircut */
-.event.haircut {
-  background: #98e3c8; /* xanh lá */
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* 💇 Hairstyle */
-.event.hairstyle {
-  background: #cfc0ff; /* tím */
+.time-box {
+  display: flex;
+  gap: 4px;
 }
 
-/* 🔥 Multiple */
-.event.multiple {
-  background: linear-gradient(135deg, #ffdc9f, #fc8686);
+.time-box span {
+  background: #22c55e;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.event-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.event-actions span {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.event-actions img {
+  width: 20px;
+  height:20px;
+  pointer-events: none;
+}
+
+.btn-delete {
+  border: 1px solid #000;
+}
+
+.btn-complete {
+  background: #22c55e;
+  color: white;
+}
+
+.event-body strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.event-body .service {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.checkout {
+  font-size: 10px;
+  text-align: right;
+  color: #22c55e;
 }
 
 .event.completed {
   opacity: 0.5;
-  text-decoration: line-through;
+}
+.event.completed {
+  opacity: 0.6;
+
 }
 
-.event.ongoing {
-  outline: 2px solid #facc15;
+
+/* Đảm bảo toàn bộ phần tử đều dùng Plus Jakarta Sans */
+*,
+*::before,
+*::after {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
-  </style>
+
+/* Riêng input, select, button vẫn giữ đúng font */
+input, select, button, textarea {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+</style>
 </head>
 <body>
 <div class="app">
   <!-- Sidebar GUTSALON -->
 <div class="sidebar">
-  <div class="logo">GOUTSALON<span>✦</span></div>
-  <a href="dashboard_receptionist.html" class="nav-item">📊 Dashboard</a>
-  <a href="schedule.html" class="nav-item active">📅 Schedule</a>
-  <a href="#" class="nav-item">📦 Inventory</a>
-  <a href="customers.html" class="nav-item">👥 Customers</a>
-  <div class="logout" onclick="logout()">🚪 Đăng xuất</div>
+  <div class="logo">G<img src="assets/icons/logo_flower.svg" width="20" height="20" alt="">UTSALON<span></span></div>
+   <a href="dashboard_receptionist.html" class="nav-item">
+    <img src="assets/icons/dashboard.svg" width="24" height="24" alt=""> Dashboard
+  </a>
+<a href="schedule.html" class="nav-item active">
+    <img src="assets/icons/schedule.svg" width="24" height="24" alt=""> Schedule
+  </a>
+
+<a href="#" class="nav-item">
+    <img src="assets/icons/inventory.svg" width="24" height="24" alt=""> Inventory
+  </a>
+<a href="customers.html" class="nav-item">
+    <img src="assets/icons/customers.svg" width="24" height="24" alt=""> Customers
+  </a>
 </div>
 
   <!-- Main -->
   <div class="main">
     <div class="topbar">
       <div class="page-title">
-        <h2>Schedule calendar</h2>
-        <p>Drag & drop to create appointments</p>
+        <h2>Schedule</h2>
+        <div class="breadcrumb">
+          <span>Dashboard</span>
+          <span class="separator">▶</span>
+          <span class="active">Schedule</span>
+        </div>
       </div>
-      <div class="view-switcher">
-        <button class="view-btn active">Today</button>
-        <button class="view-btn">Week</button>
-        <button class="view-btn">Month</button>
-        <button class="view-btn">Day</button>
+      <div class="search-bar">
+       <input type="text" placeholder="Search" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center;background-size: 20px; padding-left: 35px;"> 
+      </div>
+      <!-- Bên phải: Thông tin tài khoản -->
+  <div class="stylist-info">
+        <div class="stylist-avatar">👩</div>
+        <div class="stylist-name">
+          <h4>Alissa</h4>
+          <p>Manger</p>
+        </div>
       </div>
     </div>
 
     <div class="calendar-container">
       <div class="calendar-card">
+        <div class="view-switcher">
+        <button class="view-btn active">Today</button>
+        <button class="view-btn">Week</button>
+        <button class="view-btn">Month</button>
+        <button class="view-btn">Day</button>
+        </div>
         <!-- Header staff avatars -->
         <div class="calendar-header">
           <div></div>
@@ -417,19 +636,19 @@
         <!-- Body: time + grid -->
         <div class="calendar-body">
           <div class="time-col">
-            <div class="time-slot">08:00</div>
-            <div class="time-slot">09:00</div>
-            <div class="time-slot">10:00</div>
-            <div class="time-slot">11:00</div>
-            <div class="time-slot">12:00</div>
-            <div class="time-slot">13:00</div>
-            <div class="time-slot">14:00</div>
-            <div class="time-slot">15:00</div>
-            <div class="time-slot">16:00</div>
-            <div class="time-slot">17:00</div>
-            <div class="time-slot">18:00</div>
-            <div class="time-slot">19:00</div>
-            <div class="time-slot">20:00</div>
+            <div class="time-slot">08</div>
+            <div class="time-slot">09</div>
+            <div class="time-slot">10</div>
+            <div class="time-slot">11</div>
+            <div class="time-slot">12</div>
+            <div class="time-slot">13</div>
+            <div class="time-slot">14</div>
+            <div class="time-slot">15</div>
+            <div class="time-slot">16</div>
+            <div class="time-slot">17</div>
+            <div class="time-slot">18</div>
+            <div class="time-slot">19</div>
+            <div class="time-slot">20</div>
           </div>
           <div id="calendar-grid" class="grid"></div>
         </div>
@@ -580,17 +799,15 @@ function logout() {
 
   // -------------------- RENDER EVENT (booking card) --------------------
   function renderEvent(booking) {
-  const { row, col, duration, customerName, service } = booking;
+  const { row, col, duration } = booking;
   if (!row || !col || !duration) return;
 
   const eventDiv = document.createElement("div");
   eventDiv.className = "event";
 
-  const status = getEventStatus(booking);
-  eventDiv.classList.add(status);
-
-  const type = getServiceType(booking);
-  eventDiv.classList.add(type);
+  if (booking.completed) {
+    eventDiv.classList.add("completed");
+  }
 
   eventDiv.style.gridColumn = col;
   eventDiv.style.gridRow = `${row} / span ${duration}`;
@@ -598,46 +815,66 @@ function logout() {
   const startHour = 7 + row;
   const endHour = startHour + duration;
 
-  // ✅ FIX: xử lý nhiều services
   const displayService = booking.services
     ? booking.services.slice(0, 2).join(", ")
-    : (service || "");
+    : (booking.service || "Haircut");
 
   eventDiv.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <strong>${customerName || ""}</strong>
-      <span class="delete-btn" style="cursor:pointer;">✖</span>
+    <div class="event-header">
+      <div class="time-box">
+        <span>${String(startHour).padStart(2, "0")}:00</span>
+        <span>${String(endHour).padStart(2, "0")}:00</span>
+      </div>
+
+      <div class="event-actions">
+  <span class="btn-delete">
+    <img src="assets/icons/delete.svg" />
+  </span>
+
+  <span class="btn-complete">
+    <img src="assets/icons/check.svg" />
+  </span>
+</div>
     </div>
 
-    <div class="service">
-      <span> ${displayService}</span>
-      <span>${startHour}:00 → ${endHour}:00</span>
+    <div class="event-body">
+      <strong>${booking.customerName || "No name"}</strong>
+      <div class="service">${displayService}</div>
     </div>
 
-    ${booking.services && booking.services.length > 2 
-      ? `<div style="font-size:10px;color:#92400e">+ Add more services</div>` 
-      : ""}
+    ${booking.completed ? `<div class="checkout">Check out →</div>` : ""}
   `;
 
-  //  click mở modal
-  eventDiv.onclick = (e) => {
+  // delete
+  eventDiv.querySelector(".btn-delete").onclick = (e) => {
     e.stopPropagation();
-    openModal(eventDiv, booking);
-  };
-
-  //  delete button 
-  const deleteBtn = eventDiv.querySelector(".delete-btn");
-
-  deleteBtn.onclick = (e) => {
-    e.stopPropagation();
-
-    if (!confirm("Delete this booking?")) return;
-
-    eventDiv.remove();
 
     let all = JSON.parse(localStorage.getItem("bookings") || "[]");
     all = all.filter(b => b.createdAt !== booking.createdAt);
     localStorage.setItem("bookings", JSON.stringify(all));
+
+    loadAllBookings();
+  };
+
+  // complete
+  eventDiv.querySelector(".btn-complete").onclick = (e) => {
+    e.stopPropagation();
+
+    booking.completed = !booking.completed;
+
+    let all = JSON.parse(localStorage.getItem("bookings") || "[]");
+    all = all.map(b =>
+      b.createdAt === booking.createdAt ? booking : b
+    );
+
+    localStorage.setItem("bookings", JSON.stringify(all));
+
+    loadAllBookings();
+  };
+
+  // edit
+  eventDiv.onclick = () => {
+    openModal(eventDiv, booking);
   };
 
   gridEl.appendChild(eventDiv);

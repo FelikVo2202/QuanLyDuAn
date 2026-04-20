@@ -95,7 +95,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
       background: #fdf0d9;
     }
 
@@ -668,92 +668,52 @@ if (dashboardLink) {
   else dashboardLink.href = 'dashboard_receptionist.html';
 }
 // ========== DỮ LIỆU KHÁCH HÀNG ==========
+const API_BASE_URL = 'http://localhost:8080/api';
+
+function getAuthHeaders() {
+  const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+  if (!userStr) {
+    window.location.href = 'login.html';
+    return null;
+  }
+  const user = JSON.parse(userStr);
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${user.token}`
+  };
+}
+
 let customers = [];
-let nextId = 1;
 
-// Load từ localStorage
-function loadCustomers() {
-  const stored = localStorage.getItem('goutsalon_customers');
-  if (stored) {
-    customers = JSON.parse(stored);
-    // Đảm bảo ID liên tục khi load từ localStorage
-    reindexCustomerIds();
-    nextId = customers.length + 1;
-  } else {
-    // Dữ liệu mẫu với ID từ 1,2,3...
-    customers = [
-      { id: 1, firstName: 'Nguyen', lastName: 'Thi Thanh Thuy', phone: '0987654321', email: 'thuy@email.com', gender: 'Female' },
-      { id: 2, firstName: 'Tran', lastName: 'Thi Xuan', phone: '0912345678', email: 'xuan@email.com', gender: 'Female' },
-      { id: 3, firstName: 'Nguyen', lastName: 'Hai Minh', phone: '0934567890', email: 'minh@email.com', gender: 'Male' },
-      { id: 4, firstName: 'Le', lastName: 'Thi Mai', phone: '0976543210', email: '', gender: 'Female' },
-      { id: 5, firstName: 'Pham', lastName: 'Van Hoang', phone: '0965432109', email: 'hoang@email.com', gender: 'Male' }
-    ];
-    nextId = 6;
-    saveToLocal();
+// Load từ API
+async function loadCustomers() {
+  const headers = getAuthHeaders();
+  if (!headers) return;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/customers`, { headers });
+    if (response.ok) {
+      const data = await response.json();
+      // Map backend phoneNumber to frontend phone
+      customers = data.map(c => ({
+        ...c,
+        phone: c.phoneNumber
+      }));
+      renderCustomersWithFilters();
+    } else if (response.status === 401) {
+      window.location.href = 'login.html';
+    } else {
+      console.error('Failed to load customers');
+    }
+  } catch (error) {
+    console.error('Error loading customers:', error);
   }
-  renderCustomersWithFilters();
-}
-
-function saveToLocal() {
-  localStorage.setItem('goutsalon_customers', JSON.stringify(customers));
-}
-
-// Render bảng khách hàng
-function renderCustomers(filterText = '') {
-  const container = document.getElementById('customersTable');
-  let filtered = [...customers];
-  
-  if (filterText) {
-    const search = filterText.toLowerCase();
-    filtered = filtered.filter(c => 
-      c.firstName.toLowerCase().includes(search) ||
-      c.lastName.toLowerCase().includes(search) ||
-      c.phone.includes(search) ||
-      (c.email && c.email.toLowerCase().includes(search))
-    );
-  }
-  
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="empty-state">✨ No customers found. Click "Add New Customer" to create one.</div>';
-    return;
-  }
-  
-  const html = `
-    <table class="customers-table">
-      <thead>
-        <tr><th>ID</th><th>Full Name</th><th>Phone</th><th>Email</th><th>Gender</th><th>Actions</th></tr>
-      </thead>
-      <tbody>
-        ${filtered.map(c => `
-          <tr>
-            <td>${c.id}</td>
-            <td><strong>${c.firstName} ${c.lastName}</strong></td>
-            <td>${c.phone}</td>
-            <td>${c.email || '—'}</td>
-            <td><span class="gender-badge ${c.gender === 'Male' ? 'gender-male' : c.gender === 'Female' ? 'gender-female' : 'gender-other'}">${c.gender}</span></td>
-            <td>
-              <button class="action-btn edit-btn" onclick="openEditModal(${c.id})">✏️</button>
-              <button class="action-btn delete-btn" onclick="deleteCustomer(${c.id})">🗑️</button>
-            </td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `;
-  container.innerHTML = html;
-}
-
-function filterCustomers() {
-  const searchValue = document.getElementById('searchInput').value;
-  renderCustomers(searchValue);
 }
 
 // MODAL
 const modal = document.getElementById('customerModal');
-let isEditing = false;
 
 function openAddModal() {
-  isEditing = false;
   document.getElementById('modalTitle').innerText = 'Add New Customer';
   document.getElementById('editId').value = '';
   document.getElementById('firstName').value = '';
@@ -767,7 +727,6 @@ function openAddModal() {
 function openEditModal(id) {
   const customer = customers.find(c => c.id === id);
   if (!customer) return;
-  isEditing = true;
   document.getElementById('modalTitle').innerText = 'Edit Customer';
   document.getElementById('editId').value = customer.id;
   document.getElementById('firstName').value = customer.firstName;
@@ -782,7 +741,7 @@ function closeModal() {
   modal.classList.add('hidden');
 }
 
-function saveCustomer() {
+async function saveCustomer() {
   const firstName = document.getElementById('firstName').value.trim();
   const lastName = document.getElementById('lastName').value.trim();
   const phone = document.getElementById('phone').value.trim();
@@ -794,29 +753,89 @@ function saveCustomer() {
     return;
   }
   
+  const headers = getAuthHeaders();
+  if (!headers) return;
+
   const editId = document.getElementById('editId').value;
+  const url = editId ? `${API_BASE_URL}/customers/${editId}` : `${API_BASE_URL}/customers`;
+  const method = editId ? 'PUT' : 'POST';
   
-  if (editId) {
-    // Edit existing
-    const index = customers.findIndex(c => c.id === parseInt(editId));
-    if (index !== -1) {
-      customers[index] = {
-        ...customers[index],
-        firstName, lastName, phone, email, gender
-      };
-    }
-  } else {
-    // Add new - ID sẽ là customers.length + 1
-    const newId = customers.length + 1;
-    customers.push({
-      id: newId,
-      firstName, lastName, phone, email, gender
+  const payload = {
+    firstName,
+    lastName,
+    phoneNumber: phone,
+    email: email || null,
+    gender
+  };
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers,
+      body: JSON.stringify(payload)
     });
+
+    if (response.ok) {
+      await loadCustomers();
+      closeModal();
+    } else {
+      const errorData = await response.json();
+      alert('Lỗi: ' + (errorData.message || 'Không thể lưu khách hàng'));
+    }
+  } catch (error) {
+    console.error('Error saving customer:', error);
+    alert('Lỗi kết nối máy chủ');
+  }
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('Bạn có chắc muốn xóa khách hàng này?')) return;
+
+  const headers = getAuthHeaders();
+  if (!headers) return;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/customers/${id}`, {
+      method: 'DELETE',
+      headers
+    });
+
+    if (response.ok) {
+      await loadCustomers();
+    } else {
+      alert('Không thể xóa khách hàng');
+    }
+  } catch (error) {
+    console.error('Error deleting customer:', error);
+    alert('Lỗi kết nối máy chủ');
+  }
+}
+
+async function deleteSelectedCustomers() {
+  const selectedIds = getSelectedCustomerIds();
+  
+  if (selectedIds.length === 0) {
+    alert('Vui lòng chọn ít nhất một khách hàng để xóa.');
+    return;
   }
   
-  saveToLocal();
-  renderCustomersWithFilters();
-  closeModal();
+  if (confirm(`Bạn có chắc muốn xóa ${selectedIds.length} khách hàng đã chọn?`)) {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    try {
+      for (const id of selectedIds) {
+        await fetch(`${API_BASE_URL}/customers/${id}`, {
+          method: 'DELETE',
+          headers
+        });
+      }
+      await loadCustomers();
+    } catch (error) {
+      console.error('Error deleting customers:', error);
+      alert('Lỗi trong quá trình xóa khách hàng');
+    }
+  }
 }
 
 // Khởi tạo

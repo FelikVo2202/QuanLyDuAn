@@ -87,7 +87,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
       background: #fde0c6;
     }
 
@@ -624,13 +624,9 @@ input, select, button, textarea {
         <button class="view-btn">Day</button>
         </div>
         <!-- Header staff avatars -->
-        <div class="calendar-header">
+        <div id="calendar-header" class="calendar-header">
           <div></div>
-          <div class="staff-card"><img src="https://i.pravatar.cc/60?img=7"><div class="staff-name">Emma</div><div class="staff-role">Stylist</div></div>
-          <div class="staff-card"><img src="https://i.pravatar.cc/60?img=9"><div class="staff-name">Liam</div><div class="staff-role">Colorist</div></div>
-          <div class="staff-card"><img src="https://i.pravatar.cc/60?img=15"><div class="staff-name">Sophia</div><div class="staff-role">Nail</div></div>
-          <div class="staff-card"><img src="https://i.pravatar.cc/60?img=20"><div class="staff-name">Mason</div><div class="staff-role">Barber</div></div>
-          <div class="staff-card"><img src="https://i.pravatar.cc/60?img=32"><div class="staff-name">Olivia</div><div class="staff-role">Makeup</div></div>
+          <!-- Staff cards will be injected here -->
         </div>
 
         <!-- Body: time + grid -->
@@ -664,15 +660,12 @@ input, select, button, textarea {
     <h3>Edit Appointment</h3>
 
     <label>Customer Name</label>
-    <input id="inputName" type="text" />
+    <input id="inputName" type="text" list="customerList" />
+    <datalist id="customerList"></datalist>
 
     <label>Stylist</label>
     <select id="inputStylist">
-      <option>Emma</option>
-      <option>Liam</option>
-      <option>Sophia</option>
-      <option>Mason</option>
-      <option>Olivia</option>
+      <!-- Options will be injected here -->
     </select>
 
     <label>Services</label>
@@ -686,406 +679,467 @@ input, select, button, textarea {
   </div>
 </div>
 <script>
-  
   // -------------------- CONFIG --------------------
   const gridEl = document.getElementById("calendar-grid");
+  const API_BASE_URL = 'http://localhost:8080/api';
   const ROWS = 13;      // 08:00 -> 20:00 (13 slots)
-  const COLS = 5;       // 5 nhân viên
-  let cellHeight = 70;
+  let COLS = 5;         // Default, will be updated by staff count
+  let cellHeight = 110;
+  let cellWidth = 0;
   let isDragging = false;
   let startRow = null;
   let startCol = null;
   let tempDiv = null;
   let currentEditingEvent = null;
 
-  // ========== KIỂM TRA ĐĂNG NHẬP ==========
-const user = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
-if (!user) {
-  window.location.href = 'login.html';
-}
-const userData = JSON.parse(user);
-console.log('Logged in as:', userData.username, '- Role:', userData.role);
+  // ========== GET USER DATA ==========
+  const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+  if (!userStr) {
+    window.location.href = 'login.html';
+  }
+  const userData = JSON.parse(userStr);
 
-// Hàm đăng xuất
-function logout() {
-  localStorage.removeItem('salonUser');
-  sessionStorage.removeItem('salonUser');
-  window.location.href = 'login.html';
-}
-// ========================================
+  // Data storage
+  let stylists = [];
+  let customers = [];
+  let services = [];
+  let appointments = [];
 
-  //------------------EVENT STATUS----------------
-  function getEventStatus(booking) {
-  const now = new Date();
+  const modal = document.getElementById("eventModal");
+  const inputName = document.getElementById("inputName");
+  const inputStylist = document.getElementById("inputStylist");
+  const servicesContainer = document.getElementById("servicesContainer");
 
-  const startHour = 7 + booking.row;
-  const endHour = startHour + booking.duration;
+  function getAuthHeaders() {
+    const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+    if (!userStr) {
+      console.error('No user data found in storage');
+      window.location.href = 'login.html';
+      return null;
+    }
+    const user = JSON.parse(userStr);
+    console.log('User data:', user);
+    console.log('Token:', user.token);
+    if (!user.token) {
+      console.error('Token is missing from user data!');
+    }
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.token}`
+    };
+  }
 
-  const startTime = new Date();
-  startTime.setHours(startHour, 0, 0, 0);
+  // ========== INITIAL DATA LOADING ==========
+  async function loadInitialData() {
+    const headers = getAuthHeaders();
+    if (!headers) return;
 
-  const endTime = new Date();
-  endTime.setHours(endHour, 0, 0, 0);
+    try {
+      console.log('Fetching initial data...');
+      
+      // 1. Load Stylists
+      const staffRes = await fetch(`${API_BASE_URL}/staffs?role=STYLIST`, { headers });
+      if (staffRes.ok) {
+        stylists = await staffRes.json();
+        console.log('Stylists loaded:', stylists);
+        if (stylists.length === 0) {
+          console.warn('No stylists found in database. Using default grid layout.');
+        }
+      } else {
+        console.error('Failed to fetch stylists:', staffRes.status);
+      }
 
-  if (now > endTime) return "completed";
-  if (now >= startTime && now <= endTime) return "ongoing";
-  return "upcoming";
-}
-  
-  // -------------------- GENERATE GRID CELLS --------------------
+      COLS = stylists.length || 5;
+      renderStylistHeaders();
+      updateStylistSelect();
+
+      // 2. Load Customers
+      const customerRes = await fetch(`${API_BASE_URL}/customers`, { headers });
+      if (customerRes.ok) {
+        customers = await customerRes.json();
+        updateCustomerDatalist();
+      }
+
+      // 3. Load Services
+      const serviceRes = await fetch(`${API_BASE_URL}/services`, { headers });
+      if (serviceRes.ok) {
+        services = await serviceRes.json();
+      }
+
+      // 4. Build Grid
+      generateGrid();
+      
+      const firstCell = document.querySelector(".grid-cell");
+      if (firstCell) {
+        const rect = firstCell.getBoundingClientRect();
+        cellHeight = rect.height || 110;
+        cellWidth = rect.width;
+      }
+
+      // 5. Load Bookings
+      await loadAllBookings();
+
+    } catch (error) {
+      console.error('Initialization error:', error);
+      generateGrid();
+    }
+  }
+  function renderStylistHeaders() {
+    const header = document.getElementById('calendar-header');
+    header.style.gridTemplateColumns = `80px repeat(${COLS}, 1fr)`;
+    header.innerHTML = '<div></div>';
+    stylists.forEach((s, i) => {
+      const card = document.createElement('div');
+      card.className = 'staff-card';
+      card.innerHTML = `
+        <img src="https://i.pravatar.cc/60?img=${10+i}">
+        <div class="staff-name">${s.firstName}</div>
+        <div class="staff-role">${s.role}</div>
+      `;
+      header.appendChild(card);
+    });
+  }
+
+  function updateStylistSelect() {
+    inputStylist.innerHTML = stylists.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName}</option>`).join('');
+  }
+
+  function updateCustomerDatalist() {
+    const dl = document.getElementById('customerList');
+    dl.innerHTML = customers.map(c => `<option value="${c.firstName} ${c.lastName}" data-id="${c.id}">`).join('');
+  }
+
+  // -------------------- RENDER EVENT --------------------
+  function renderEvent(booking) {
+    const { row, col, duration } = booking;
+    console.log(`Rendering event at row=${row}, col=${col}, duration=${duration}`);
+    if (!row || !col || !duration) {
+      console.warn('Missing row, col, or duration:', booking);
+      return;
+    }
+
+    const eventDiv = document.createElement("div");
+    eventDiv.className = "event";
+    if (booking.status === 'DONE' || booking.status === 'PAID' || booking.status === 'CANCELED') {
+      eventDiv.classList.add("completed");
+    }
+
+    eventDiv.style.gridColumn = col;
+    eventDiv.style.gridRow = `${row} / span ${duration}`;
+
+    const startHour = 7 + row;
+    const endHour = startHour + duration;
+
+    const displayService = booking.serviceNames ? booking.serviceNames.join(", ") : "Service";
+
+    const canCancel = userData.role === 'MANAGER' || userData.role === 'RECEPTIONIST';
+
+    eventDiv.innerHTML = `
+      <div class="event-header">
+        <div class="time-box">
+          <span>${String(startHour).padStart(2, "0")}:00</span>
+          <span>${String(endHour).padStart(2, "0")}:00</span>
+        </div>
+        <div class="event-actions">
+          ${(canCancel && booking.status !== 'CANCELED') ? '<span class="btn-delete"><img src="assets/icons/delete.svg" /></span>' : ''}
+        </div>
+      </div>
+      <div class="event-body">
+        <strong>${booking.customerName || "No name"}</strong>
+        <div class="service">${displayService}</div>
+      </div>
+    `;
+
+    if (canCancel && booking.status !== 'CANCELED') {
+      eventDiv.querySelector(".btn-delete").onclick = async (e) => {
+        e.stopPropagation();
+        if (confirm('Cancel this appointment?')) {
+          const headers = getAuthHeaders();
+          try {
+            const res = await fetch(`${API_BASE_URL}/appointments/${booking.id}/cancel`, { method: 'PATCH', headers });
+            if (res.ok) {
+              console.log('Appointment canceled successfully, removing from display...');
+              eventDiv.remove(); // Remove the element immediately from display
+              await loadAllBookings(); // Reload to refresh the data
+            } else {
+              const err = await res.json();
+              alert('Could not cancel appointment: ' + (err.message || JSON.stringify(err)));
+            }
+          } catch (error) {
+            console.error('Cancel error:', error);
+            alert('Network error');
+          }
+        }
+      };
+    }
+
+    eventDiv.onclick = () => openModal(eventDiv, booking);
+    gridEl.appendChild(eventDiv);
+    console.log('Event rendered successfully');
+  }
+
+  async function loadAllBookings() {
+    const headers = getAuthHeaders();
+    try {
+      // Get today's date and tomorrow's date for the query
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const pad = (n) => String(n).padStart(2, '0');
+      const todayStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+      const tomorrowStr = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth()+1)}-${pad(tomorrow.getDate())}`;
+      
+      // Query appointments for today and tomorrow (since appointments are created for tomorrow)
+      const url = `${API_BASE_URL}/appointments?startDate=${todayStr}&endDate=${tomorrowStr}`;
+      console.log('Fetching appointments from:', url);
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        console.error('Failed to fetch appointments:', res.status);
+        return;
+      }
+      const data = await res.json();
+      console.log('Appointments fetched:', data);
+      console.log('Stylists array:', stylists);
+
+      document.querySelectorAll(".event:not(.temp-drag)").forEach(ev => ev.remove());
+
+      appointments = data.map(app => {
+        const date = new Date(app.appointmentDateTime);
+        const row = date.getHours() - 7;
+        const stylistIndex = stylists.findIndex(s => s.id === app.staffId);
+        const col = stylistIndex >= 0 ? stylistIndex + 1 : -1; // -1 means stylist not found
+
+        // Duration in hours
+        const end = new Date(app.endDateTime);
+        const duration = Math.max(1, Math.ceil((end - date) / (1000 * 60 * 60)));
+
+        const customer = customers.find(c => c.id === app.customerId);
+        const customerName = customer ? `${customer.firstName} ${customer.lastName}` : "Unknown";
+
+        const appointment = {
+          id: app.id,
+          row,
+          col,
+          duration,
+          customerName,
+          customerId: app.customerId,
+          staffId: app.staffId,
+          serviceNames: app.services ? app.services.map(s => s.name) : [],
+          serviceIds: app.services ? app.services.map(s => s.id) : [],
+          status: app.status
+        };
+        console.log('Mapped appointment:', appointment);
+        if (col < 0) console.warn(`⚠️  Stylist ID ${app.staffId} not found in stylists list`);
+        return appointment;
+      });
+      appointments.forEach(b => {
+        // Skip rendering canceled appointments completely
+        if (b.status === 'CANCELED') {
+          console.log('Skipping canceled appointment:', b.id);
+          return;
+        }
+        if (b.col > 0) {
+          console.log('Rendering event:', b);
+          renderEvent(b);
+        } else {
+          console.warn('Skipping event - invalid col:', b);
+        }
+      });
+    } catch (err) {
+      console.error('Load bookings error:', err);
+    }
+  }
+
   function generateGrid() {
+    console.log(`Generating grid with ${ROWS} rows and ${COLS} columns...`);
     gridEl.innerHTML = "";
+    gridEl.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+    gridEl.style.gridAutoRows = `${cellHeight}px`;
     for (let row = 1; row <= ROWS; row++) {
       for (let col = 1; col <= COLS; col++) {
         const cell = document.createElement("div");
         cell.className = "grid-cell";
         cell.dataset.row = row;
         cell.dataset.col = col;
-
         cell.style.gridRow = row;
         cell.style.gridColumn = col;
         gridEl.appendChild(cell);
       }
     }
+    console.log('Grid generation complete.');
   }
-  //----------------------MODAL LOGIC----------------------
-  const modal = document.getElementById("eventModal");
-  const inputName = document.getElementById("inputName");
-  const inputStylist = document.getElementById("inputStylist");
-  const servicesContainer = document.getElementById("servicesContainer");
 
+  // -------------------- MODAL LOGIC --------------------
   function openModal(eventDiv, booking) {
     currentEditingEvent = { eventDiv, booking };
-
     inputName.value = booking.customerName || "";
-    inputStylist.value = ["Emma","Liam","Sophia","Mason","Olivia"][booking.col-1];
+    inputStylist.value = booking.staffId || (stylists[booking.col-1] ? stylists[booking.col-1].id : "");
 
     servicesContainer.innerHTML = "";
-
-    const services = booking.services || [booking.service];
-
-    services.forEach(s => addServiceInput(s));
+    const sIds = booking.serviceIds || [];
+    if (sIds.length === 0) addServiceSelect();
+    else sIds.forEach(id => addServiceSelect(id));
 
     modal.classList.remove("hidden");
   }
-  //---------------------SERVICE INPUT-----------------
-  function addServiceInput(value = "") {
-    const input = document.createElement("input");
-    input.type = "text";
-    input.value = value;
-    servicesContainer.appendChild(input);
+
+  function addServiceSelect(selectedId = "") {
+    const select = document.createElement("select");
+    select.innerHTML = '<option value="">-- Select Service --</option>' + 
+      services.map(s => `<option value="${s.id}" ${s.id == selectedId ? 'selected' : ''}>${s.name}</option>`).join('');
+    servicesContainer.appendChild(select);
   }
 
-  document.getElementById("addServiceBtn").onclick = () => {
-    addServiceInput();
-  };
+  document.getElementById("addServiceBtn").onclick = () => addServiceSelect();
 
-  //--------------------COLORS OF EVENTS------------------
-  function getServiceType(booking) {
-  if (booking.services && booking.services.length > 1) {
-    return "multiple";
-  }
-
-  const service = (booking.services && booking.services[0]) || booking.service || "";
-
-  const s = service.toLowerCase();
-
-  if (s.includes("wash")) return "hairwash";
-  if (s.includes("cut")) return "haircut";
-  if (s.includes("style")) return "hairstyle";
-
-  return "haircut"; // default
-}
-
-  // -------------------- RENDER EVENT (booking card) --------------------
-  function renderEvent(booking) {
-  const { row, col, duration } = booking;
-  if (!row || !col || !duration) return;
-
-  const eventDiv = document.createElement("div");
-  eventDiv.className = "event";
-
-  if (booking.completed) {
-    eventDiv.classList.add("completed");
-  }
-
-  eventDiv.style.gridColumn = col;
-  eventDiv.style.gridRow = `${row} / span ${duration}`;
-
-  const startHour = 7 + row;
-  const endHour = startHour + duration;
-
-  const displayService = booking.services
-    ? booking.services.slice(0, 2).join(", ")
-    : (booking.service || "Haircut");
-
-  eventDiv.innerHTML = `
-    <div class="event-header">
-      <div class="time-box">
-        <span>${String(startHour).padStart(2, "0")}:00</span>
-        <span>${String(endHour).padStart(2, "0")}:00</span>
-      </div>
-
-      <div class="event-actions">
-  <span class="btn-delete">
-    <img src="assets/icons/delete.svg" />
-  </span>
-
-  <span class="btn-complete">
-    <img src="assets/icons/check.svg" />
-  </span>
-</div>
-    </div>
-
-    <div class="event-body">
-      <strong>${booking.customerName || "No name"}</strong>
-      <div class="service">${displayService}</div>
-    </div>
-
-    ${booking.completed ? `<div class="checkout">Check out →</div>` : ""}
-  `;
-
-  // delete
-  eventDiv.querySelector(".btn-delete").onclick = (e) => {
-    e.stopPropagation();
-
-    let all = JSON.parse(localStorage.getItem("bookings") || "[]");
-    all = all.filter(b => b.createdAt !== booking.createdAt);
-    localStorage.setItem("bookings", JSON.stringify(all));
-
-    loadAllBookings();
-  };
-
-  // complete
-  eventDiv.querySelector(".btn-complete").onclick = (e) => {
-    e.stopPropagation();
-
-    booking.completed = !booking.completed;
-
-    let all = JSON.parse(localStorage.getItem("bookings") || "[]");
-    all = all.map(b =>
-      b.createdAt === booking.createdAt ? booking : b
-    );
-
-    localStorage.setItem("bookings", JSON.stringify(all));
-
-    loadAllBookings();
-  };
-
-  // edit
-  eventDiv.onclick = () => {
-    openModal(eventDiv, booking);
-  };
-
-  gridEl.appendChild(eventDiv);
-}
-
-  // -------------------- CHECK OVERLAP --------------------
-  function hasOverlap(newBooking, existingBookings) {
-    return existingBookings.some(b => {
-      if (b.col !== newBooking.col) return false;
-      const bStart = b.row;
-      const bEnd = b.row + b.duration - 1;
-      const nStart = newBooking.row;
-      const nEnd = newBooking.row + newBooking.duration - 1;
-      return (nStart <= bEnd && nEnd >= bStart);
-    });
-  }
-
-  // -------------------- SAVE TO LOCALSTORAGE --------------------
-  function addBooking(booking) {
-    const bookings = JSON.parse(localStorage.getItem("bookings") || "[]");
-    if (hasOverlap(booking, bookings)) {
-      alert("⚠️ Overlap! This time slot is already booked.");
-      return false;
+  document.getElementById("saveBtn").onclick = async () => {
+    const custName = inputName.value;
+    const customer = customers.find(c => `${c.firstName} ${c.lastName}` === custName);
+    if (!customer) {
+      alert('Please select a valid customer from the list.');
+      return;
     }
-    bookings.push(booking);
-    localStorage.setItem("bookings", JSON.stringify(bookings));
-    renderEvent(booking);
-    return true;
-  }
 
-  function loadAllBookings() {
-    const allEvents = document.querySelectorAll(".event");
-    allEvents.forEach(ev => ev.remove());
-    const bookings = JSON.parse(localStorage.getItem("bookings") || "[]");
-    bookings.forEach(b => renderEvent(b));
-  }
+    const staffId = inputStylist.value;
+    const sIds = Array.from(servicesContainer.querySelectorAll('select'))
+      .map(s => s.value)
+      .filter(v => v);
 
-  function resetAll() {
-    if (confirm("Delete all appointments?")) {
-      localStorage.removeItem("bookings");
-      loadAllBookings();
+    if (sIds.length === 0) {
+      alert('Please select at least one service.');
+      return;
     }
-  }
 
-  // -------------------- GET CELL UNDER CURSOR (chính xác) --------------------
+    const { booking } = currentEditingEvent;
+    const startHour = 7 + booking.row;
+    
+    // Use tomorrow's date to ensure it's in the future (sprinting 1 demo limitation)
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    date.setHours(startHour, 0, 0, 0);
+
+    // Format: yyyy-MM-dd HH:mm:ss
+    const pad = (n) => String(n).padStart(2, '0');
+    const dateStr = `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(startHour)}:00:00`;
+
+    const payload = {
+      customerId: customer.id,
+      staffId: parseInt(staffId),
+      appointmentDateTime: dateStr,
+      serviceIds: sIds.map(id => parseInt(id))
+    };
+
+    console.log('Saving appointment with payload:', payload);
+
+    const headers = getAuthHeaders();
+    const url = booking.id ? `${API_BASE_URL}/appointments/${booking.id}` : `${API_BASE_URL}/appointments`;
+    const method = booking.id ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers,
+        body: JSON.stringify(payload)
+      });
+
+      console.log('Appointment save response:', response.status);
+      const responseData = await response.json();
+      console.log('Response data:', responseData);
+
+      if (response.ok) {
+        console.log('Appointment saved successfully, reloading bookings...');
+        await loadAllBookings();
+        closeModal();
+      } else {
+        const err = responseData;
+        alert('Error: ' + (err.message || JSON.stringify(err)));
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      alert('Network error');
+    }
+  };
+
+  function closeModal() {
+    modal.classList.add("hidden");
+    currentEditingEvent = null;
+  }
+  document.getElementById("closeBtn").onclick = closeModal;
+
+  // -------------------- DRAG & DROP --------------------
   function getGridPosition(clientX, clientY) {
-  const rect = gridEl.getBoundingClientRect();
+    const rect = gridEl.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    let col = Math.floor(x / cellWidth) + 1;
+    let row = Math.floor(y / cellHeight) + 1;
+    col = Math.max(1, Math.min(COLS, col));
+    row = Math.max(1, Math.min(ROWS, row));
+    return { row, col };
+  }
 
-  const x = clientX - rect.left;
-  const y = clientY - rect.top;
-
-  let col = Math.floor(x / cellWidth) + 1;
-  let row = Math.floor(y / cellHeight) + 1;
-
-  col = Math.max(1, Math.min(COLS, col));
-  row = Math.max(1, Math.min(ROWS, row));
-
-  return { row, col };
-}
-  //--------------------SAVE DATA-----------------
-  document.getElementById("saveBtn").onclick = () => {
-  if (!currentEditingEvent) return;
-
-  const { booking } = currentEditingEvent;
-
-  const services = Array.from(servicesContainer.querySelectorAll("input"))
-    .map(i => i.value)
-    .filter(v => v);
-
-  booking.customerName = inputName.value;
-  booking.services = services;
-
-  // update storage
-  let all = JSON.parse(localStorage.getItem("bookings") || "[]");
-  all = all.map(b => b.createdAt === booking.createdAt ? booking : b);
-  localStorage.setItem("bookings", JSON.stringify(all));
-
-  // reload toàn bộ UI
-  loadAllBookings();
-
-  closeModal();
-};
-function closeModal() {
-  modal.classList.add("hidden");
-  currentEditingEvent = null;
-}
-
-document.getElementById("closeBtn").onclick = closeModal;
-
-
-  // -------------------- DRAG & DROP HANDLERS --------------------
   function onMouseDown(e) {
-  const cell = e.target.closest(".grid-cell");
-  if (!cell || e.target.closest(".event")) return;
-
-  isDragging = true;
-  startRow = parseInt(cell.dataset.row);
-  startCol = parseInt(cell.dataset.col);
-
-  tempDiv = document.createElement("div");
-  tempDiv.className = "event temp-drag";
-  tempDiv.style.gridColumn = startCol;
-  tempDiv.style.gridRow = startRow;
-  tempDiv.innerHTML = `<strong>➕ Drag down</strong><div class="service">Set duration</div>`;
-  gridEl.appendChild(tempDiv);
-
-  // GẮN Ở ĐÂY (QUAN TRỌNG)
-  window.addEventListener("mousemove", onMouseMove);
-  window.addEventListener("mouseup", onMouseUp);
-  document.body.classList.add("dragging");
-}
+    const cell = e.target.closest(".grid-cell");
+    if (!cell || e.target.closest(".event")) return;
+    isDragging = true;
+    startRow = parseInt(cell.dataset.row);
+    startCol = parseInt(cell.dataset.col);
+    tempDiv = document.createElement("div");
+    tempDiv.className = "event temp-drag";
+    tempDiv.style.gridColumn = startCol;
+    tempDiv.style.gridRow = startRow;
+    tempDiv.innerHTML = `<strong>➕ Drag down</strong>`;
+    gridEl.appendChild(tempDiv);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    document.body.classList.add("dragging");
+  }
 
   function onMouseMove(e) {
-  if (!isDragging || !tempDiv) return;
-
-  const { row: currentRow } = getGridPosition(e.clientX, e.clientY);
-
-  let row = currentRow;
-  if (row < startRow) row = startRow;
-
-  let duration = row - startRow + 1;
-  const maxSpan = ROWS - startRow + 1;
-  duration = Math.min(duration, maxSpan);
-
-  tempDiv.style.gridRow = `${startRow} / span ${duration}`;
-
-  const endHour = 7 + startRow + duration - 1;
-  tempDiv.innerHTML = `
-    <strong>📅 ${duration}h booking</strong>
-    <div class="service">${7 + startRow}:00 → ${endHour}:00</div>
-  `;
-}
-
-  function onMouseUp(e) {
-  if (!isDragging || !tempDiv) {
-    cleanupDrag();
-    return;
+    if (!isDragging || !tempDiv) return;
+    const { row: currentRow } = getGridPosition(e.clientX, e.clientY);
+    let row = Math.max(currentRow, startRow);
+    let duration = row - startRow + 1;
+    tempDiv.style.gridRow = `${startRow} / span ${duration}`;
   }
 
-  const { row: endRowRaw } = getGridPosition(e.clientX, e.clientY);
-
-  const endRow = endRowRaw >= startRow ? endRowRaw : startRow;
-
-  let duration = endRow - startRow + 1;
-  duration = Math.min(duration, ROWS - startRow + 1);
-
-  const newBooking = {
-    row: startRow,
-    col: startCol,
-    duration: duration,
-    customerName: "",
-    service: "",
-    createdAt: Date.now()
-  };
-
-  addBooking(newBooking);
-  setTimeout(() => {
-    const lastEvent = document.querySelector(".event:last-child");
-    openModal(lastEvent, newBooking);
-  }, 0);
-  cleanupDrag();
-}
+  function onMouseUp(e) {
+    if (!isDragging || !tempDiv) { cleanupDrag(); return; }
+    const { row: endRowRaw } = getGridPosition(e.clientX, e.clientY);
+    const endRow = Math.max(endRowRaw, startRow);
+    const duration = endRow - startRow + 1;
+    const newBooking = { row: startRow, col: startCol, duration: duration };
+    cleanupDrag();
+    openModal(null, newBooking);
+  }
 
   function cleanupDrag() {
-    if (tempDiv) {
-      tempDiv.remove();
-      tempDiv = null;
-    }
+    if (tempDiv) tempDiv.remove();
+    tempDiv = null;
     isDragging = false;
-    startRow = null;
-    startCol = null;
     window.removeEventListener("mousemove", onMouseMove);
     window.removeEventListener("mouseup", onMouseUp);
     document.body.classList.remove("dragging");
   }
 
-  function attachGlobalDragEvents() {
-    gridEl.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-  }
-
-  // -------------------- INIT APP --------------------
   function init() {
-  generateGrid();
-
-  // đo cell thật
-  const firstCell = document.querySelector(".grid-cell");
-  if (firstCell) {
-    const rect = firstCell.getBoundingClientRect();
-    cellHeight = rect.height;
-    cellWidth = rect.width;
+    gridEl.addEventListener("mousedown", onMouseDown);
+    loadInitialData();
+    document.getElementById("resetBtn").onclick = () => {
+      if (confirm("Reset local view?")) loadAllBookings();
+    };
   }
-
-  attachGlobalDragEvents();
-  loadAllBookings();
-  document.getElementById("resetBtn").addEventListener("click", resetAll);
-  setInterval(() => {
-    loadAllBookings();
-  }, 60000);
-}
 
   init();
-// Cập nhật link dashboard theo role
-const userRole = JSON.parse(localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser')).role;
-const dashboardLink = document.querySelector('.sidebar a[href*="dashboard"]');
-if (dashboardLink) {
-  if (userRole === 'admin') dashboardLink.href = 'dashboard.html';
-  else if (userRole === 'stylist') dashboardLink.href = 'dashboard_stylist.html';
-  else dashboardLink.href = 'dashboard_receptionist.html';
-}
+
+  // Role-based links
+  const dashboardLink = document.querySelector('.sidebar a[href*="dashboard"]');
+  if (dashboardLink) {
+    if (userData.role === 'MANAGER') dashboardLink.href = 'dashboard.html';
+    else if (userData.role === 'STYLIST') dashboardLink.href = 'dashboard_stylist.html';
+    else dashboardLink.href = 'dashboard_receptionist.html';
+  }
 </script>
 </body>
 </html>

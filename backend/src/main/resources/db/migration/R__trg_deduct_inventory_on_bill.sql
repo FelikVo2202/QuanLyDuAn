@@ -4,8 +4,9 @@ FOR EACH ROW
 WHEN (NEW.PaymentStatus = 'PAID' AND OLD.PaymentStatus != 'PAID')
 BEGIN
     INSERT INTO INVENTORY_LEDGER (ProductID, ChangeAmount, TransactionType, ReferenceID)
-    SELECT PRODUCTID, -QUANTITY, 'RETAIL_SALE', BillID
-    FROM BILL_DETAIL
+    SELECT PRODUCTID, -(bd.QUANTITY * p.ConversionFactor), 'RETAIL_SALE', bd.BillID
+    FROM BILL_DETAIL bd
+    JOIN PRODUCT p ON p.ProductID = bd.ProductID
     WHERE BillID = :NEW.BillID AND
     ProductID IS NOT NULL AND
     QUANTITY > 0; -- ADDED: Only deduct if quantity is greater than 0
@@ -16,6 +17,25 @@ BEGIN
     JOIN SERVICE_RECIPE sr ON sr.SERVICEID = bd.SERVICEID 
     WHERE BillID = :NEW.BillID AND bd.SERVICEID IS NOT NULL AND bd.QUANTITY > 0; -- ADDED: Only deduct if quantity is greater than 0
 
+    MERGE INTO PRODUCT pr
+        USING (
+            SELECT ProductID, SUM(DeductAmount) AS TotalDeduct
+            FROM (
+                 SELECT bd.ProductID, (bd.QUANTITY * p.ConversionFactor) AS DeductAmount
+                 FROM BILL_DETAIL bd
+                 JOIN PRODUCT p ON p.ProductID = bd.ProductID
+                 WHERE bd.BillID = :NEW.BillID AND bd.ProductID IS NOT NULL AND bd.QUANTITY > 0
+                 UNION ALL
+                 SELECT sr.ProductID, (sr.QUANTITYCONSUMED * bd.QUANTITY) AS DeductAmount
+                 FROM BILL_DETAIL bd
+                 JOIN SERVICE_RECIPE sr ON sr.SERVICEID = bd.SERVICEID
+                 WHERE bd.BillID = :NEW.BillID AND bd.SERVICEID IS NOT NULL AND bd.QUANTITY > 0
+             )
+            GROUP BY ProductID
+        ) src
+        ON (p.ProductID = src.ProductID)
+        WHEN MATCHED THEN
+            UPDATE SET p.QuantityOnHand = p.QuantityOnHand - src.TotalDeduct;
 
 EXCEPTION
     WHEN OTHERS THEN 

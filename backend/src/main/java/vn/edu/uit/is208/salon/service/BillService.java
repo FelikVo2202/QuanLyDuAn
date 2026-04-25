@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import vn.edu.uit.is208.salon.dto.BillDto;
 import vn.edu.uit.is208.salon.entity.Bill;
+import vn.edu.uit.is208.salon.exception.ResourceNotFoundException;
 import vn.edu.uit.is208.salon.mapper.BillMapper;
 import vn.edu.uit.is208.salon.repository.BillRepository;
 import vn.edu.uit.is208.salon.repository.specifications.BillSpecification;
@@ -32,5 +33,14 @@ public class BillService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("billDate").descending());
         return billRepository.findAll(spec, pageable).map(billMapper::toDto);
+    }
+
+    public BillDto getBillById(Long id) {
+        return billMapper.toDto(getBill(id));
+    }
+
+    private Bill getBill(Long billId) {
+        return billRepository.findById(billId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bill với ID: " + billId));
     }
 }

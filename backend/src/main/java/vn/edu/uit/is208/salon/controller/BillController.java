@@ -1,13 +1,17 @@
 package vn.edu.uit.is208.salon.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import vn.edu.uit.is208.salon.dto.BillDto;
+import vn.edu.uit.is208.salon.dto.CreateBillRequest;
 import vn.edu.uit.is208.salon.service.BillService;
 
+import java.net.URI;
 import java.time.LocalDate;
 
 @RestController
@@ -31,5 +35,18 @@ public class BillController {
     @GetMapping("/{id}")
     public ResponseEntity<BillDto> getBillById(@PathVariable Long id) {
         return ResponseEntity.ok(billService.getBillById(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<BillDto> createBill(@Valid @RequestBody CreateBillRequest request) {
+        BillDto createdBill = billService.createBill(request);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(createdBill.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(createdBill);
     }
 }

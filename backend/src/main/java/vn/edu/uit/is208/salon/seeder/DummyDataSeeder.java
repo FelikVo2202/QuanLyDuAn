@@ -7,16 +7,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import vn.edu.uit.is208.salon.constant.AppointmentStatus;
-import vn.edu.uit.is208.salon.constant.StaffRole;
-import vn.edu.uit.is208.salon.entity.Appointment;
-import vn.edu.uit.is208.salon.entity.Customer;
-import vn.edu.uit.is208.salon.entity.SalonService;
-import vn.edu.uit.is208.salon.entity.Staff;
-import vn.edu.uit.is208.salon.repository.AppointmentRepository;
-import vn.edu.uit.is208.salon.repository.CustomerRepository;
-import vn.edu.uit.is208.salon.repository.SalonServiceRepository;
-import vn.edu.uit.is208.salon.repository.StaffRepository;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import vn.edu.uit.is208.salon.constant.*;
+import vn.edu.uit.is208.salon.entity.*;
+import vn.edu.uit.is208.salon.repository.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,6 +28,10 @@ public class DummyDataSeeder implements CommandLineRunner {
             "Gội đầu massage", "Ép tóc", "Phục hồi tóc hư tổn",
             "Tạo kiểu cô dâu", "Cắt tỉa râu", "Duỗi tóc Keratin"
     );
+    private static final List<String> PRODUCT_CATEGORIES = List.of(
+            "Dầu gội", "Dầu xả", "Thuốc nhuộm", "Dưỡng tóc",
+            "Sáp/Gel tạo kiểu", "Tinh dầu", "Dụng cụ"
+    );
     private static final List<StaffRole> STAFF_ROLES = List.of(
             StaffRole.MANAGER,
             StaffRole.RECEPTIONIST,
@@ -48,6 +47,11 @@ public class DummyDataSeeder implements CommandLineRunner {
     private final StaffRepository staffRepository;
     private final SalonServiceRepository salonServiceRepository;
     private final AppointmentRepository appointmentRepository;
+    private final ProductRepository productRepository;
+    private final ServiceRecipeRepository serviceRecipeRepository;
+    private final InventoryLedgerRepository inventoryLedgerRepository;
+    private final BillRepository billRepository;
+
     private final PasswordEncoder passwordEncoder;
     private final Faker faker = new Faker(new Locale("vi"));
 
@@ -64,13 +68,24 @@ public class DummyDataSeeder implements CommandLineRunner {
         List<Customer> customers = seedCustomers(20);
         List<Staff> staffList = seedStaff(10);
         List<SalonService> services = seedServices();
-        seedAppointments(30, customers, staffList, services);
+        List<Appointment> appointments = seedAppointments(30, customers, staffList, services);
+        List<Product> products = seedProducts(30);
+        seedServiceRecipes(services, products);
+        seedInventoryLedger(products);
+        List<Bill> bills = seedBills(appointments, products);
 
-        System.out.println("[Seeder] Hoàn tất! Đã tạo: "
-                + customers.size() + " khách hàng, "
-                + staffList.size() + " nhân viên, "
-                + services.size() + " dịch vụ, "
-                + "30 lịch hẹn.");
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                System.out.println("[Seeder] Hoàn tất! Đã tạo: \n"
+                        + "- " + customers.size() + " khách hàng\n"
+                        + "- " + staffList.size() + " nhân viên\n"
+                        + "- " + services.size() + " dịch vụ\n"
+                        + "- " + appointments.size() + " lịch hẹn\n"
+                        + "- " + products.size() + " sản phẩm (kèm công thức & kho)\n"
+                        + "- " + bills.size() + " hóa đơn.");
+            }
+        });
     }
 
     private List<Customer> seedCustomers(int count) {
@@ -149,10 +164,10 @@ public class DummyDataSeeder implements CommandLineRunner {
         return salonServiceRepository.saveAll(services);
     }
 
-    private void seedAppointments(int count,
-                                  List<Customer> customers,
-                                  List<Staff> staffList,
-                                  List<SalonService> services) {
+    private List<Appointment> seedAppointments(int count,
+                                               List<Customer> customers,
+                                               List<Staff> staffList,
+                                               List<SalonService> services) {
         List<Appointment> appointments = new ArrayList<>();
         Random rnd = new Random();
 
@@ -184,7 +199,140 @@ public class DummyDataSeeder implements CommandLineRunner {
             appointments.add(appointment);
         }
 
-        appointmentRepository.saveAll(appointments);
+        return appointmentRepository.saveAll(appointments);
+    }
+
+    private List<Product> seedProducts(int count) {
+        List<Product> products = new ArrayList<>();
+        ProductType[] types = ProductType.values();
+
+        for (int i = 0; i < count; i++) {
+            Product product = new Product();
+            product.setName(faker.commerce().productName() + " " + faker.commerce().material());
+            product.setCategory(PRODUCT_CATEGORIES.get(faker.random().nextInt(PRODUCT_CATEGORIES.size())));
+            product.setProductType(types[faker.random().nextInt(types.length)]);
+            product.setPrice(BigDecimal.valueOf(faker.number().numberBetween(50, 1500) * 1000L));
+
+            product.setBaseUom("ml");
+            product.setPurchasingUom("Chai");
+            product.setConversionFactor(BigDecimal.valueOf(faker.number().numberBetween(100, 1000)));
+
+            product.setQuantityOnHand(BigDecimal.valueOf(faker.number().randomDouble(2, 10, 200)));
+
+            products.add(product);
+        }
+
+        return productRepository.saveAll(products);
+    }
+
+    private void seedServiceRecipes(List<SalonService> services, List<Product> products) {
+        List<ServiceRecipe> recipes = new ArrayList<>();
+        Random rnd = new Random();
+
+        for (SalonService service : services) {
+            int productCount = rnd.nextInt(4);
+            Set<Product> chosenProducts = new HashSet<>();
+
+            while (chosenProducts.size() < productCount) {
+                chosenProducts.add(products.get(rnd.nextInt(products.size())));
+            }
+
+            for (Product product : chosenProducts) {
+                ServiceRecipe recipe = new ServiceRecipe();
+
+                ServiceRecipeId id = new ServiceRecipeId();
+                id.setServiceId(service.getId());
+                id.setProductId(product.getId());
+                recipe.setId(id);
+
+                recipe.setService(service);
+                recipe.setProduct(product);
+
+                recipe.setQuantityConsumed(BigDecimal.valueOf(faker.number().randomDouble(2, 5, 50)));
+
+                recipes.add(recipe);
+            }
+        }
+        serviceRecipeRepository.saveAll(recipes);
+    }
+
+    private void seedInventoryLedger(List<Product> products) {
+        List<InventoryLedger> ledgers = new ArrayList<>();
+        InventoryTransactionType[] types = InventoryTransactionType.values();
+        InventoryTransactionType defaultStockInType = types.length > 0 ? types[0] : null;
+
+        for (Product product : products) {
+            InventoryLedger ledger = new InventoryLedger();
+            ledger.setProduct(product);
+            ledger.setChangeAmount(product.getQuantityOnHand());
+            ledger.setTransactionType(defaultStockInType);
+            ledger.setTransactionDate(LocalDateTime.now().minusDays(faker.number().numberBetween(5, 60)));
+            ledgers.add(ledger);
+        }
+        inventoryLedgerRepository.saveAll(ledgers);
+    }
+
+    private List<Bill> seedBills(List<Appointment> appointments, List<Product> products) {
+        List<Bill> bills = new ArrayList<>();
+        Random rnd = new Random();
+        PaymentStatus[] paymentStatuses = PaymentStatus.values();
+
+        for (Appointment appointment : appointments) {
+            if (appointment.getStatus() == AppointmentStatus.CANCELED) {
+                continue;
+            }
+
+            Bill bill = new Bill();
+            bill.setAppointment(appointment);
+            bill.setCustomer(appointment.getCustomer());
+            bill.setBillDate(appointment.getEndDateTime() != null ? appointment.getEndDateTime() : LocalDateTime.now());
+
+            if (appointment.getStatus() == AppointmentStatus.PAID || appointment.getStatus() == AppointmentStatus.DONE) {
+                bill.setPaymentStatus(paymentStatuses.length > 1 ? paymentStatuses[paymentStatuses.length - 1] : paymentStatuses[0]);
+            } else {
+                bill.setPaymentStatus(paymentStatuses[rnd.nextInt(paymentStatuses.length)]);
+            }
+
+            BigDecimal totalAmount = BigDecimal.ZERO;
+            Set<BillDetail> details = new LinkedHashSet<>();
+
+            if (appointment.getServices() != null) {
+                for (SalonService service : appointment.getServices()) {
+                    BillDetail detail = new BillDetail();
+                    detail.setBill(bill);
+                    detail.setService(service);
+                    detail.setQuantity(1L);
+                    detail.setUnitPrice(service.getPrice());
+
+                    totalAmount = totalAmount.add(service.getPrice());
+                    details.add(detail);
+                }
+            }
+
+            int extraProductsCount = rnd.nextInt(3);
+            for (int i = 0; i < extraProductsCount; i++) {
+                Product randomProduct = products.get(rnd.nextInt(products.size()));
+
+                BillDetail detail = new BillDetail();
+                detail.setBill(bill);
+                detail.setProduct(randomProduct);
+
+                long qty = faker.number().numberBetween(1, 3);
+                detail.setQuantity(qty);
+                detail.setUnitPrice(randomProduct.getPrice());
+
+                BigDecimal itemTotal = randomProduct.getPrice().multiply(BigDecimal.valueOf(qty));
+                totalAmount = totalAmount.add(itemTotal);
+
+                details.add(detail);
+            }
+
+            bill.setDetails(details);
+            bill.setTotalAmount(totalAmount);
+            bills.add(bill);
+        }
+
+        return billRepository.saveAll(bills);
     }
 
     private String generateVietnamesePhone() {

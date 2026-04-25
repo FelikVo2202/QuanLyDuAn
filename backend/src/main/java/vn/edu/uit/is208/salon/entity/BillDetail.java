@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.GeneratedColumn;
 
 import java.math.BigDecimal;
 
@@ -38,6 +39,7 @@ public class BillDetail {
     @Column(name = "UNITPRICE", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
+    @GeneratedColumn("QUANTITY * UNITPRICE")
     @Column(name = "LINETOTAL", precision = 10, scale = 2, insertable = false, updatable = false)
     private BigDecimal lineTotal;
 }

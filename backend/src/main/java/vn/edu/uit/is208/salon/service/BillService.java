@@ -22,10 +22,7 @@ import vn.edu.uit.is208.salon.repository.specifications.BillSpecification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -104,7 +101,7 @@ public class BillService {
             detail.setUnitPrice(unitPrice);
             detail.setQuantity(quantity);
 
-            bill.getDetails().add(detail);
+            mergeOrAddDetail(bill, request, detail, unitPrice);
             total = total.add(unitPrice.multiply(BigDecimal.valueOf(quantity)));
 
             BigDecimal factor = product.getConversionFactor() != null ? product.getConversionFactor() : BigDecimal.ONE;
@@ -113,6 +110,21 @@ public class BillService {
         }
 
         return total;
+    }
+
+    private void mergeOrAddDetail(Bill bill, AddRetailProductRequest request, BillDetail detail, BigDecimal unitPrice) {
+        bill.getDetails().stream()
+                .filter(d -> isSameProduct(d, request.getProductId()))
+                .filter(d -> d.getUnitPrice().compareTo(unitPrice) == 0)
+                .findFirst()
+                .ifPresentOrElse(
+                        existing -> existing.setQuantity(existing.getQuantity() + request.getQuantity()),
+                        () -> bill.getDetails().add(detail)
+                );
+    }
+
+    private boolean isSameProduct(BillDetail detail, Long productId) {
+        return detail.getProduct() != null && Objects.equals(detail.getProduct().getId(), productId);
     }
 
     private void validateInventory(Map<Long, BigDecimal> inventoryCart) {

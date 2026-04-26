@@ -8,9 +8,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.edu.uit.is208.salon.dto.AddRetailProductRequest;
 import vn.edu.uit.is208.salon.dto.BillDto;
-import vn.edu.uit.is208.salon.dto.CreateBillDetailRequest;
-import vn.edu.uit.is208.salon.dto.CreateBillRequest;
+import vn.edu.uit.is208.salon.dto.CreateAppointmentBillRequest;
+import vn.edu.uit.is208.salon.dto.CreateRetailBillRequest;
 import vn.edu.uit.is208.salon.entity.*;
 import vn.edu.uit.is208.salon.exception.BusinessRuleException;
 import vn.edu.uit.is208.salon.exception.ResourceNotFoundException;
@@ -20,25 +21,28 @@ import vn.edu.uit.is208.salon.repository.specifications.BillSpecification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BillService {
+
     private final BillRepository billRepository;
     private final CustomerRepository customerRepository;
-    private final BillMapper billMapper;
     private final AppointmentRepository appointmentRepository;
     private final SalonServiceRepository salonServiceRepository;
     private final ProductRepository productRepository;
+    private final ServiceRecipeRepository serviceRecipeRepository;
+    private final BillMapper billMapper;
 
     public Page<BillDto> getAllBills(
-            int page, int size, String paymentStatus, Long customerId, LocalDate startDate, LocalDate endDate
-    ) {
+            int page, int size, String paymentStatus, Long customerId, LocalDate startDate, LocalDate endDate) {
+
         Specification<Bill> spec = Specification
                 .where(BillSpecification.hasPaymentStatus(paymentStatus))
                 .and(BillSpecification.hasCustomer(customerId))
@@ -53,96 +57,144 @@ public class BillService {
         return billMapper.toDto(getBill(id));
     }
 
-    @Transactional
-    public BillDto createBill(CreateBillRequest request) {
-        Customer customer = getCustomer(request.getCustomerId());
-        Appointment appointment = Optional.ofNullable(request.getAppointmentId())
-                .map(this::getAppointment)
-                .orElse(null);
-
-        Bill bill = new Bill();
-        bill.setCustomer(customer);
-        bill.setAppointment(appointment);
-
-        Map<Long, SalonService> serviceMap = fetchServiceMap(request.getDetails());
-        Map<Long, Product> productMap = fetchProductMap(request.getDetails());
-
-        BigDecimal totalAmount = BigDecimal.ZERO;
-
-        for (CreateBillDetailRequest d : request.getDetails()) {
-            validateMutualExclusive(d.getServiceId(), d.getProductId());
-
-            BillDetail detail = new BillDetail();
-            detail.setBill(bill);
-            detail.setQuantity(d.getQuantity());
-
-            BigDecimal unitPrice;
-
-            if (d.getServiceId() != null) {
-                SalonService service = serviceMap.get(d.getServiceId());
-                if (service == null)
-                    throw new ResourceNotFoundException("Không tìm thấy dịch vụ với ID: " + d.getServiceId());
-
-                detail.setService(service);
-                unitPrice = service.getPrice();
-            } else {
-                Product product = productMap.get(d.getProductId());
-                if (product == null)
-                    throw new ResourceNotFoundException("Không tìm thấy sản phẩm với ID: " + d.getProductId());
-
-                detail.setProduct(product);
-                unitPrice = product.getPrice();
-            }
-
-            detail.setUnitPrice(unitPrice);
-            BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(d.getQuantity()));
-            totalAmount = totalAmount.add(lineTotal);
-
-            bill.getDetails().add(detail);
-        }
-
-        bill.setTotalAmount(totalAmount);
-
-        return billMapper.toDto(billRepository.save(bill));
-    }
-
     private Bill getBill(Long billId) {
         return billRepository.findById(billId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bill với ID: " + billId));
     }
 
-    private Customer getCustomer(Long customerId) {
-        return customerRepository.findById(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng với ID: " + customerId));
+    @Transactional
+    public BillDto createRetailBill(CreateRetailBillRequest request) {
+        Bill bill = new Bill();
+        Map<Long, BigDecimal> inventoryCart = new HashMap<>();
+
+        bill.setCustomer(getCustomer(request.getCustomerId()));
+        bill.setTotalAmount(appendRetailProductsToBill(bill, request.getRetailProducts(), inventoryCart));
+
+        validateInventory(inventoryCart);
+
+        return billMapper.toDto(billRepository.save(bill));
     }
 
-    private Appointment getAppointment(Long appointmentId) {
-        return appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch hẹn với ID: " + appointmentId));
+    private Customer getCustomer(Long id) {
+        return customerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng ID: " + id));
     }
 
-    private Map<Long, SalonService> fetchServiceMap(List<CreateBillDetailRequest> details) {
-        List<Long> ids = details.stream()
-                .map(CreateBillDetailRequest::getServiceId)
-                .filter(Objects::nonNull)
-                .toList();
-        return salonServiceRepository.findAllById(ids).stream()
-                .collect(Collectors.toMap(SalonService::getId, s -> s));
-    }
+    private BigDecimal appendRetailProductsToBill(
+            Bill bill, List<AddRetailProductRequest> requests, Map<Long, BigDecimal> inventoryCart) {
 
-    private Map<Long, Product> fetchProductMap(List<CreateBillDetailRequest> details) {
-        List<Long> ids = details.stream()
-                .map(CreateBillDetailRequest::getProductId)
-                .filter(Objects::nonNull)
-                .toList();
-        return productRepository.findAllById(ids).stream()
-                .collect(Collectors.toMap(Product::getId, p -> p));
-    }
+        List<Long> productIds = requests.stream().map(AddRetailProductRequest::getProductId).toList();
+        Map<Long, Product> productMap = productRepository.findAllById(productIds)
+                .stream().collect(Collectors.toMap(Product::getId, Function.identity()));
 
-    private void validateMutualExclusive(Long serviceId, Long productId) {
-        boolean ok = (serviceId != null && productId == null) || (serviceId == null && productId != null);
-        if (!ok) {
-            throw new BusinessRuleException("Bill detail phải chọn Service hoặc Product (không được chọn cả hai hoặc không chọn)");
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (AddRetailProductRequest request : requests) {
+            Product product = productMap.get(request.getProductId());
+            if (product == null) {
+                throw new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + request.getProductId());
+            }
+            BigDecimal unitPrice = product.getPrice();
+            Long quantity = request.getQuantity();
+
+            BillDetail detail = new BillDetail();
+            detail.setBill(bill);
+            detail.setProduct(product);
+            detail.setUnitPrice(unitPrice);
+            detail.setQuantity(quantity);
+
+            bill.getDetails().add(detail);
+            total = total.add(unitPrice.multiply(BigDecimal.valueOf(quantity)));
+
+            BigDecimal factor = product.getConversionFactor() != null ? product.getConversionFactor() : BigDecimal.ONE;
+            BigDecimal quantityOnBaseUOM = BigDecimal.valueOf(quantity).multiply(factor);
+            inventoryCart.merge(product.getId(), quantityOnBaseUOM, BigDecimal::add);
         }
+
+        return total;
+    }
+
+    private void validateInventory(Map<Long, BigDecimal> inventoryCart) {
+        if (inventoryCart.isEmpty()) return;
+
+        Map<Long, Product> productMap = productRepository.findAllById(inventoryCart.keySet()).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        inventoryCart.forEach((productId, requiredQuantity) -> {
+            Product product = productMap.get(productId);
+            if (product == null) {
+                throw new ResourceNotFoundException("Không tìm thấy sản phẩm hoặc nguyên liệu ID: " + productId);
+            }
+
+            if (product.getQuantityOnHand().compareTo(requiredQuantity) < 0) {
+                throw new BusinessRuleException(String.format(
+                        "Không đủ tồn kho cho '%s'. Tổng cộng cần: %s, Hiện có: %s",
+                        product.getName(), requiredQuantity, product.getQuantityOnHand()));
+            }
+        });
+    }
+
+    @Transactional
+    public BillDto createAppointmentBill(Long appointmentId, CreateAppointmentBillRequest request) {
+        if (billRepository.existsByAppointment_Id(appointmentId)) {
+            throw new BusinessRuleException("Lịch hẹn này đã được lập hóa đơn. Không thể tạo thêm.");
+        }
+
+        Bill bill = new Bill();
+
+        Appointment appointment = getAppointment(appointmentId);
+        bill.setAppointment(appointment);
+        bill.setCustomer(appointment.getCustomer());
+
+        Map<Long, BigDecimal> inventoryCart = new HashMap<>();
+        BigDecimal totalAmount = syncServicesFromAppointment(bill, appointment, inventoryCart);
+
+        List<AddRetailProductRequest> retailProducts = request.getRetailProducts();
+        if (retailProducts != null && !retailProducts.isEmpty()) {
+            totalAmount = totalAmount.add(appendRetailProductsToBill(bill, retailProducts, inventoryCart));
+        }
+
+        bill.setTotalAmount(totalAmount);
+
+        validateInventory(inventoryCart);
+
+        return billMapper.toDto(billRepository.save(bill));
+    }
+
+    private Appointment getAppointment(Long id) {
+        return appointmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch hẹn ID: " + id));
+    }
+
+    private BigDecimal syncServicesFromAppointment(Bill bill, Appointment appointment, Map<Long, BigDecimal> inventoryCart) {
+        Set<SalonService> services = appointment.getServices();
+        if (services.isEmpty()) return BigDecimal.ZERO;
+
+        List<Long> serviceIds = services.stream().map(SalonService::getId).toList();
+        Map<Long, List<ServiceRecipe>> recipesByServiceId = fetchRecipesByServiceId(serviceIds);
+
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (SalonService service : services) {
+            BillDetail detail = new BillDetail();
+            detail.setBill(bill);
+            detail.setService(service);
+            detail.setQuantity(1L);
+            detail.setUnitPrice(service.getPrice());
+            bill.getDetails().add(detail);
+
+            recipesByServiceId.getOrDefault(service.getId(), List.of()).forEach(recipe ->
+                    inventoryCart.merge(recipe.getProduct().getId(), recipe.getQuantityConsumed(), BigDecimal::add));
+
+            total = total.add(service.getPrice());
+        }
+
+        return total;
+    }
+
+    private Map<Long, List<ServiceRecipe>> fetchRecipesByServiceId(List<Long> serviceIds) {
+        if (serviceIds.isEmpty()) return Map.of();
+        return serviceRecipeRepository.findByService_IdIn(serviceIds).stream()
+                .collect(Collectors.groupingBy(recipe -> recipe.getService().getId()));
     }
 }

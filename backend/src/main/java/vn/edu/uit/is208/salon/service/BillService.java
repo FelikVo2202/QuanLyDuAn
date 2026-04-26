@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.edu.uit.is208.salon.constant.PaymentStatus;
 import vn.edu.uit.is208.salon.dto.AddRetailProductRequest;
 import vn.edu.uit.is208.salon.dto.BillDto;
 import vn.edu.uit.is208.salon.dto.CreateAppointmentBillRequest;
@@ -196,5 +197,23 @@ public class BillService {
         if (serviceIds.isEmpty()) return Map.of();
         return serviceRecipeRepository.findByService_IdIn(serviceIds).stream()
                 .collect(Collectors.groupingBy(recipe -> recipe.getService().getId()));
+    }
+
+
+    @Transactional
+    public BillDto addRetailProduct(Long billId, AddRetailProductRequest request) {
+        Bill bill = getBill(billId);
+
+        if (bill.getPaymentStatus() != PaymentStatus.PENDING) {
+            throw new BusinessRuleException("Chỉ có thể thêm món vào hóa đơn đang chờ thanh toán (PENDING)");
+        }
+
+        Map<Long, BigDecimal> inventoryCart = new HashMap<>();
+        BigDecimal additionalAmount = appendRetailProductsToBill(bill, List.of(request), inventoryCart);
+        bill.setTotalAmount(bill.getTotalAmount().add(additionalAmount));
+
+        validateInventory(inventoryCart);
+
+        return billMapper.toDto(billRepository.save(bill));
     }
 }

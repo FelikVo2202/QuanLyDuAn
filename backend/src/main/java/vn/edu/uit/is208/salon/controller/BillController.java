@@ -7,6 +7,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import vn.edu.uit.is208.salon.dto.AddRetailProductRequest;
 import vn.edu.uit.is208.salon.dto.BillDto;
 import vn.edu.uit.is208.salon.dto.CreateAppointmentBillRequest;
 import vn.edu.uit.is208.salon.dto.CreateRetailBillRequest;
@@ -64,5 +65,14 @@ public class BillController {
                 .toUri();
 
         return ResponseEntity.created(location).body(createdBill);
+    }
+
+
+    @PostMapping("/bills/{billId}/retail-products")
+    public ResponseEntity<BillDto> addRetailProduct(
+            @PathVariable("billId") Long billId, @Valid @RequestBody AddRetailProductRequest request) {
+
+        BillDto updatedBill = billService.addRetailProduct(billId, request);
+        return ResponseEntity.ok(updatedBill);
     }
 }

@@ -217,7 +217,7 @@ public class DummyDataSeeder implements CommandLineRunner {
             product.setPurchasingUom("Chai");
             product.setConversionFactor(BigDecimal.valueOf(faker.number().numberBetween(100, 1000)));
 
-            product.setQuantityOnHand(BigDecimal.valueOf(faker.number().randomDouble(2, 10, 200)));
+            product.setQuantityOnHand(BigDecimal.valueOf(faker.number().randomDouble(2, 10000, 20000)));
 
             products.add(product);
         }

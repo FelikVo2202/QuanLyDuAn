@@ -75,4 +75,10 @@ public class BillController {
         BillDto updatedBill = billService.addRetailProduct(billId, request);
         return ResponseEntity.ok(updatedBill);
     }
+
+    @PostMapping("/bills/{id}/pay")
+    public ResponseEntity<BillDto> payBill(@PathVariable Long id) {
+        BillDto updatedBill = billService.payBill(id);
+        return ResponseEntity.ok(updatedBill);
+    }
 }

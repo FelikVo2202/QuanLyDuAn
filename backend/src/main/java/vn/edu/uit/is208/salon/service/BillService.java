@@ -232,4 +232,18 @@ public class BillService {
 
         return billMapper.toDto(billRepository.save(bill));
     }
+
+
+    @Transactional
+    public BillDto payBill(Long billId) {
+        Bill bill = getBill(billId);
+
+        if (bill.getPaymentStatus() != PaymentStatus.PENDING) {
+            throw new BusinessRuleException("Hóa đơn không ở trạng thái có thể thanh toán");
+        }
+
+        bill.setPaymentStatus(PaymentStatus.PAID);
+
+        return billMapper.toDto(billRepository.save(bill));
+    }
 }

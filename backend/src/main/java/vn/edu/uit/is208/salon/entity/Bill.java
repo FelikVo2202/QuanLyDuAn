@@ -45,4 +45,7 @@ public class Bill {
     @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 20)
     private Set<BillDetail> details = new LinkedHashSet<>();
+
+    @Version
+    private Long version;
 }

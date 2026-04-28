@@ -4,7 +4,7 @@ FOR EACH ROW
 WHEN (NEW.PaymentStatus = 'PAID' AND OLD.PaymentStatus != 'PAID')
 BEGIN
     INSERT INTO INVENTORY_LEDGER (ProductID, ChangeAmount, TransactionType, ReferenceID)
-    SELECT bd.PRODUCTID, -(bd.QUANTITY * p.ConversionFactor), 'RETAIL_SALE', bd.BillID
+    SELECT bd.PRODUCTID, -(bd.QUANTITY * NVL(p.ConversionFactor, 1)), 'RETAIL_SALE', bd.BillID
     FROM BILL_DETAIL bd
     JOIN PRODUCT p ON p.ProductID = bd.ProductID
     WHERE bd.BillID = :NEW.BillID AND

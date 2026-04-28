@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.uit.is208.salon.constant.PaymentStatus;
+import vn.edu.uit.is208.salon.constant.ProductType;
 import vn.edu.uit.is208.salon.dto.AddRetailProductRequest;
 import vn.edu.uit.is208.salon.dto.BillDto;
 import vn.edu.uit.is208.salon.dto.CreateAppointmentBillRequest;
@@ -92,6 +93,11 @@ public class BillService {
             ProductSummary productSummary = productSummaryMap.get(request.getProductId());
             if (productSummary == null) {
                 throw new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + request.getProductId());
+            }
+
+            if (productSummary.getProductType() == ProductType.PROFESSIONAL) {
+                throw new BusinessRuleException("Sản phẩm có id: " + productSummary.getId() +
+                        " là nguyên liệu nội bộ, không được phép bán lẻ");
             }
 
             mergeOrAddDetail(bill, request, productSummary);

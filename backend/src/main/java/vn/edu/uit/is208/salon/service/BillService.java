@@ -17,6 +17,7 @@ import vn.edu.uit.is208.salon.entity.*;
 import vn.edu.uit.is208.salon.exception.BusinessRuleException;
 import vn.edu.uit.is208.salon.exception.ResourceNotFoundException;
 import vn.edu.uit.is208.salon.mapper.BillMapper;
+import vn.edu.uit.is208.salon.projection.ProductSummary;
 import vn.edu.uit.is208.salon.repository.*;
 import vn.edu.uit.is208.salon.repository.specifications.BillSpecification;
 
@@ -68,7 +69,7 @@ public class BillService {
         bill.setCustomer(getCustomer(request.getCustomerId()));
         bill.setTotalAmount(appendRetailProductsToBill(bill, request.getRetailProducts(), inventoryCart));
 
-        validateInventory(inventoryCart);
+        reserveInventory(inventoryCart);
 
         return billMapper.toDto(billRepository.save(bill));
     }
@@ -82,44 +83,45 @@ public class BillService {
             Bill bill, List<AddRetailProductRequest> requests, Map<Long, BigDecimal> inventoryCart) {
 
         List<Long> productIds = requests.stream().map(AddRetailProductRequest::getProductId).toList();
-        Map<Long, Product> productMap = productRepository.findAllById(productIds)
-                .stream().collect(Collectors.toMap(Product::getId, Function.identity()));
+        Map<Long, ProductSummary> productSummaryMap = productRepository.getProductSummaryByIds(productIds)
+                .stream().collect(Collectors.toMap(ProductSummary::getId, Function.identity()));
 
         BigDecimal total = BigDecimal.ZERO;
 
         for (AddRetailProductRequest request : requests) {
-            Product product = productMap.get(request.getProductId());
-            if (product == null) {
+            ProductSummary productSummary = productSummaryMap.get(request.getProductId());
+            if (productSummary == null) {
                 throw new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + request.getProductId());
             }
-            BigDecimal unitPrice = product.getPrice();
-            Long quantity = request.getQuantity();
 
-            BillDetail detail = new BillDetail();
-            detail.setBill(bill);
-            detail.setProduct(product);
-            detail.setUnitPrice(unitPrice);
-            detail.setQuantity(quantity);
+            mergeOrAddDetail(bill, request, productSummary);
+            total = total.add(productSummary.getPrice().
+                    multiply(BigDecimal.valueOf(request.getQuantity())));
 
-            mergeOrAddDetail(bill, request, detail, unitPrice);
-            total = total.add(unitPrice.multiply(BigDecimal.valueOf(quantity)));
-
-            BigDecimal factor = product.getConversionFactor() != null ? product.getConversionFactor() : BigDecimal.ONE;
-            BigDecimal quantityOnBaseUOM = BigDecimal.valueOf(quantity).multiply(factor);
-            inventoryCart.merge(product.getId(), quantityOnBaseUOM, BigDecimal::add);
+            BigDecimal factor = productSummary.getConversionFactor() != null ? productSummary.getConversionFactor() : BigDecimal.ONE;
+            BigDecimal quantityOnBaseUOM = BigDecimal.valueOf(request.getQuantity()).multiply(factor);
+            inventoryCart.merge(productSummary.getId(), quantityOnBaseUOM, BigDecimal::add);
         }
 
         return total;
     }
 
-    private void mergeOrAddDetail(Bill bill, AddRetailProductRequest request, BillDetail detail, BigDecimal unitPrice) {
+    private void mergeOrAddDetail(Bill bill, AddRetailProductRequest request, ProductSummary productSummary) {
         bill.getDetails().stream()
                 .filter(d -> isSameProduct(d, request.getProductId()))
-                .filter(d -> d.getUnitPrice().compareTo(unitPrice) == 0)
+                .filter(d -> d.getUnitPrice().compareTo(productSummary.getPrice()) == 0)
                 .findFirst()
                 .ifPresentOrElse(
                         existing -> existing.setQuantity(existing.getQuantity() + request.getQuantity()),
-                        () -> bill.getDetails().add(detail)
+                        () -> {
+                            BillDetail detail = new BillDetail();
+                            detail.setBill(bill);
+                            detail.setProduct(productRepository.getReferenceById(productSummary.getId()));
+                            detail.setUnitPrice(productSummary.getPrice());
+                            detail.setQuantity(request.getQuantity());
+
+                            bill.getDetails().add(detail);
+                        }
                 );
     }
 
@@ -127,10 +129,10 @@ public class BillService {
         return detail.getProduct() != null && Objects.equals(detail.getProduct().getId(), productId);
     }
 
-    private void validateInventory(Map<Long, BigDecimal> inventoryCart) {
+    private void reserveInventory(Map<Long, BigDecimal> inventoryCart) {
         if (inventoryCart.isEmpty()) return;
 
-        Map<Long, Product> productMap = productRepository.findAllById(inventoryCart.keySet()).stream()
+        Map<Long, Product> productMap = productRepository.findByIdsWithLock(inventoryCart.keySet()).stream()
                 .collect(Collectors.toMap(Product::getId, Function.identity()));
 
         inventoryCart.forEach((productId, requiredQuantity) -> {
@@ -144,6 +146,8 @@ public class BillService {
                         "Không đủ tồn kho cho '%s'. Tổng cộng cần: %s, Hiện có: %s",
                         product.getName(), requiredQuantity, product.getQuantityOnHand()));
             }
+
+            product.setQuantityOnHand(product.getQuantityOnHand().subtract(requiredQuantity));
         });
     }
 
@@ -169,7 +173,7 @@ public class BillService {
 
         bill.setTotalAmount(totalAmount);
 
-        validateInventory(inventoryCart);
+        reserveInventory(inventoryCart);
 
         return billMapper.toDto(billRepository.save(bill));
     }
@@ -224,7 +228,7 @@ public class BillService {
         BigDecimal additionalAmount = appendRetailProductsToBill(bill, List.of(request), inventoryCart);
         bill.setTotalAmount(bill.getTotalAmount().add(additionalAmount));
 
-        validateInventory(inventoryCart);
+        reserveInventory(inventoryCart);
 
         return billMapper.toDto(billRepository.save(bill));
     }

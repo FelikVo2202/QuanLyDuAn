@@ -225,10 +225,7 @@ public class BillService {
     @Transactional
     public BillDto addRetailProduct(Long billId, AddRetailProductRequest request) {
         Bill bill = getBill(billId);
-
-        if (bill.getPaymentStatus() != PaymentStatus.PENDING) {
-            throw new BusinessRuleException("Chỉ có thể thêm món vào hóa đơn đang chờ thanh toán (PENDING)");
-        }
+        ensureBillIsPending(bill);
 
         Map<Long, BigDecimal> inventoryCart = new HashMap<>();
         BigDecimal additionalAmount = appendRetailProductsToBill(bill, List.of(request), inventoryCart);
@@ -239,14 +236,16 @@ public class BillService {
         return billMapper.toDto(billRepository.save(bill));
     }
 
+    private void ensureBillIsPending(Bill bill) {
+        if (bill.getPaymentStatus() != PaymentStatus.PENDING) {
+            throw new BusinessRuleException("Thao tác bị từ chối: Hóa đơn không ở trạng thái chờ xử lý (PENDING)");
+        }
+    }
 
     @Transactional
     public BillDto payBill(Long billId) {
         Bill bill = getBill(billId);
-
-        if (bill.getPaymentStatus() != PaymentStatus.PENDING) {
-            throw new BusinessRuleException("Hóa đơn không ở trạng thái có thể thanh toán");
-        }
+        ensureBillIsPending(bill);
 
         bill.setPaymentStatus(PaymentStatus.PAID);
 
@@ -256,18 +255,12 @@ public class BillService {
     @Transactional
     public BillDto cancelBill(Long billId) {
         Bill bill = getBill(billId);
+        ensureBillIsPending(bill);
 
-        validateBillForCancellation(bill);
         restoreInventoryForCancelledBill(bill);
         bill.setPaymentStatus(PaymentStatus.FAILED);
 
         return billMapper.toDto(billRepository.save(bill));
-    }
-
-    private void validateBillForCancellation(Bill bill) {
-        if (bill.getPaymentStatus() != PaymentStatus.PENDING) {
-            throw new BusinessRuleException("Chỉ có thể hủy bill đang chờ (PENDING)");
-        }
     }
 
     private void restoreInventoryForCancelledBill(Bill bill) {

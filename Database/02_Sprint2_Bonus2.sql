@@ -33,18 +33,11 @@ DECLARE
     v_lock_dummy NUMBER;
 BEGIN
     IF :NEW.Status != 'CANCELED' THEN
-        
-        -- 1. THE CONCURRENCY FIX: Lock the Staff record.
-        -- This forces any other transaction trying to book this specific 
-        -- staff member to pause and wait right here until this transaction finishes.
         SELECT StaffID INTO v_lock_dummy 
         FROM Staff 
         WHERE StaffID = :NEW.StaffID 
         FOR UPDATE; 
 
-        -- 2. Now it is 100% safe to check for overlaps.
-        -- By the time Tx B gets past the lock above, Tx A will have committed,
-        -- and Tx B will successfully "see" Tx A's new appointment.
         SELECT COUNT(*)
         INTO v_overlap_count
         FROM Appointment
@@ -54,7 +47,6 @@ BEGIN
           AND :NEW.EndDateTime > AppointmentDateTime
           AND AppointmentID != NVL(:NEW.AppointmentID, -1);
 
-        -- 3. Throw the error if overlapped
         IF v_overlap_count > 0 THEN
             RAISE_APPLICATION_ERROR(-20001, 'Double booking detected! Staff ID ' || :NEW.StaffID || ' is already booked during this time.');
         END IF;
@@ -90,19 +82,16 @@ DECLARE
     v_status VARCHAR2(20);
     v_bill_id NUMBER;
 BEGIN
-    -- Lấy BillID tương ứng tùy thuộc vào loại thao tác (Xóa thì dùng OLD, Thêm/Sửa thì dùng NEW)
     IF DELETING THEN
         v_bill_id := :OLD.BillID;
     ELSE
         v_bill_id := :NEW.BillID;
     END IF;
 
-    -- Truy vấn trạng thái của Hóa đơn cha
     SELECT PaymentStatus INTO v_status
     FROM Bill
     WHERE BillID = v_bill_id;
 
-    -- Nếu hóa đơn đã thanh toán, ném lỗi Database ngay lập tức
     IF v_status = 'PAID' THEN
         RAISE_APPLICATION_ERROR(-20002, 'Bảo mật tài chính: Không thể thêm, sửa, hoặc xóa chi tiết của hóa đơn đã thanh toán (PAID).');
     END IF;
@@ -116,10 +105,7 @@ CREATE OR REPLACE TRIGGER trg_prevent_edit_paid_bill
 BEFORE UPDATE OR DELETE ON Bill
 FOR EACH ROW
 BEGIN
-    -- Chỉ kích hoạt chặn nếu hóa đơn TRƯỚC ĐÓ đã là PAID
     IF :OLD.PaymentStatus = 'PAID' THEN
-        
-        -- Mở một ngoại lệ duy nhất: Cho phép cập nhật trạng thái sang REFUNDED (Hoàn tiền)
         IF UPDATING AND :NEW.PaymentStatus = 'REFUNDED' THEN
             NULL; 
         ELSE
@@ -129,3 +115,5 @@ BEGIN
     END IF;
 END;
 /
+
+

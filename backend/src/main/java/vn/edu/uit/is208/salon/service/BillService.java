@@ -252,4 +252,85 @@ public class BillService {
 
         return billMapper.toDto(billRepository.save(bill));
     }
+
+    @Transactional
+    public BillDto cancelBill(Long billId) {
+        Bill bill = getBill(billId);
+
+        validateBillForCancellation(bill);
+        restoreInventoryForCancelledBill(bill);
+        bill.setPaymentStatus(PaymentStatus.FAILED);
+
+        return billMapper.toDto(billRepository.save(bill));
+    }
+
+    private void validateBillForCancellation(Bill bill) {
+        if (bill.getPaymentStatus() != PaymentStatus.PENDING) {
+            throw new BusinessRuleException("Chỉ có thể hủy bill đang chờ (PENDING)");
+        }
+    }
+
+    private void restoreInventoryForCancelledBill(Bill bill) {
+        List<Long> serviceIds = new ArrayList<>();
+        List<Long> retailProductIds = new ArrayList<>();
+
+        bill.getDetails().forEach(detail -> {
+            if (detail.getService() != null) serviceIds.add(detail.getService().getId());
+            else if (detail.getProduct() != null) retailProductIds.add(detail.getProduct().getId());
+        });
+
+        Map<Long, List<ServiceRecipe>> recipesByServiceId = fetchRecipesByServiceId(serviceIds);
+        Set<Long> productIdsToLock = buildProductIdsToLock(retailProductIds, recipesByServiceId);
+
+        if (productIdsToLock.isEmpty()) return;
+
+        Map<Long, Product> lockedProducts = getLockedProducts(productIdsToLock);
+        applyInventoryRestoration(bill, recipesByServiceId, lockedProducts);
+    }
+
+    private Set<Long> buildProductIdsToLock(List<Long> retailProductIds, Map<Long, List<ServiceRecipe>> recipes) {
+        Set<Long> ids = new HashSet<>(retailProductIds);
+        recipes.values().stream()
+                .flatMap(List::stream)
+                .map(recipe -> recipe.getProduct().getId())
+                .forEach(ids::add);
+        return ids;
+    }
+
+    private Map<Long, Product> getLockedProducts(Set<Long> productIds) {
+        return productRepository.findByIdsWithLock(productIds).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+    }
+
+    private void applyInventoryRestoration(Bill bill, Map<Long, List<ServiceRecipe>> recipes, Map<Long, Product> lockedProducts) {
+        for (BillDetail detail : bill.getDetails()) {
+            BigDecimal qty = BigDecimal.valueOf(detail.getQuantity());
+
+            if (detail.getProduct() != null) {
+                restoreRetailProduct(detail.getProduct().getId(), qty, lockedProducts);
+            } else if (detail.getService() != null) {
+                restoreServiceIngredients(detail.getService().getId(), qty, recipes, lockedProducts);
+            }
+        }
+    }
+
+    private void restoreRetailProduct(Long productId, BigDecimal quantityToRestore, Map<Long, Product> lockedProducts) {
+        Product p = lockedProducts.get(productId);
+        if (p == null) {
+            throw new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + productId + ". Không thể hoàn kho");
+        }
+        BigDecimal factor = p.getConversionFactor() != null ? p.getConversionFactor() : BigDecimal.ONE;
+        p.setQuantityOnHand(p.getQuantityOnHand().add(quantityToRestore.multiply(factor)));
+    }
+
+    private void restoreServiceIngredients(Long serviceId, BigDecimal serviceQuantity, Map<Long, List<ServiceRecipe>> recipes, Map<Long, Product> lockedProducts) {
+        List<ServiceRecipe> serviceRecipes = recipes.getOrDefault(serviceId, List.of());
+        for (ServiceRecipe r : serviceRecipes) {
+            Product p = lockedProducts.get(r.getProduct().getId());
+            if (p == null) {
+                throw new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + r.getProduct().getId() + ". Không thể hoàn kho");
+            }
+            p.setQuantityOnHand(p.getQuantityOnHand().add(r.getQuantityConsumed().multiply(serviceQuantity)));
+        }
+    }
 }

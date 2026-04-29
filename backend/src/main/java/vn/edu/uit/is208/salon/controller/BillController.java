@@ -81,4 +81,10 @@ public class BillController {
         BillDto updatedBill = billService.payBill(id);
         return ResponseEntity.ok(updatedBill);
     }
+
+    @PostMapping("/bills/{id}/cancel")
+    public ResponseEntity<BillDto> cancelBill(@PathVariable Long id) {
+        BillDto updatedBill = billService.cancelBill(id);
+        return ResponseEntity.ok(updatedBill);
+    }
 }

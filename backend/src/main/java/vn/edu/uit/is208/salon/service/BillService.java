@@ -243,6 +243,49 @@ public class BillService {
     }
 
     @Transactional
+    public BillDto removeRetailProduct(Long billId, Long detailId) {
+        Bill bill = getBill(billId);
+        ensureBillIsPending(bill);
+
+        BillDetail targetDetail = findRetailDetailOrThrow(bill, detailId);
+        Long productId = targetDetail.getProduct().getId();
+        Product product = getSingleLockedProductOrThrow(productId);
+
+        BigDecimal qty = BigDecimal.valueOf(targetDetail.getQuantity());
+        BigDecimal factor = product.getConversionFactor() != null ? product.getConversionFactor() : BigDecimal.ONE;
+        product.setQuantityOnHand(product.getQuantityOnHand().add(qty.multiply(factor)));
+
+        BigDecimal itemTotal = targetDetail.getUnitPrice().multiply(qty);
+        bill.setTotalAmount(bill.getTotalAmount().subtract(itemTotal));
+
+        bill.getDetails().remove(targetDetail);
+
+        productRepository.save(product);
+        return billMapper.toDto(billRepository.save(bill));
+    }
+
+    private BillDetail findRetailDetailOrThrow(Bill bill, Long detailId) {
+        BillDetail targetDetail = bill.getDetails().stream()
+                .filter(d -> d.getId() != null && d.getId().equals(detailId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy dòng chi tiết ID: " + detailId + " trong hóa đơn này"));
+
+        if (targetDetail.getProduct() == null) {
+            throw new BusinessRuleException(
+                    "Bạn không thể xóa, sửa dịch vụ trực tiếp trên Hóa đơn. Vui lòng cập nhật thông qua Lịch hẹn"
+            );
+        }
+
+        return targetDetail;
+    }
+
+    private Product getSingleLockedProductOrThrow(Long productId) {
+        return productRepository.findByIdsWithLock(Set.of(productId)).stream()
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + productId));
+    }
+
+    @Transactional
     public BillDto payBill(Long billId) {
         Bill bill = getBill(billId);
         ensureBillIsPending(bill);

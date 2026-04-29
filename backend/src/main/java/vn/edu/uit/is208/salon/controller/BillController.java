@@ -76,6 +76,12 @@ public class BillController {
         return ResponseEntity.ok(updatedBill);
     }
 
+    @DeleteMapping("/bills/{billId}/bill-details/{detailId}")
+    public ResponseEntity<BillDto> removeRetailProduct(@PathVariable Long billId, @PathVariable Long detailId) {
+        BillDto updatedBill = billService.removeRetailProduct(billId, detailId);
+        return ResponseEntity.ok(updatedBill);
+    }
+
     @PostMapping("/bills/{id}/pay")
     public ResponseEntity<BillDto> payBill(@PathVariable Long id) {
         BillDto updatedBill = billService.payBill(id);

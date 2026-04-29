@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Nationalized;
 import org.hibernate.annotations.SQLRestriction;
 import vn.edu.uit.is208.salon.constant.ProductType;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "PRODUCT")
+@DynamicUpdate
 @SQLRestriction("DELETEDAT IS NULL")
 public class Product {
     @Id

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 import vn.edu.uit.is208.salon.constant.PaymentStatus;
 
 import java.math.BigDecimal;
@@ -42,5 +43,9 @@ public class Bill {
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 20)
     private Set<BillDetail> details = new LinkedHashSet<>();
+
+    @Version
+    private Long version;
 }

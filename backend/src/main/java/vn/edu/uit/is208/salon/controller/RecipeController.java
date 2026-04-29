@@ -1,8 +1,8 @@
 package vn.edu.uit.is208.salon.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.uit.is208.salon.dto.CreateRecipeRequest;
 import vn.edu.uit.is208.salon.dto.RecipeResponse;
@@ -11,19 +11,18 @@ import vn.edu.uit.is208.salon.service.RecipeService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/recipes")
+@RequestMapping("/api/services/{serviceId}/recipes")
 @RequiredArgsConstructor
 public class RecipeController {
     private final RecipeService recipeService;
 
     @PostMapping
-    @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<RecipeResponse> createRecipe(@RequestBody CreateRecipeRequest request) {
-        return ResponseEntity.ok(recipeService.createRecipe(request));
+    public ResponseEntity<RecipeResponse> createRecipe(@PathVariable Long serviceId, @RequestBody @Valid CreateRecipeRequest request) {
+        return ResponseEntity.ok(recipeService.createRecipe(serviceId, request));
     }
 
-    @GetMapping("/service/{serviceId}")
-    public ResponseEntity<List<RecipeResponse>> getRecipesByService(@PathVariable Long serviceId) {
-        return ResponseEntity.ok(recipeService.getRecipesByService(serviceId));
+    @GetMapping
+    public ResponseEntity<List<RecipeResponse>> getRecipesByServiceId(@PathVariable Long serviceId) {
+        return ResponseEntity.ok(recipeService.getRecipesByServiceId(serviceId));
     }
 }

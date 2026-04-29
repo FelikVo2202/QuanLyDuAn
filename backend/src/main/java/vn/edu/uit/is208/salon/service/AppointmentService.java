@@ -37,6 +37,7 @@ public class AppointmentService {
     private final CustomerRepository customerRepository;
     private final StaffRepository staffRepository;
     private final SalonServiceRepository salonServiceRepository;
+    private final InventoryService inventoryService;
     @Value("${salon.business-hours.open}")
     private LocalTime openingTime;
     @Value("${salon.business-hours.close}")
@@ -189,5 +190,20 @@ public class AppointmentService {
         if (isBusy) {
             throw new BusinessRuleException("Nhân viên " + staffId + " đã có lịch trong khung giờ này");
         }
+    }
+
+    @Transactional
+    public AppointmentDto completeAppointment(Long id) {
+        Appointment appointment = getAppointment(id);
+
+        if (appointment.getStatus() == AppointmentStatus.CANCELED) {
+            throw new IllegalStateException("Không thể hoàn thành lịch hẹn đã bị hủy");
+        }
+
+        appointment.setStatus(AppointmentStatus.DONE);
+
+        appointment.getServices().forEach(service -> inventoryService.deductStockAfterService(service.getId()));
+
+        return appointmentMapper.toDto(appointmentRepository.save(appointment));
     }
 }

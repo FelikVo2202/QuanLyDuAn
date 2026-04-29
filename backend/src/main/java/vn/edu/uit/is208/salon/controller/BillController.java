@@ -7,10 +7,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import vn.edu.uit.is208.salon.dto.AddRetailProductRequest;
-import vn.edu.uit.is208.salon.dto.BillDto;
-import vn.edu.uit.is208.salon.dto.CreateAppointmentBillRequest;
-import vn.edu.uit.is208.salon.dto.CreateRetailBillRequest;
+import vn.edu.uit.is208.salon.dto.*;
 import vn.edu.uit.is208.salon.service.BillService;
 
 import java.net.URI;
@@ -79,6 +76,16 @@ public class BillController {
     @DeleteMapping("/bills/{billId}/bill-details/{detailId}")
     public ResponseEntity<BillDto> removeRetailProduct(@PathVariable Long billId, @PathVariable Long detailId) {
         BillDto updatedBill = billService.removeRetailProduct(billId, detailId);
+        return ResponseEntity.ok(updatedBill);
+    }
+
+    @PatchMapping("/bills/{billId}/bill-details/{detailId}")
+    public ResponseEntity<BillDto> updateRetailProductQuantity(
+            @PathVariable Long billId,
+            @PathVariable Long detailId,
+            @Valid @RequestBody UpdateRetailProductQuantityRequest request) {
+
+        BillDto updatedBill = billService.updateRetailProductQuantity(billId, detailId, request.getQuantity());
         return ResponseEntity.ok(updatedBill);
     }
 

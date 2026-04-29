@@ -1,6 +1,7 @@
 package vn.edu.uit.is208.salon.service;
 
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -283,6 +284,43 @@ public class BillService {
         return productRepository.findByIdsWithLock(Set.of(productId)).stream()
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + productId));
+    }
+
+    @Transactional
+    public BillDto updateRetailProductQuantity(Long billId, Long detailId, Long newQuantity) {
+        Bill bill = getBill(billId);
+        ensureBillIsPending(bill);
+
+        BillDetail targetDetail = findRetailDetailOrThrow(bill, detailId);
+        Product product = getSingleLockedProductOrThrow(targetDetail.getProduct().getId());
+
+        Long oldQuantity = targetDetail.getQuantity();
+        BigDecimal diffInventory = getDiffInventory(newQuantity, oldQuantity, product);
+
+        product.setQuantityOnHand(product.getQuantityOnHand().subtract(diffInventory));
+
+        BigDecimal oldItemTotal = targetDetail.getUnitPrice().multiply(BigDecimal.valueOf(oldQuantity));
+        BigDecimal newItemTotal = targetDetail.getUnitPrice().multiply(BigDecimal.valueOf(newQuantity));
+
+        targetDetail.setQuantity(newQuantity);
+        bill.setTotalAmount(bill.getTotalAmount().subtract(oldItemTotal).add(newItemTotal));
+
+        productRepository.save(product);
+        return billMapper.toDto(billRepository.save(bill));
+    }
+
+    private static @NonNull BigDecimal getDiffInventory(Long newQuantity, Long oldQuantity, Product product) {
+        BigDecimal diffQty = BigDecimal.valueOf(newQuantity - oldQuantity);
+
+        BigDecimal factor = product.getConversionFactor() != null ? product.getConversionFactor() : BigDecimal.ONE;
+        BigDecimal diffInventory = diffQty.multiply(factor);
+
+        if (diffQty.compareTo(BigDecimal.ZERO) > 0) {
+            if (product.getQuantityOnHand().compareTo(diffInventory) < 0) {
+                throw new BusinessRuleException("Kho không đủ. Cần: " + diffInventory + ". Chỉ còn: " + product.getQuantityOnHand());
+            }
+        }
+        return diffInventory;
     }
 
     @Transactional

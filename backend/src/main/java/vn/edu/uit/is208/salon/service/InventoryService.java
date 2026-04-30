@@ -7,13 +7,11 @@ import vn.edu.uit.is208.salon.dto.StockUpdateRequest;
 import vn.edu.uit.is208.salon.entity.Product;
 import vn.edu.uit.is208.salon.exception.ResourceNotFoundException;
 import vn.edu.uit.is208.salon.repository.ProductRepository;
-import vn.edu.uit.is208.salon.repository.RecipeRepository;
 
 @Service
 @RequiredArgsConstructor
 public class InventoryService {
     private final ProductRepository productRepository;
-    private final RecipeRepository recipeRepository;
 
     @Transactional
     public void addStock(StockUpdateRequest request) {

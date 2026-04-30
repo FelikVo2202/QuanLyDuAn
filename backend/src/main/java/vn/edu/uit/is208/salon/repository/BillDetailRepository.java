@@ -8,4 +8,6 @@ public interface BillDetailRepository extends JpaRepository<BillDetail, Long> {
     boolean existsByProductId(Long productId);
 
     boolean existsByProductIdAndBillPaymentStatus(Long productId, PaymentStatus paymentStatus);
+
+    boolean existsByServiceIdAndBillPaymentStatus(Long serviceId, PaymentStatus paymentStatus);
 }

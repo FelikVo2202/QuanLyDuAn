@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Builder
@@ -14,8 +15,5 @@ import java.math.BigDecimal;
 public class RecipeResponse {
     private Long serviceId;
     private String serviceName;
-    private Long productId;
-    private String productName;
-    private BigDecimal quantityConsumed;
-    private String baseUom;
+    private List<RecipeItemResponse> ingredients;
 }

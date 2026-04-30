@@ -8,10 +8,13 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import vn.edu.uit.is208.salon.constant.ProductType;
 import vn.edu.uit.is208.salon.dto.ProductRequest;
 import vn.edu.uit.is208.salon.dto.ProductResponse;
 import vn.edu.uit.is208.salon.service.ProductService;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/products")
@@ -31,7 +34,15 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody ProductRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(request));
+        ProductResponse createdProduct = productService.createProduct(request);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentContextPath()
+                .path("/api/products/{id}")
+                .buildAndExpand(createdProduct.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(createdProduct);
     }
 
     @DeleteMapping("/{id}")

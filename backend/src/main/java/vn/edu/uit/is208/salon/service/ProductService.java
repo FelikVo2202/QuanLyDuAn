@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.uit.is208.salon.dto.ProductRequest;
 import vn.edu.uit.is208.salon.dto.ProductResponse;
+import vn.edu.uit.is208.salon.exception.BusinessRuleException;
 import vn.edu.uit.is208.salon.mapper.ProductMapper;
 import vn.edu.uit.is208.salon.constant.ProductType;
 import vn.edu.uit.is208.salon.entity.Product;
@@ -29,9 +30,25 @@ public class ProductService {
 
     @Transactional
     public ProductResponse createProduct(ProductRequest request) {
-        Product product = new Product();
-        mapToEntity(request, product);
+        String normalizedName = request.getName().trim();
+
+        if (productRepository.existsByNameIgnoreCase(normalizedName)) {
+            throw new BusinessRuleException("Tên sản phẩm '" + normalizedName + "' đã tồn tại trong hệ thống");
+        }
+
+        Product product = productMapper.toEntity(request);
+        product.setName(normalizedName);
+
+        if (product.getBaseUom().equalsIgnoreCase(product.getPurchasingUom())) {
+            product.setConversionFactor(BigDecimal.ONE);
+        } else {
+            if (product.getConversionFactor() == null || product.getConversionFactor().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new BusinessRuleException("Hệ số quy đổi phải lớn hơn 0 khi Đơn vị nhập và Đơn vị bán khác nhau.");
+            }
+        }
+
         product.setQuantityOnHand(BigDecimal.ZERO);
+
         return productMapper.toResponse(productRepository.save(product));
     }
 
@@ -41,15 +58,5 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         product.setDeletedAt(LocalDateTime.now());
         productRepository.save(product);
-    }
-
-    private void mapToEntity(ProductRequest request, Product product) {
-        product.setName(request.getName());
-        product.setProductType(request.getProductType());
-        product.setCategory(request.getCategory());
-        product.setPrice(request.getPrice());
-        product.setBaseUom(request.getBaseUom());
-        product.setPurchasingUom(request.getPurchasingUom());
-        product.setConversionFactor(request.getConversionFactor());
     }
 }

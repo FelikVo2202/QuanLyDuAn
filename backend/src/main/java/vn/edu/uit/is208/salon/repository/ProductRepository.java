@@ -19,4 +19,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Product p WHERE p.id IN :ids ORDER BY p.id ASC")
     List<Product> findByIdsWithLock(@Param("ids") Collection<Long> ids);
+
+    boolean existsByNameIgnoreCase(String name);
 }

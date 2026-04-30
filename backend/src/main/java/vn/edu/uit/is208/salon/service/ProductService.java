@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.edu.uit.is208.salon.constant.PaymentStatus;
 import vn.edu.uit.is208.salon.dto.ProductRequest;
 import vn.edu.uit.is208.salon.dto.ProductResponse;
 import vn.edu.uit.is208.salon.exception.BusinessRuleException;
@@ -118,8 +119,23 @@ public class ProductService {
     @Transactional
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm với ID: " + id));
+
+        if (product.getQuantityOnHand() != null && product.getQuantityOnHand().compareTo(BigDecimal.ZERO) > 0) {
+            throw new BusinessRuleException(
+                    "Không thể xóa sản phẩm khi số lượng tồn kho vẫn còn (" + product.getQuantityOnHand() + ")");
+        }
+
+        if (serviceRecipeRepository.existsByProductId(id)) {
+            throw new BusinessRuleException(
+                    "Không thể xóa sản phẩm vì đang được sử dụng làm vật tư tiêu hao cho một Dịch vụ");
+        }
+
+        boolean isLockedInPendingBill = billDetailRepository.existsByProductIdAndBillPaymentStatus(id, PaymentStatus.PENDING);
+        if (isLockedInPendingBill) {
+            throw new BusinessRuleException("Không thể xóa sản phẩm vì đang có Hóa đơn chưa thanh toán");
+        }
+
         product.setDeletedAt(LocalDateTime.now());
-        productRepository.save(product);
     }
 }

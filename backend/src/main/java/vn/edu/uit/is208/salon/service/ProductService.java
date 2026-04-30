@@ -1,27 +1,30 @@
 package vn.edu.uit.is208.salon.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.uit.is208.salon.dto.ProductRequest;
 import vn.edu.uit.is208.salon.dto.ProductResponse;
+import vn.edu.uit.is208.salon.mapper.ProductMapper;
+import vn.edu.uit.is208.salon.constant.ProductType;
 import vn.edu.uit.is208.salon.entity.Product;
 import vn.edu.uit.is208.salon.repository.ProductRepository;
+import vn.edu.uit.is208.salon.repository.specifications.ProductSpecification;
 
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ProductService {
     private final ProductRepository productRepository;
+    private final ProductMapper productMapper;
 
-    public List<ProductResponse> getAllProducts() {
-        return productRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<ProductResponse> getAllProducts(ProductType productType, String category, String search, Pageable pageable) {
+        return productRepository.findAll(ProductSpecification.withFilters(productType, category, search), pageable)
+                .map(productMapper::toResponse);
     }
 
     @Transactional
@@ -29,7 +32,7 @@ public class ProductService {
         Product product = new Product();
         mapToEntity(request, product);
         product.setQuantityOnHand(BigDecimal.ZERO);
-        return mapToResponse(productRepository.save(product));
+        return productMapper.toResponse(productRepository.save(product));
     }
 
     @Transactional
@@ -48,17 +51,5 @@ public class ProductService {
         product.setBaseUom(request.getBaseUom());
         product.setPurchasingUom(request.getPurchasingUom());
         product.setConversionFactor(request.getConversionFactor());
-    }
-
-    private ProductResponse mapToResponse(Product product) {
-        return ProductResponse.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .productType(product.getProductType().name())
-                .category(product.getCategory())
-                .price(product.getPrice())
-                .baseUom(product.getBaseUom())
-                .quantityOnHand(product.getQuantityOnHand())
-                .build();
     }
 }

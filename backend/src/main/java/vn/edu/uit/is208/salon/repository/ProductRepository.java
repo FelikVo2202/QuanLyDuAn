@@ -1,14 +1,12 @@
 package vn.edu.uit.is208.salon.repository;
 
 import jakarta.persistence.LockModeType;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import vn.edu.uit.is208.salon.entity.Product;
 import vn.edu.uit.is208.salon.projection.ProductSummary;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,4 +21,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     boolean existsByNameIgnoreCase(String name);
 
     boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Product p SET p.quantityOnHand = p.quantityOnHand + :amount WHERE p.id = :id AND (p.quantityOnHand + :amount) >= 0")
+    int adjustStock(@Param("id") Long id, @Param("amount") BigDecimal amount);
 }

@@ -19,6 +19,7 @@ import vn.edu.uit.is208.salon.repository.InventoryLedgerRepository;
 import vn.edu.uit.is208.salon.repository.ProductRepository;
 import vn.edu.uit.is208.salon.repository.specifications.InventoryLedgerSpecification;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -73,10 +74,33 @@ public class InventoryService {
     }
 
     @Transactional
-    public void addStock(StockUpdateRequest request) {
-        Product product = productRepository.findById(request.getProductId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm"));
+    public InventoryLedgerResponse adjustStock(StockUpdateRequest request) {
+        if (request.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+            throw new BusinessRuleException("Số lượng điều chỉnh phải khác 0.");
+        }
 
-        product.setQuantityOnHand(product.getQuantityOnHand().add(request.getQuantity()));
-        productRepository.save(product);
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm với ID: " + request.getProductId()));
+
+        BigDecimal changeAmount = request.getQuantity().multiply(product.getConversionFactor());
+
+        int updatedRows = productRepository.adjustStock(product.getId(), changeAmount);
+
+        if (updatedRows == 0) {
+            throw new BusinessRuleException("Lỗi: Số lượng tồn kho hiện tại không đủ để thực hiện lệnh trừ này");
+        }
+
+        InventoryLedger ledger = new InventoryLedger();
+        ledger.setProduct(product);
+        ledger.setChangeAmount(changeAmount);
+        ledger.setReferenceId(request.getReferenceId());
+
+        if (changeAmount.compareTo(BigDecimal.ZERO) > 0) {
+            ledger.setTransactionType(InventoryTransactionType.RESTOCK);
+        } else {
+            ledger.setTransactionType(InventoryTransactionType.ADJUSTMENT);
+        }
+
+        return inventoryLedgerMapper.toResponse(inventoryLedgerRepository.save(ledger));
     }
 }

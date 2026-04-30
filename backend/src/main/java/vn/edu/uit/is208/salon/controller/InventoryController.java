@@ -9,11 +9,13 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import vn.edu.uit.is208.salon.constant.InventoryTransactionType;
 import vn.edu.uit.is208.salon.dto.InventoryLedgerResponse;
 import vn.edu.uit.is208.salon.dto.StockUpdateRequest;
 import vn.edu.uit.is208.salon.service.InventoryService;
 
+import java.net.URI;
 import java.time.LocalDate;
 
 @RestController
@@ -22,10 +24,17 @@ import java.time.LocalDate;
 public class InventoryController {
     private final InventoryService inventoryService;
 
-    @PostMapping("/stock-in")
-    public ResponseEntity<?> addStock(@RequestBody @Valid StockUpdateRequest request) {
-        inventoryService.addStock(request);
-        return ResponseEntity.ok("Nhập kho thành công");
+    @PostMapping("/adjust")
+    public ResponseEntity<InventoryLedgerResponse> adjustStock(@RequestBody @Valid StockUpdateRequest request) {
+        InventoryLedgerResponse createdInventory = inventoryService.adjustStock(request);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentContextPath()
+                .path("/api/inventory-ledgers/{id}")
+                .buildAndExpand(createdInventory.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(createdInventory);
     }
 
     @GetMapping

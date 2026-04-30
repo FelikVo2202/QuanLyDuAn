@@ -7,6 +7,7 @@ import vn.edu.uit.is208.salon.entity.ServiceRecipeId;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ServiceRecipeRepository extends JpaRepository<ServiceRecipe, ServiceRecipeId> {
     List<ServiceRecipe> findByService_IdIn(Collection<Long> serviceIds);
@@ -17,4 +18,6 @@ public interface ServiceRecipeRepository extends JpaRepository<ServiceRecipe, Se
     List<ServiceRecipe> findByServiceId(Long serviceId);
 
     boolean existsByIdServiceIdAndIdProductId(Long serviceId, Long productId);
+
+    Optional<ServiceRecipe> findByIdServiceIdAndIdProductId(Long serviceId, Long productId);
 }

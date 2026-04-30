@@ -7,10 +7,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import vn.edu.uit.is208.salon.dto.CreateRecipeRequest;
 import vn.edu.uit.is208.salon.dto.RecipeResponse;
+import vn.edu.uit.is208.salon.dto.UpdateRecipeRequest;
 import vn.edu.uit.is208.salon.service.RecipeService;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/services/{serviceId}/recipes")
@@ -33,5 +33,11 @@ public class RecipeController {
     @GetMapping
     public ResponseEntity<RecipeResponse> getRecipesByServiceId(@PathVariable Long serviceId) {
         return ResponseEntity.ok(recipeService.getRecipesByServiceId(serviceId));
+    }
+
+    @PutMapping("/{productId}")
+    public ResponseEntity<RecipeResponse> updateRecipe(@PathVariable Long serviceId, @PathVariable Long productId, @RequestBody @Valid UpdateRecipeRequest request) {
+        RecipeResponse updatedServiceRecipe = recipeService.updateRecipe(serviceId, productId, request);
+        return ResponseEntity.ok(updatedServiceRecipe);
     }
 }

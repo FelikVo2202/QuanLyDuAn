@@ -8,6 +8,7 @@ import vn.edu.uit.is208.salon.constant.ProductType;
 import vn.edu.uit.is208.salon.dto.CreateRecipeRequest;
 import vn.edu.uit.is208.salon.dto.RecipeItemResponse;
 import vn.edu.uit.is208.salon.dto.RecipeResponse;
+import vn.edu.uit.is208.salon.dto.UpdateRecipeRequest;
 import vn.edu.uit.is208.salon.entity.Product;
 import vn.edu.uit.is208.salon.entity.ServiceRecipe;
 import vn.edu.uit.is208.salon.entity.SalonService;
@@ -80,5 +81,18 @@ public class RecipeService {
                 .serviceName(service.getName())
                 .ingredients(ingredients)
                 .build();
+    }
+
+    @Transactional
+    public RecipeResponse updateRecipe(Long serviceId, Long productId, UpdateRecipeRequest request) {
+        validateServiceNotInPendingBill(serviceId);
+
+        ServiceRecipe recipe = serviceRecipeRepository.findByIdServiceIdAndIdProductId(serviceId, productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy công thức với sản phẩm ID: " + productId + " trong dịch vụ này."));
+
+        recipe.setQuantityConsumed(request.getQuantityConsumed());
+        serviceRecipeRepository.save(recipe);
+
+        return getRecipesByServiceId(serviceId);
     }
 }

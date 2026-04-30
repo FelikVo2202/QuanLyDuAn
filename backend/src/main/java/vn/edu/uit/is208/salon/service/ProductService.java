@@ -80,7 +80,7 @@ public class ProductService {
                 (existingProduct.getConversionFactor() != null && existingProduct.getConversionFactor().compareTo(request.getConversionFactor()) != 0);
 
         if (isUomChanged) {
-            boolean hasTransactions = inventoryLedgerRepository.existsByProductId(id) || billDetailRepository.existsByProductId(id);
+            boolean hasTransactions = inventoryLedgerRepository.existsByProduct_Id(id) || billDetailRepository.existsByProductId(id);
             if (hasTransactions) {
                 throw new BusinessRuleException("Không thể thay đổi đơn vị tính hoặc hệ số quy đổi vì sản phẩm này đã phát sinh giao dịch kho hoặc hóa đơn");
             }

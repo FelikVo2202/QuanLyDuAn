@@ -40,4 +40,12 @@ public class RecipeController {
         RecipeResponse updatedServiceRecipe = recipeService.updateRecipe(serviceId, productId, request);
         return ResponseEntity.ok(updatedServiceRecipe);
     }
+
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<RecipeResponse> deleteRecipe(
+            @PathVariable Long serviceId,
+            @PathVariable Long productId) {
+
+        return ResponseEntity.ok(recipeService.deleteRecipe(serviceId, productId));
+    }
 }

@@ -95,4 +95,16 @@ public class RecipeService {
 
         return getRecipesByServiceId(serviceId);
     }
+
+    @Transactional
+    public RecipeResponse deleteRecipe(Long serviceId, Long productId) {
+        validateServiceNotInPendingBill(serviceId);
+
+        ServiceRecipe recipe = serviceRecipeRepository.findByIdServiceIdAndIdProductId(serviceId, productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy công thức với sản phẩm ID: " + productId + " trong dịch vụ này."));
+
+        serviceRecipeRepository.delete(recipe);
+
+        return getRecipesByServiceId(serviceId);
+    }
 }

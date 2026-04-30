@@ -3,6 +3,7 @@ package vn.edu.uit.is208.salon.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.edu.uit.is208.salon.constant.PaymentStatus;
 import vn.edu.uit.is208.salon.constant.ProductType;
 import vn.edu.uit.is208.salon.dto.CreateRecipeRequest;
 import vn.edu.uit.is208.salon.dto.RecipeItemResponse;
@@ -13,6 +14,7 @@ import vn.edu.uit.is208.salon.entity.SalonService;
 import vn.edu.uit.is208.salon.exception.BusinessRuleException;
 import vn.edu.uit.is208.salon.exception.ResourceNotFoundException;
 import vn.edu.uit.is208.salon.mapper.ServiceRecipeMapper;
+import vn.edu.uit.is208.salon.repository.BillDetailRepository;
 import vn.edu.uit.is208.salon.repository.ProductRepository;
 import vn.edu.uit.is208.salon.repository.SalonServiceRepository;
 import vn.edu.uit.is208.salon.repository.ServiceRecipeRepository;
@@ -26,6 +28,7 @@ public class RecipeService {
     private final SalonServiceRepository salonServiceRepository;
     private final ProductRepository productRepository;
     private final ServiceRecipeMapper serviceRecipeMapper;
+    private final BillDetailRepository billDetailRepository;
 
     @Transactional
     public RecipeResponse createRecipe(Long serviceId, CreateRecipeRequest request) {
@@ -43,6 +46,8 @@ public class RecipeService {
             throw new BusinessRuleException("Sản phẩm '" + product.getName() + "' đã tồn tại trong công thức của dịch vụ này.");
         }
 
+        validateServiceNotInPendingBill(serviceId);
+
         ServiceRecipe recipe = new ServiceRecipe();
         recipe.setService(service);
         recipe.setProduct(product);
@@ -51,6 +56,13 @@ public class RecipeService {
         serviceRecipeRepository.save(recipe);
 
         return getRecipesByServiceId(serviceId);
+    }
+
+    private void validateServiceNotInPendingBill(Long serviceId) {
+        boolean isServiceInPendingBill = billDetailRepository.existsByServiceIdAndBillPaymentStatus(serviceId, PaymentStatus.PENDING);
+        if (isServiceInPendingBill) {
+            throw new BusinessRuleException("Không thể thay đổi công thức vì dịch vụ này đang có khách sử dụng (Hóa đơn chưa thanh toán).");
+        }
     }
 
     @Transactional(readOnly = true)

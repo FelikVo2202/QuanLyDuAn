@@ -9,4 +9,6 @@ import java.util.List;
 
 public interface ServiceRecipeRepository extends JpaRepository<ServiceRecipe, ServiceRecipeId> {
     List<ServiceRecipe> findByService_IdIn(Collection<Long> serviceIds);
+
+    boolean existsByProductId(Long id);
 }

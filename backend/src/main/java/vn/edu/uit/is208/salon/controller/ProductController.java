@@ -32,6 +32,11 @@ public class ProductController {
         return ResponseEntity.ok(productService.getAllProducts(productType, category, search, pageable));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponse> get(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.get(id));
+    }
+
     @PostMapping
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody ProductRequest request) {
         ProductResponse createdProduct = productService.createProduct(request);
@@ -43,6 +48,12 @@ public class ProductController {
                 .toUri();
 
         return ResponseEntity.created(location).body(createdProduct);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductResponse> update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
+        ProductResponse updatedProduct = productService.updateProduct(id, request);
+        return ResponseEntity.ok(updatedProduct);
     }
 
     @DeleteMapping("/{id}")

@@ -12,5 +12,7 @@ public class ProductResponse {
     private String category;
     private BigDecimal price;
     private String baseUom;
+    private String purchasingUom;
+    private BigDecimal conversionFactor;
     private BigDecimal quantityOnHand;
 }

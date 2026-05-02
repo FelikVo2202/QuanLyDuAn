@@ -24,7 +24,7 @@
       height: 100vh;
     }
 
-    /* SIDEBAR - giữ nguyên phong cách */
+    /* SIDEBAR */
     .sidebar {
       width: 260px;
       background: #fdf0d9;
@@ -85,6 +85,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-height: 0;
       background: #fdf0d9;
     }
 
@@ -96,7 +97,7 @@
       align-items: center;
     }
 
-    .page-title h2 {
+    .page-title h2, h2.page-title {
       font-size: 20px;
       font-weight: 600;
       color: #34281d;
@@ -178,6 +179,9 @@
       border-radius: 24px;
       padding: 24px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
     }
 
     .action-bar {
@@ -261,14 +265,14 @@
     }
     .products-table th {
       text-align: left;
-      padding: 12px 8px;
+      padding: 12px 12px;
       font-size: 12px;
       font-weight: 600;
       color: #8b6b4a;
       border-bottom: 1px solid #f0e0d0;
     }
     .products-table td {
-      padding: 16px 8px;
+      padding: 16px 12px;
       font-size: 13px;
       border-bottom: 1px solid #f5ede4;
       vertical-align: middle;
@@ -280,17 +284,60 @@
       font-size: 11px;
       font-weight: 600;
     }
-    .type-service { background: #e0f2fe; color: #0369a1; }
-    .type-product { background: #dcfce7; color: #15803d; }
+    .type-professional{ background: #e0f2fe; color: #0369a1; }
+    .type-retail { background: #dcfce7; color: #15803d; }
     .type-both { background: #fef9c3; color: #854d0e; }
+
+    .stock-on-hand-cell { vertical-align: middle; line-height: 1.35; min-width: 140px; }
+    .stock-on-hand-primary {
+      font-size: 15px;
+      font-weight: 700;
+      color: #15803d;
+    }
+    .stock-on-hand-primary.stock-low {
+      color: #dc2626;
+    }
+    .stock-on-hand-uom {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b5340;
+    }
+    .stock-on-hand-sub {
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #a08b72;
+    }
+    .stock-pack-cell {
+      font-size: 12px;
+      color: #4e3927;
+      line-height: 1.45;
+      white-space: nowrap;
+      min-width: 130px;
+    }
+    .stock-pack-strong { font-weight: 700; color: #34281d; }
+
+    .actions-cell {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      flex-wrap: nowrap;
+      min-width: 150px;
+    }
 
     .action-btn {
       background: none;
       border: none;
       font-size: 18px;
       cursor: pointer;
-      padding: 4px 8px;
+      padding: 6px;
       border-radius: 8px;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .action-btn:hover {
+      background: #f0e0d0;
     }
 
     .empty-state {
@@ -307,7 +354,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 999;
+      z-index: 1000;
     }
 
     .hidden { display: none; }
@@ -369,6 +416,213 @@
       background: #ccc;
       cursor: not-allowed;
     }
+
+    /* Custom dialogs (filter, confirm, ledger) */
+    .dialog-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 22, 16, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1200;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+    .dialog-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .dialog-panel {
+      background: linear-gradient(165deg, #fffef9 0%, #fff9ee 100%);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 48px rgba(54, 46, 27, 0.18), 0 0 0 1px rgba(196, 140, 71, 0.15);
+      transform: translateY(8px);
+      transition: transform 0.25s ease;
+    }
+    .dialog-overlay.open .dialog-panel {
+      transform: translateY(0);
+    }
+    .dialog-panel--wide {
+      max-width: 720px;
+    }
+    .dialog-head {
+      padding: 20px 24px 12px;
+      border-bottom: 1px solid rgba(226, 213, 192, 0.6);
+    }
+    .dialog-head h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #34281d;
+      margin: 0;
+    }
+    .dialog-head p {
+      font-size: 13px;
+      color: #8b6b4a;
+      margin: 6px 0 0;
+    }
+    .dialog-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+    }
+    .dialog-body label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b5340;
+      margin-bottom: 6px;
+    }
+    .dialog-body input[type="text"],
+    .dialog-body select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #e8dcc8;
+      border-radius: 14px;
+      background: #fff;
+      font-size: 14px;
+      margin-bottom: 16px;
+      font-family: inherit;
+    }
+    .dialog-foot {
+      padding: 16px 24px 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      border-top: 1px solid rgba(226, 213, 192, 0.5);
+      background: rgba(255, 250, 240, 0.6);
+    }
+    .btn-pill {
+      border: none;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-pill:active { transform: scale(0.98); }
+    .btn-pill--ghost {
+      background: #fff;
+      color: #5c4a38;
+      border: 1px solid #e2d5c0;
+    }
+    .btn-pill--ghost:hover { background: #faf5eb; }
+    .btn-pill--primary {
+      background: linear-gradient(135deg, #c48c47, #e8b86d);
+      color: #1a140d;
+      box-shadow: 0 4px 12px rgba(196, 140, 71, 0.35);
+    }
+    .btn-pill--danger {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+    }
+    .ledger-table-wrap {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #ede4d6;
+      background: #fff;
+    }
+    .ledger-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .ledger-table th {
+      text-align: left;
+      padding: 12px 14px;
+      background: #fdf6ea;
+      color: #6b5340;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .ledger-table td {
+      padding: 12px 14px;
+      border-top: 1px solid #f0e8dc;
+      color: #34281d;
+    }
+    .ledger-table .amt-pos { color: #15803d; font-weight: 700; }
+    .ledger-table .ledger-amt-stack .amt-main { font-size: 14px; }
+    .ledger-table .ledger-amt-stack .amt-sub {
+      margin-top: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #a08b72;
+    }
+    .ledger-table .amt-neg { color: #b91c1c; font-weight: 700; }
+    .ledger-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #eef2ff;
+      color: #4338ca;
+    }
+    .ledger-empty, .ledger-loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #8b6b4a;
+      font-size: 14px;
+    }
+    .ledger-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .ledger-loading.hidden {
+      display: none !important;
+    }
+    .ledger-spinner {
+      width: 22px;
+      height: 22px;
+      border: 3px solid #e8dcc8;
+      border-top-color: #c48c47;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #34281d;
+      color: #fff9ee;
+      padding: 14px 22px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+      z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s, transform 0.25s, visibility 0.25s;
+      max-width: min(90vw, 420px);
+      text-align: center;
+    }
+    #toast.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
     @media (max-width: 900px) {
       .main { padding: 20px; }
       .products-table { font-size: 12px; }
@@ -414,7 +668,7 @@
         </div>
       </div>
       <div class="search-bar-center">
-        <input type="text" placeholder="Search" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
+        <input type="text" id="topSearchInput" placeholder="Search" oninput="onSearchInput('top')" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
       </div>
       <div class="stylist-info">
         <div class="stylist-avatar">👩</div>
@@ -428,7 +682,7 @@
     <div class="inventory-section">
       <div class="action-bar">
         <div class="search-bar">
-          <input type="text" id="searchInput" placeholder="Search by ID, name, type..." onkeyup="filterProducts()" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 18px; padding-left: 36px;">
+          <input type="text" id="searchInput" placeholder="Search by ID, name" oninput="onSearchInput('main')" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 18px; padding-left: 36px;">
         </div>
         <div class="right-group">
           <button class="filter-btn" onclick="openFilterModal()">
@@ -459,20 +713,20 @@
     <input type="text" id="productName" placeholder="e.g., Premium Hair Wax">
     <label>Product Type *</label>
     <select id="productType">
-      <option value="Both">Both (Service + Product)</option>
-      <option value="Product">Product Only</option>
-      <option value="Service">Service Only</option>
+      <option value="BOTH">Both (Retail & Professional)</option>
+      <option value="RETAIL">Retail only</option>
+      <option value="PROFESSIONAL">Professional only (salon use)</option>
     </select>
     <label>Category *</label>
     <input type="text" id="category" placeholder="e.g., Wax, Hair Dye, Shampoo">
-    <label>Price (VND) *</label>
+    <label>Price *</label>
     <input type="number" step="10000" id="price" placeholder="0">
-    <label>Base Unit (BaseUOM) *</label>
-    <input type="text" id="baseUom" placeholder="e.g., Each, Tube, Bottle">
-    <label>Purchasing Unit (PurchasingUOM)</label>
-    <input type="text" id="purchasingUom" placeholder="e.g., Box, Carton">
-    <label>Conversion Factor (1 BaseUOM = ? PurchasingUOM)</label>
-    <input type="number" step="0.5" id="conversionFactor" placeholder="e.g., 1 Tube = 0.5 Box">
+    <label>Base Unit *</label>
+    <input type="text" id="baseUom" placeholder="e.g., ml, gram">
+    <label>Purchasing Unit *</label>
+    <input type="text" id="purchasingUom" placeholder="e.g., Bottle, Tube">
+    <label>Conversion — base units per 1 purchase unit *</label>
+    <input type="number" step="0.5" id="conversionFactor" placeholder="e.g., 500 (1 bottle = 500 ml)">
     <div class="modal-actions">
       <button class="cancel-btn" onclick="closeProductModal()">Cancel</button>
       <button class="save-btn" onclick="saveProduct()">Save Product</button>
@@ -480,8 +734,33 @@
   </div>
 </div>
 
+<!-- MODAL ADJUST STOCK -->
+<div id="adjustModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Adjust stock</h3>
+    <input type="hidden" id="adjustProductId">
+    <label>Product</label>
+    <input type="text" id="adjustProductName" disabled style="background:#f5f5f5;">
+    <label>Current stock</label>
+    <input type="text" id="adjustCurrentStock" disabled style="background:#f5f5f5;" title="Purchase unit is primary">
+    <label>Transaction type *</label>
+    <select id="adjustTransactionType">
+      <option value="RESTOCK">RESTOCK — Add stock (restock)</option>
+      <option value="ADJUSTMENT">ADJUSTMENT — Remove stock (shrinkage, count correction)</option>
+    </select>
+    <label id="adjustQuantityLabel">Quantity (purchase unit) *</label>
+    <input type="number" id="adjustQuantity" placeholder="e.g. 10" step="any" min="0">
+    <label>Reference ID (optional)</label>
+    <input type="number" id="adjustReferenceId" placeholder="e.g. receipt or order ID">
+    <div class="modal-actions">
+      <button type="button" class="cancel-btn" onclick="closeAdjustModal()">Cancel</button>
+      <button type="button" class="save-btn" onclick="submitAdjustment()">Apply</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  const API_BASE_URL = "http://localhost:8080";
+  const API_BASE_URL = "http://localhost:8080/api";
 
   // ==================== AUTH CHECK ====================
   const user = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
@@ -493,7 +772,16 @@
 
   // Get access token
   function getAccessToken() {
-    return localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+    const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+    if (!userStr) return null;
+
+    try {
+      const userData = JSON.parse(userStr);
+      return userData.token;
+    } catch (error) {
+      console.error("Error reading user data:", error);
+      return null;
+    }
   }
 
   // Helper function for headers
@@ -509,7 +797,31 @@
     };
   }
 
-  // Helper xử lý response
+  /** Turns backend error bodies (JSON or text) into a short user-facing message. */
+  function formatApiError(raw) {
+    if (raw == null || raw === '') return 'Something went wrong. Please try again.';
+    const s = String(raw).trim();
+    try {
+      const j = JSON.parse(s);
+      if (j.message && typeof j.message === 'string') return j.message;
+      if (Array.isArray(j.errors) && j.errors.length) {
+        const parts = j.errors.map(e =>
+          (e && (e.defaultMessage || e.message)) ? (e.defaultMessage || e.message) : String(e)
+        ).filter(Boolean);
+        if (parts.length) return parts.join('; ');
+      }
+      if (typeof j.status === 'number' && typeof j.error === 'string') {
+        const p = (j.path && typeof j.path === 'string') ? ` — ${j.path}` : '';
+        return j.error + p;
+      }
+      if (j.error && typeof j.error === 'string') return j.error;
+      if (j.detail && typeof j.detail === 'string') return j.detail;
+      if (j.title && typeof j.title === 'string') return j.title;
+    } catch (_) { /* not JSON */ }
+    if (s.length > 220) return s.slice(0, 217) + '…';
+    return s;
+  }
+
   async function handleResponse(response) {
     if (response.status === 401) {
       localStorage.removeItem('accessToken');
@@ -522,10 +834,43 @@
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(error || `HTTP error! status: ${response.status}`);
+      throw new Error(formatApiError(error) || `HTTP error (${response.status})`);
     }
 
     return response.json();
+  }
+
+  // ==================== TOAST & CUSTOM DIALOGS ====================
+  let toastTimer = null;
+  function showToast(message, durationMs = 3200) {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), durationMs);
+  }
+
+  let confirmResolve = null;
+  function openConfirmDialog({ title, message, okText = 'Confirm', danger = false }) {
+    return new Promise((resolve) => {
+      confirmResolve = resolve;
+      const overlay = document.getElementById('confirmDialog');
+      document.getElementById('confirmDialogTitle').textContent = title;
+      document.getElementById('confirmDialogMessage').textContent = message;
+      const okBtn = document.getElementById('confirmDialogOk');
+      okBtn.textContent = okText;
+      okBtn.className = 'btn-pill ' + (danger ? 'btn-pill--danger' : 'btn-pill--primary');
+      overlay.classList.add('open');
+    });
+  }
+  function closeConfirmDialog(value) {
+    const overlay = document.getElementById('confirmDialog');
+    if (overlay) overlay.classList.remove('open');
+    if (confirmResolve) {
+      confirmResolve(value);
+      confirmResolve = null;
+    }
   }
 
   // Logout function
@@ -542,7 +887,7 @@
   let currentFilterCategory = "";
   let currentFilterType = "";
 
-  // Cập nhật link Dashboard theo role
+  // Dashboard link by role
   const userRole = userData.role;
   const dashboardLink = document.querySelector('.sidebar a[href*="dashboard"]');
   if (dashboardLink) {
@@ -552,47 +897,62 @@
   }
 
   // ==================== API PRODUCTS ====================
-  // Lấy danh sách sản phẩm
+  // Load products
   async function loadInventory() {
     const headers = getAuthHeaders();
-    if (!headers) return;
+    if (!headers) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const container = document.getElementById('inventoryTableContainer');
+    if (container) {
+      container.innerHTML = '<div class="empty-state">Loading products…</div>';
+    }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/products`, {
+      const response = await fetch(`${API_BASE_URL}/products?size=1000`, {
         method: "GET",
         headers: headers
       });
 
       if (response.ok) {
         const data = await response.json();
-        // Map API response fields
-        products = data.map(p => ({
+
+        const productList = data.content || [];
+
+        products = productList.map(p => ({
           ProductID: p.id,
           Name: p.name,
-          ProductType: p.type || 'Product',
+          ProductType: p.productType || 'BOTH',
           Category: p.category,
-          Price: p.price,
+          Price: Number(p.price != null ? p.price : 0),
           BaseUOM: p.baseUom,
           PurchasingUOM: p.purchasingUom,
-          ConversionFactor: p.conversionFactor || 1,
-          currentStock: p.currentStock || 0
+          ConversionFactor: p.conversionFactor != null ? Number(p.conversionFactor) : 1,
+          currentStock: Number(p.quantityOnHand != null ? p.quantityOnHand : 0)
         }));
+
         renderProductTable();
       } else if (response.status === 401) {
         window.location.href = 'login.html';
       } else {
         console.error("Failed to load products");
         products = [];
-        renderProductTable();
+        if (container) {
+          container.innerHTML = '<div class="empty-state">Could not load data. Please try again later.</div>';
+        }
       }
     } catch (err) {
       console.error("API Error:", err);
       products = [];
-      renderProductTable();
+      if (container) {
+        container.innerHTML = '<div class="empty-state">Server connection error. Check that the backend is running.</div>';
+      }
     }
   }
 
-  // Tạo sản phẩm mới
+  // Create product
   async function createProduct(productData) {
     const headers = getAuthHeaders();
     if (!headers) return false;
@@ -604,22 +964,26 @@
         body: JSON.stringify(productData)
       });
 
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        return false;
+      }
       if (response.ok) {
         await loadInventory();
         return true;
       } else {
         const error = await response.text();
-        alert(`Failed to create product: ${error}`);
+        showToast('Could not create product: ' + formatApiError(error));
         return false;
       }
     } catch (err) {
       console.error("Create error:", err);
-      alert("Network error. Please try again.");
+      showToast('Network error. Please try again.');
       return false;
     }
   }
 
-  // Cập nhật sản phẩm
+  // Update product
   async function updateProduct(id, productData) {
     const headers = getAuthHeaders();
     if (!headers) return false;
@@ -631,24 +995,36 @@
         body: JSON.stringify({...productData, id: id})
       });
 
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        return false;
+      }
       if (response.ok) {
         await loadInventory();
         return true;
       } else {
         const error = await response.text();
-        alert(`Failed to update product: ${error}`);
+        showToast('Could not update product: ' + formatApiError(error));
         return false;
       }
     } catch (err) {
       console.error("Update error:", err);
-      alert("Network error. Please try again.");
+      showToast('Network error. Please try again.');
       return false;
     }
   }
 
-  // Xóa sản phẩm
+  // Delete product
   async function deleteProduct(id) {
-    if (!confirm("Delete this product permanently?")) return;
+    const product = products.find(p => p.ProductID === id);
+    const label = product ? product.Name : ('#' + id);
+    const ok = await openConfirmDialog({
+      title: 'Delete product',
+      message: 'Permanently delete "' + label + '"? This cannot be undone.',
+      okText: 'Delete',
+      danger: true
+    });
+    if (!ok) return;
 
     const headers = getAuthHeaders();
     if (!headers) return;
@@ -659,59 +1035,64 @@
         headers: headers
       });
 
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        return;
+      }
       if (response.ok) {
+        showToast('Product deleted.');
         await loadInventory();
       } else {
         const error = await response.text();
-        alert(`Failed to delete: ${error}`);
+        showToast('Could not delete: ' + formatApiError(error));
       }
     } catch (err) {
       console.error("Delete error:", err);
-      alert("Network error. Please try again.");
+      showToast('Network error. Please try again.');
     }
   }
 
   // ==================== API INVENTORY ADJUSTMENT ====================
-  // Điều chỉnh tồn kho
-  async function adjustInventory(productId, quantity, referenceId = null, transactionType = 'ADJUSTMENT') {
+  async function adjustInventory(productId, quantity, referenceId = null) {
     const headers = getAuthHeaders();
     if (!headers) return false;
 
     const adjustmentData = {
       productId: productId,
-      quantity: quantity,
-      transactionType: transactionType
+      quantity: quantity
     };
 
-    if (referenceId) {
+    if (referenceId != null && referenceId !== '') {
       adjustmentData.referenceId = referenceId;
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/inventory-ledgers/adjust`, {
+      const response = await fetch(`${API_BASE_URL}/inventory-ledgers/adjust`, {
         method: "POST",
         headers: headers,
         body: JSON.stringify(adjustmentData)
       });
 
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        return false;
+      }
       if (response.ok) {
-        console.log("Inventory adjusted successfully");
         return true;
       } else {
         const error = await response.text();
         console.error("Adjustment failed:", error);
-        alert(`Adjustment failed: ${error}`);
+        showToast('Stock adjustment failed: ' + formatApiError(error));
         return false;
       }
     } catch (err) {
       console.error("Adjustment error:", err);
-      alert("Network error. Please try again.");
+      showToast('Network error. Please try again.');
       return false;
     }
   }
 
   // ==================== API INVENTORY LEDGERS ====================
-  // Lấy lịch sử tồn kho
   async function getInventoryLedgers({
                                        productId = null,
                                        transactionType = null,
@@ -737,11 +1118,15 @@
     if (sort) params.append('sort', sort);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/inventory-ledgers?${params.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/inventory-ledgers?${params.toString()}`, {
         method: "GET",
         headers: headers
       });
 
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        return null;
+      }
       if (response.ok) {
         return await response.json();
       } else {
@@ -779,6 +1164,16 @@
     renderProductTable();
   }
 
+  function onSearchInput(from) {
+    const top = document.getElementById('topSearchInput');
+    const main = document.getElementById('searchInput');
+    if (top && main) {
+      if (from === 'top') main.value = top.value;
+      else top.value = main.value;
+    }
+    filterProducts();
+  }
+
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, function(m){
@@ -787,6 +1182,77 @@
       if(m==='>') return '&gt;';
       return m;
     });
+  }
+
+  /** Backend: on-hand qty is base UOM; 1 purchase unit = factor base units */
+  function purchasingConvFactor(p) {
+    if (!p || p.ConversionFactor == null) return 1;
+    const cf = Number(p.ConversionFactor);
+    if (!isFinite(cf) || cf === 0) return 1;
+    return cf;
+  }
+
+  function stockBaseAmount(p) {
+    return Number(p.currentStock != null ? p.currentStock : 0);
+  }
+
+  function stockPurchaseAmount(p) {
+    return stockBaseAmount(p) / purchasingConvFactor(p);
+  }
+
+  function fmtQty(n, maxFrac = 4) {
+    const x = Number(n);
+    if (!isFinite(x)) return '—';
+    return x.toLocaleString('en-US', { maximumFractionDigits: maxFrac });
+  }
+
+  function purchaseUomLabel(p) {
+    const b = String(p.BaseUOM || '').trim();
+    const u = String(p.PurchasingUOM || '').trim();
+    return u || b || '—';
+  }
+
+  /** Plain text line for inputs (adjust modal etc.) */
+  function formatStockLinePurchaseFirstPlain(p) {
+    const pu = purchaseUomLabel(p);
+    const bu = String(p.BaseUOM || '').trim() || '?';
+    return `${fmtQty(stockPurchaseAmount(p))} ${pu} (= ${fmtQty(stockBaseAmount(p))} ${bu})`;
+  }
+
+  /** How purchase package maps to counted base units (matches backend multiply) */
+  function renderPackagingCellHtml(p) {
+    const puRaw = String(p.PurchasingUOM || '').trim();
+    const buRaw = String(p.BaseUOM || '').trim() || '?';
+    const puEsc = escapeHtml(purchaseUomLabel(p));
+    const buEsc = escapeHtml(buRaw);
+    const cf = purchasingConvFactor(p);
+    if (!puRaw || puRaw === buRaw) {
+      return `<span class="stock-pack-strong">${buEsc}</span><div style="margin-top:4px;font-size:11px;color:#a08b72">Counted in ${buEsc}</div>`;
+    }
+    return `<span class="stock-pack-strong">1 ${escapeHtml(puRaw)}</span> = <span class="stock-pack-strong">${escapeHtml(fmtQty(cf))}</span> ${buEsc}`;
+  }
+
+  /** HTML block: purchase qty primary + base qty secondary */
+  function renderStockOnHandCell(p) {
+    const pu = escapeHtml(purchaseUomLabel(p));
+    const bu = escapeHtml(String(p.BaseUOM || '').trim() || '?');
+    const pq = fmtQty(stockPurchaseAmount(p), 2);
+    const bq = fmtQty(stockBaseAmount(p), 0);
+    const low = stockBaseAmount(p) < 10;
+    const strongCls = low ? 'stock-on-hand-primary stock-low' : 'stock-on-hand-primary';
+    const packInner = renderPackagingCellHtml(p);
+    return `
+      <td class="stock-on-hand-cell">
+        <div class="${strongCls}">${pq} <span class="stock-on-hand-uom">${pu}</span></div>
+        <div class="stock-on-hand-sub">${bq} ${bu}</div>
+      </td>
+      <td class="stock-pack-cell">${packInner}</td>`;
+  }
+
+  /** Ledger: base Δ from API → purchase Δ */
+  function ledgerPurchaseDelta(baseDelta, product) {
+    const cf = purchasingConvFactor(product);
+    return baseDelta / cf;
   }
 
   function renderProductTable() {
@@ -807,11 +1273,9 @@
           <th>Product Name</th>
           <th>Type</th>
           <th>Category</th>
-          <th>Price (VND)</th>
-          <th>Current Stock</th>
-          <th>Base UOM</th>
-          <th>Purchase UOM</th>
-          <th>Conversion</th>
+          <th>Price</th>
+          <th>On hand</th>
+          <th>Unit Conversion</th>
           <th>Actions</th>
          </tr>
       </thead>
@@ -821,16 +1285,14 @@
             <td class="checkbox-cell"><input type="checkbox" class="product-checkbox" data-id="${p.ProductID}" onchange="updateDeleteButtonState()"></td>
             <td>${p.ProductID}</td>
             <td><strong>${escapeHtml(p.Name)}</strong></td>
-            <td><span class="badge-type ${p.ProductType === 'Service' ? 'type-service' : (p.ProductType === 'Product' ? 'type-product' : 'type-both')}">${p.ProductType}</span></td>
+            <td><span class="badge-type ${p.ProductType === 'PROFESSIONAL' ? 'type-professional' : (p.ProductType === 'RETAIL' ? 'type-retail' : 'type-both')}">${p.ProductType}</span></td>
             <td>${p.Category || '—'}</td>
-            <td>${p.Price.toLocaleString('vi-VN')}₫</td>
-            <td><strong style="color: ${p.currentStock < 10 ? '#dc2626' : '#15803d'}">${p.currentStock}</strong></td>
-            <td>${p.BaseUOM}</td>
-            <td>${p.PurchasingUOM || '—'}</td>
-            <td>${p.ConversionFactor || '1.0'}</td>
-            <td>
+            <td>${Number(p.Price).toLocaleString('en-US')}₫</td>
+            ${renderStockOnHandCell(p)}
+            <td class="actions-cell">
               <button class="action-btn edit-btn" onclick="openEditProductModal(${p.ProductID})" title="Edit">✏️</button>
-              <button class="action-btn adjust-btn" onclick="openAdjustModal(${p.ProductID}, '${escapeHtml(p.Name)}', ${p.currentStock || 0})" title="Adjust Stock">📦</button>
+              <button class="action-btn adjust-btn" onclick="openAdjustModalForProduct(${p.ProductID})" title="Adjust Stock">📦</button>
+              <button class="action-btn" onclick="viewProductHistory(${p.ProductID})" title="History">📜</button>
               <button class="action-btn delete-btn" onclick="deleteProduct(${p.ProductID})" title="Delete">🗑️</button>
             </td>
           </tr>
@@ -884,11 +1346,17 @@
   async function deleteSelectedProducts() {
     const selectedIds = getSelectedProductIds();
     if (selectedIds.length === 0) {
-      alert("No products selected.");
+      showToast('Select at least one product.');
       return;
     }
 
-    if (!confirm(`Delete ${selectedIds.length} selected product(s)?`)) return;
+    const ok = await openConfirmDialog({
+      title: 'Bulk delete',
+      message: `Delete ${selectedIds.length} selected product(s)? This cannot be undone.`,
+      okText: 'Delete',
+      danger: true
+    });
+    if (!ok) return;
 
     const headers = getAuthHeaders();
     if (!headers) return;
@@ -902,45 +1370,97 @@
       );
 
       const results = await Promise.all(deletePromises);
+      if (results.some(r => r.status === 401)) {
+        window.location.href = 'login.html';
+        return;
+      }
       const allSuccessful = results.every(r => r.ok);
 
       if (allSuccessful) {
+        showToast('Selected products deleted.');
         await loadInventory();
       } else {
-        alert("Some products could not be deleted");
+        showToast('Some products could not be deleted.');
         await loadInventory();
       }
     } catch (err) {
       console.error("Bulk delete error:", err);
-      alert("Network error. Please try again.");
+      showToast('Network error. Please try again.');
     }
   }
 
   // ==================== FILTER ====================
+  function getUniqueCategories() {
+    const set = new Set();
+    products.forEach(p => {
+      const c = p.Category != null ? String(p.Category).trim() : '';
+      if (c) set.add(c);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }
+
+  function populateFilterCategorySelect() {
+    const sel = document.getElementById('filterCategorySelect');
+    if (!sel) return;
+    const keep = currentFilterCategory;
+    sel.replaceChildren();
+    const optAll = document.createElement('option');
+    optAll.value = '';
+    optAll.textContent = 'All';
+    sel.appendChild(optAll);
+    getUniqueCategories().forEach(cat => {
+      const o = document.createElement('option');
+      o.value = cat;
+      o.textContent = cat;
+      sel.appendChild(o);
+    });
+    if (keep && ![...sel.options].some(o => o.value === keep)) {
+      const o = document.createElement('option');
+      o.value = keep;
+      o.textContent = keep;
+      sel.appendChild(o);
+    }
+    sel.value = keep || '';
+  }
+
   function openFilterModal() {
-    let filterCat = prompt("Filter by Category (leave empty to clear):", currentFilterCategory || "");
-    if (filterCat !== null) {
-      currentFilterCategory = filterCat.trim() === "" ? "" : filterCat.trim();
-    }
-    let filterType = prompt("Filter by Product Type (Service / Product / Both / leave empty):", currentFilterType || "");
-    if (filterType !== null) {
-      const val = filterType.trim();
-      if (val === "" || val === "Service" || val === "Product" || val === "Both") {
-        currentFilterType = val;
-      } else if (val !== "") {
-        alert("Invalid type. Please enter: Service, Product, Both");
-      }
-    }
+    populateFilterCategorySelect();
+    document.getElementById('filterTypeSelect').value = currentFilterType || '';
+    document.getElementById('filterDialog').classList.add('open');
+  }
+  function closeFilterDialog() {
+    document.getElementById('filterDialog').classList.remove('open');
+  }
+  function applyFilterDialog() {
+    currentFilterCategory = document.getElementById('filterCategorySelect').value.trim();
+    currentFilterType = document.getElementById('filterTypeSelect').value.trim();
     renderProductTable();
+    closeFilterDialog();
+  }
+  function clearFilterDialog() {
+    currentFilterCategory = '';
+    currentFilterType = '';
+    populateFilterCategorySelect();
+    document.getElementById('filterTypeSelect').value = '';
+    renderProductTable();
+    closeFilterDialog();
   }
 
   // ==================== EXPORT CSV ====================
   function exportInventoryCSV() {
     const dataToExport = getFilteredProducts();
-    if (dataToExport.length === 0) { alert("No data to export"); return; }
-    let rows = [["ProductID","Name","ProductType","Category","Price","CurrentStock","BaseUOM","PurchasingUOM","ConversionFactor"]];
+    if (dataToExport.length === 0) {
+      showToast('No data to export.');
+      return;
+    }
+    let rows = [["ProductID","Name","ProductType","Category","Price","StockPurchaseQty","StockBaseQty","PurchaseUOM","BaseUOM","BasePerPurchaseUnit"]];
     dataToExport.forEach(p => {
-      rows.push([p.ProductID, p.Name, p.ProductType, p.Category || "", p.Price, p.currentStock, p.BaseUOM, p.PurchasingUOM || "", p.ConversionFactor || ""]);
+      rows.push([
+        p.ProductID, p.Name, p.ProductType, p.Category || "", p.Price,
+        stockPurchaseAmount(p), stockBaseAmount(p),
+        purchaseUomLabel(p), (p.BaseUOM || ''),
+        purchasingConvFactor(p)
+      ]);
     });
     const csvContent = rows.map(row => row.join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csvContent], {type: "text/csv;charset=utf-8;"});
@@ -952,6 +1472,7 @@
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    showToast('Exported inventory_export.csv');
   }
 
   // ==================== PRODUCT MODAL ====================
@@ -961,7 +1482,7 @@
     document.getElementById('modalTitle').innerText = "Add New Product";
     document.getElementById('editProductId').value = "";
     document.getElementById('productName').value = "";
-    document.getElementById('productType').value = "Both";
+    document.getElementById('productType').value = "BOTH";
     document.getElementById('category').value = "";
     document.getElementById('price').value = "";
     document.getElementById('baseUom').value = "";
@@ -1000,18 +1521,18 @@
             parseFloat(document.getElementById('conversionFactor').value) : 1;
 
     if (!name || !baseUom || isNaN(price) || price <= 0) {
-      alert("Please fill required fields: Name, Base UOM, Price (>0)");
+      showToast('Fill in name, base unit, and a price greater than 0.');
       return;
     }
 
     const editId = document.getElementById('editProductId').value;
     const productData = {
       name: name,
-      type: productType,
+      productType: productType,
       category: category || null,
       price: price,
       baseUom: baseUom,
-      purchasingUom: purchasingUom || null,
+      purchasingUom: (purchasingUom || baseUom).trim(),
       conversionFactor: conversionFactor
     };
 
@@ -1029,16 +1550,26 @@
 
   // ==================== ADJUST MODAL ====================
   const adjustModal = document.getElementById('adjustModal');
-  let currentProductStock = 0;
 
-  function openAdjustModal(productId, productName, currentStock) {
-    document.getElementById('adjustProductId').value = productId;
-    document.getElementById('adjustProductName').value = productName;
-    document.getElementById('adjustCurrentStock').value = currentStock;
+  function openAdjustModalForProduct(productId) {
+    const product = products.find(p => p.ProductID === productId);
+    if (!product) return;
+    openAdjustModal(product);
+  }
+
+  function adjustModalProductLookup() {
+    const idStr = document.getElementById('adjustProductId').value;
+    if (!idStr) return null;
+    return products.find(pp => pp.ProductID === parseInt(idStr, 10)) || null;
+  }
+
+  function openAdjustModal(product) {
+    document.getElementById('adjustProductId').value = product.ProductID;
+    document.getElementById('adjustProductName').value = product.Name;
+    document.getElementById('adjustCurrentStock').value = formatStockLinePurchaseFirstPlain(product);
     document.getElementById('adjustQuantity').value = '';
     document.getElementById('adjustReferenceId').value = '';
-    document.getElementById('adjustTransactionType').value = 'ADJUSTMENT';
-    currentProductStock = currentStock;
+    document.getElementById('adjustTransactionType').value = 'RESTOCK';
     adjustModal.classList.remove('hidden');
   }
 
@@ -1047,118 +1578,234 @@
   }
 
   async function submitAdjustment() {
-    const productId = parseInt(document.getElementById('adjustProductId').value);
-    let quantity = parseFloat(document.getElementById('adjustQuantity').value);
+    const productId = parseInt(document.getElementById('adjustProductId').value, 10);
+    const quantity = parseFloat(document.getElementById('adjustQuantity').value);
     const transactionType = document.getElementById('adjustTransactionType').value;
-    const referenceId = document.getElementById('adjustReferenceId').value;
+    const refRaw = document.getElementById('adjustReferenceId').value.trim();
+    let referenceId = null;
+    if (refRaw !== '') {
+      referenceId = parseInt(refRaw, 10);
+      if (isNaN(referenceId)) {
+        showToast('Reference ID must be an integer.');
+        return;
+      }
+    }
 
     if (isNaN(quantity) || quantity <= 0) {
-      alert("Please enter a valid quantity > 0");
+      showToast('Enter a valid quantity greater than 0.');
       return;
     }
 
-    // Adjust sign based on transaction type
-    const decreaseTypes = ['SERVICE_USE', 'RETAIL_SALE'];
-    let finalQuantity = quantity;
-    if (decreaseTypes.includes(transactionType)) {
-      finalQuantity = -quantity;
-    }
+    const finalQuantity = transactionType === 'ADJUSTMENT' ? -quantity : quantity;
+    const abs = Math.abs(finalQuantity);
+    const prod = adjustModalProductLookup();
+    const cf = prod ? purchasingConvFactor(prod) : 1;
+    const bu = prod ? String(prod.BaseUOM || '').trim() || '?' : '?';
+    const pu = prod ? purchaseUomLabel(prod || {}) : 'unit';
+    const baseEff = quantity * cf;
+    const msg = transactionType === 'RESTOCK'
+      ? `Add ${fmtQty(abs)} ${pu}? On-hand (${bu}) increases by ${fmtQty(baseEff)}.`
+      : `Remove ${fmtQty(abs)} ${pu} from stock (adjustment)? On-hand (${bu}) decreases by ${fmtQty(baseEff)}.`;
 
-    let actionText = finalQuantity > 0 ? '增加 (Increase)' : '减少 (Decrease)';
-    if (confirm(`Confirm ${transactionType}: ${actionText} ${Math.abs(finalQuantity)} units?`)) {
-      const success = await adjustInventory(
-              productId,
-              finalQuantity,
-              referenceId ? parseInt(referenceId) : null,
-              transactionType
-      );
+    const ok = await openConfirmDialog({
+      title: 'Confirm stock adjustment',
+      message: msg,
+      okText: 'Apply'
+    });
+    if (!ok) return;
 
-      if (success) {
-        alert("Inventory adjusted successfully!");
-        closeAdjustModal();
-        await loadInventory();
-      } else {
-        alert("Failed to adjust inventory. Please check and try again.");
-      }
+    const success = await adjustInventory(productId, finalQuantity, referenceId);
+
+    if (success) {
+      showToast('Stock updated.');
+      closeAdjustModal();
+      await loadInventory();
     }
   }
 
   // ==================== VIEW LEDGERS ====================
+  function closeLedgerDialog() {
+    document.getElementById('ledgerDialog').classList.remove('open');
+  }
+
+  function formatLedgerDate(rawDate) {
+    if (!rawDate) return '—';
+    const s = String(rawDate);
+    const d = /^\d{4}-\d{2}-\d{2} \d/.test(s) ? new Date(s.replace(' ', 'T')) : new Date(s);
+    return isNaN(d.getTime()) ? String(rawDate) : d.toLocaleString('en-US');
+  }
+
   async function viewProductHistory(productId) {
     const product = products.find(p => p.ProductID === productId);
     if (!product) return;
+
+    const overlay = document.getElementById('ledgerDialog');
+    const loadingEl = document.getElementById('ledgerLoading');
+    const host = document.getElementById('ledgerTableHost');
+
+    document.getElementById('ledgerDialogTitle').textContent = 'Inventory ledger';
+    document.getElementById('ledgerDialogSubtitle').textContent =
+      product.Name + ' · Now: ' + formatStockLinePurchaseFirstPlain(product);
+
+    loadingEl.classList.remove('hidden');
+    host.classList.add('hidden');
+    host.innerHTML = '';
+    overlay.classList.add('open');
 
     const ledgers = await getInventoryLedgers({
       productId: productId,
       page: 0,
       size: 50,
-      sort: 'createdAt,desc'
+      sort: 'transactionDate,desc'
     });
 
-    if (ledgers && ledgers.content) {
-      let historyText = `Stock History for ${product.Name}:\n\n`;
-      historyText += `Current Stock: ${product.currentStock}\n`;
-      historyText += `================================\n`;
+    loadingEl.classList.add('hidden');
 
-      ledgers.content.forEach(ledger => {
-        const date = new Date(ledger.createdAt).toLocaleString('vi-VN');
-        const sign = ledger.quantity > 0 ? '+' : '';
-        historyText += `${date} | ${ledger.transactionType} | ${sign}${ledger.quantity} | Ref: ${ledger.referenceId || 'N/A'}\n`;
-      });
-
-      if (ledgers.content.length === 0) {
-        historyText += "No transaction history found.";
-      }
-
-      alert(historyText);
-    } else {
-      alert("Unable to load transaction history.");
+    if (!ledgers || !ledgers.content) {
+      host.innerHTML = '<div class="ledger-empty">Could not load history. Check your connection or permissions.</div>';
+      host.classList.remove('hidden');
+      return;
     }
+
+    if (ledgers.content.length === 0) {
+      host.innerHTML = '<div class="ledger-empty">No inventory transactions for this product yet.</div>';
+      host.classList.remove('hidden');
+      return;
+    }
+
+    const puLbl = escapeHtml(purchaseUomLabel(product));
+    const buLbl = escapeHtml(String(product.BaseUOM || '').trim() || '?');
+
+    function fmtSignedLedger(n) {
+      const x = Number(n);
+      if (!isFinite(x)) return '—';
+      const s = Math.abs(x).toLocaleString('en-US', { maximumFractionDigits: 4 });
+      if (x > 0) return '+' + s;
+      if (x < 0) return '−' + s;
+      return x.toLocaleString('en-US', { maximumFractionDigits: 4 });
+    }
+
+    let rows = ledgers.content.map(ledger => {
+      const amtBase = ledger.changeAmount != null ? Number(ledger.changeAmount) : Number(ledger.quantity || 0);
+      const amtPur = ledgerPurchaseDelta(amtBase, product);
+      const ref = ledger.referenceId != null ? ledger.referenceId : '—';
+      const typeLabel = ledger.transactionType != null ? String(ledger.transactionType) : '—';
+      const mainCls = amtPur >= 0 ? 'amt-pos' : 'amt-neg';
+      return `<tr>
+        <td>${formatLedgerDate(ledger.transactionDate || ledger.createdAt)}</td>
+        <td><span class="ledger-badge">${escapeHtml(typeLabel)}</span></td>
+        <td class="ledger-amt-stack">
+          <div class="${mainCls} amt-main">${fmtSignedLedger(amtPur)} ${puLbl}</div>
+          <div class="amt-sub">${fmtSignedLedger(amtBase)} ${buLbl}</div>
+        </td>
+        <td>${ref}</td>
+      </tr>`;
+    }).join('');
+
+    host.innerHTML = `
+      <div class="ledger-table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Type</th>
+              <th>AMOUNT CHANGE</th>
+              <th>Reference</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    host.classList.remove('hidden');
   }
 
   // ==================== INITIALIZATION ====================
   document.addEventListener('DOMContentLoaded', () => {
     loadInventory();
+
+    document.getElementById('confirmDialogOk').addEventListener('click', () => closeConfirmDialog(true));
+    document.getElementById('confirmDialogCancel').addEventListener('click', () => closeConfirmDialog(false));
+    document.getElementById('confirmDialog').addEventListener('click', (e) => {
+      if (e.target.id === 'confirmDialog') closeConfirmDialog(false);
+    });
+    document.getElementById('filterDialog').addEventListener('click', (e) => {
+      if (e.target.id === 'filterDialog') closeFilterDialog();
+    });
+    document.getElementById('ledgerDialog').addEventListener('click', (e) => {
+      if (e.target.id === 'ledgerDialog') closeLedgerDialog();
+    });
   });
 
   // Close modal when clicking outside
   window.onclick = function(event) {
     const modal = document.getElementById('productModal');
-    const adjustModal = document.getElementById('adjustModal');
+    const adjustModalEl = document.getElementById('adjustModal');
     if (event.target === modal) {
       closeProductModal();
     }
-    if (event.target === adjustModal) {
+    if (event.target === adjustModalEl) {
       closeAdjustModal();
     }
   }
 </script>
-<!-- MODAL ADJUST STOCK -->
-<div id="adjustModal" class="modal hidden">
-  <div class="modal-content">
-    <h3>Adjust Inventory</h3>
-    <input type="hidden" id="adjustProductId">
-    <label>Product</label>
-    <input type="text" id="adjustProductName" disabled style="background:#f5f5f5;">
-    <label>Current Stock</label>
-    <input type="text" id="adjustCurrentStock" disabled style="background:#f5f5f5;">
-    <label>Transaction Type *</label>
-    <select id="adjustTransactionType">
-      <option value="RESTOCK">RESTOCK (Increase Stock)</option>
-      <option value="SERVICE_USE">SERVICE USE (Decrease Stock)</option>
-      <option value="RETAIL_SALE">RETAIL SALE (Decrease Stock)</option>
-      <option value="ADJUSTMENT">ADJUSTMENT</option>
-      <option value="RETURN">RETURN (Increase Stock)</option>
-    </select>
-    <label>Quantity *</label>
-    <input type="number" id="adjustQuantity" placeholder="Enter quantity" step="1">
-    <label>Reference ID (Optional)</label>
-    <input type="number" id="adjustReferenceId" placeholder="e.g., Order ID, Service ID">
-    <div class="modal-actions">
-      <button class="cancel-btn" onclick="closeAdjustModal()">Cancel</button>
-      <button class="save-btn" onclick="submitAdjustment()">Apply Adjustment</button>
+
+<!-- FILTER DIALOG -->
+<div id="filterDialog" class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="filterDialogTitle">
+  <div class="dialog-panel" onclick="event.stopPropagation()">
+    <div class="dialog-head">
+      <h3 id="filterDialogTitle">Filter list</h3>
+      <p>Narrow down by category or product type.</p>
+    </div>
+    <div class="dialog-body">
+      <label for="filterTypeSelect">Type</label>
+      <select id="filterTypeSelect">
+        <option value="">All</option>
+        <option value="PROFESSIONAL">PROFESSIONAL</option>
+        <option value="RETAIL">RETAIL</option>
+        <option value="BOTH">BOTH</option>
+      </select>
+      <label for="filterCategorySelect">Category</label>
+      <select id="filterCategorySelect"></select>
+    </div>
+    <div class="dialog-foot">
+      <button type="button" class="btn-pill btn-pill--ghost" onclick="clearFilterDialog()">Clear filters</button>
+      <button type="button" class="btn-pill btn-pill--ghost" onclick="closeFilterDialog()">Close</button>
+      <button type="button" class="btn-pill btn-pill--primary" onclick="applyFilterDialog()">Apply</button>
     </div>
   </div>
 </div>
+
+<!-- CONFIRM DIALOG -->
+<div id="confirmDialog" class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle">
+  <div class="dialog-panel" onclick="event.stopPropagation()">
+    <div class="dialog-head">
+      <h3 id="confirmDialogTitle">Confirm</h3>
+      <p id="confirmDialogMessage"></p>
+    </div>
+    <div class="dialog-foot">
+      <button type="button" class="btn-pill btn-pill--ghost" id="confirmDialogCancel">Cancel</button>
+      <button type="button" class="btn-pill btn-pill--primary" id="confirmDialogOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEDGER DIALOG -->
+<div id="ledgerDialog" class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="ledgerDialogTitle">
+  <div class="dialog-panel dialog-panel--wide" onclick="event.stopPropagation()">
+    <div class="dialog-head">
+      <h3 id="ledgerDialogTitle">Inventory ledger</h3>
+      <p id="ledgerDialogSubtitle"></p>
+    </div>
+    <div class="dialog-body" id="ledgerDialogBody">
+      <div class="ledger-loading" id="ledgerLoading"><span class="ledger-spinner"></span> Loading…</div>
+      <div id="ledgerTableHost" class="hidden"></div>
+    </div>
+    <div class="dialog-foot">
+      <button type="button" class="btn-pill btn-pill--primary" onclick="closeLedgerDialog()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

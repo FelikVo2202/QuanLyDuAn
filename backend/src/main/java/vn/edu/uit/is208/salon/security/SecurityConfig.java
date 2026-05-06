@@ -74,7 +74,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/services").permitAll()
 
-                        .requestMatchers("/api/staffs/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/api/staffs/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("MANAGER")
 
                         .requestMatchers(HttpMethod.POST, "/api/appointments/**").hasAnyRole("MANAGER", "RECEPTIONIST")

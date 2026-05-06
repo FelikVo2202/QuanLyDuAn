@@ -82,6 +82,14 @@
       color: #4e3927;
     }
 
+    .logout {
+      margin-top: auto;
+      padding: 16px 24px;
+      cursor: pointer;
+      color: #8b6b4a;
+      font-weight: 500;
+    }
+
     /* MAIN CONTENT */
     .main {
       flex: 1;
@@ -120,9 +128,10 @@
     }
 
     .page-title h2 {
-      font-size: 26px;
+      font-size: 20px;
       font-weight: 600;
-      color: #271e16;
+      color: #34281d;
+      margin: 0;
     }
 
     .page-title p {
@@ -183,6 +192,7 @@
       padding: 8px 20px 8px 12px;
       border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      white-space: nowrap;
     }
     .stylist-avatar {
       width: 48px;
@@ -195,11 +205,13 @@
       font-weight: 800;
       color: #1a1a1a;
       font-size: 18px;
+      flex-shrink: 0;
     }
     .stylist-name h4 {
       font-size: 14px;
       font-weight: 700;
       color: #4e3927;
+      margin: 0;
     }
     .stylist-name p {
       font-size: 11px;
@@ -573,29 +585,30 @@ input, select, button, textarea {
 </head>
 <body>
 <div class="app">
-  <!-- Sidebar GUTSALON -->
-<div class="sidebar">
-  <div class="logo">G<img src="assets/icons/logo_flower.svg" width="20" height="20" alt="">UTSALON<span></span></div>
-   <a href="dashboard_receptionist.html" class="nav-item">
-    <img src="assets/icons/dashboard.svg" width="24" height="24" alt=""> Dashboard
-  </a>
-<a href="schedule.html" class="nav-item active">
-    <img src="assets/icons/schedule.svg" width="24" height="24" alt=""> Schedule
-  </a>
+ <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">G<img src="assets/icons/logo_flower.svg" width="20" height="20" alt="">UTSALON<span></span></div>
+    <a href="dashboard_receptionist.html" class="nav-item">
+      <img src="assets/icons/dashboard.svg" width="24" height="24" alt=""> Dashboard
+    </a>
+    <a href="schedule.html" class="nav-item active">
+      <img src="assets/icons/schedule.svg" width="24" height="24" alt=""> Schedule
+    </a>
 
-<a href="#" class="nav-item">
-    <img src="assets/icons/inventory.svg" width="24" height="24" alt=""> Inventory
-  </a>
-<a href="customers.html" class="nav-item">
-    <img src="assets/icons/customers.svg" width="24" height="24" alt=""> Customers
-  </a>
-</div>
+    <a href="inventory.html" class="nav-item">
+      <img src="assets/icons/inventory.svg" width="24" height="24" alt=""> Inventory
+    </a>
+    <a href="customers.html" class="nav-item">
+      <img src="assets/icons/customers.svg" width="24" height="24" alt=""> Customers
+    </a>
+    <div class="logout" onclick="logout()">🚪 Logout</div>
+  </div>
 
   <!-- Main -->
   <div class="main">
     <div class="topbar">
-      <div class="page-title">
-        <h2>Schedule</h2>
+      <div class="left-section">
+        <h2 class="page-title">Schedule</h2>
         <div class="breadcrumb">
           <span>Dashboard</span>
           <span class="separator">▶</span>
@@ -609,8 +622,8 @@ input, select, button, textarea {
   <div class="stylist-info">
         <div class="stylist-avatar">👩</div>
         <div class="stylist-name">
-          <h4>Alissa</h4>
-          <p>Manger</p>
+          <h4 id="userName">Alissa</h4>
+          <p id="userRole">Manager</p>
         </div>
       </div>
     </div>
@@ -682,9 +695,14 @@ input, select, button, textarea {
   // -------------------- CONFIG --------------------
   const gridEl = document.getElementById("calendar-grid");
   const API_BASE_URL = 'http://localhost:8080/api';
-  const ROWS = 13;      // 08:00 -> 20:00 (13 slots)
+  // Time grid configuration: use 15-minute slots
+  const START_HOUR = 8; // first hour shown
+  const END_HOUR = 20;  // last hour shown (inclusive)
+  const SLOT_MINUTES = 15; // minutes per grid row
+  const SLOTS_PER_HOUR = 60 / SLOT_MINUTES; // 4 for 15-min slots
+  const ROWS = (END_HOUR - START_HOUR + 1) * SLOTS_PER_HOUR; // total grid rows
   let COLS = 5;         // Default, will be updated by staff count
-  let cellHeight = 110;
+  let cellHeight = Math.round(110 / SLOTS_PER_HOUR); // initial guess per slot
   let cellWidth = 0;
   let isDragging = false;
   let startRow = null;
@@ -698,6 +716,26 @@ input, select, button, textarea {
     window.location.href = 'login.html';
   }
   const userData = JSON.parse(userStr);
+
+  // Populate topbar user info (avatar, name, role)
+  (function populateTopbarUser() {
+    try {
+      const userNameEl = document.getElementById('userName');
+      const userRoleEl = document.getElementById('userRole');
+      const avatarEl = document.querySelector('.stylist-avatar');
+      if (userNameEl) userNameEl.innerText = userData.username || userData.userName || userData.name || 'User';
+      if (userRoleEl) {
+        const r = userData.role || '';
+        userRoleEl.innerText = r ? (r.charAt(0).toUpperCase() + r.slice(1).toLowerCase()) : '';
+      }
+      if (avatarEl) {
+        // prefer explicit avatar emoji, otherwise initial letter
+        avatarEl.textContent = userData.avatarEmoji || userData.avatar || (userData.username ? userData.username.charAt(0).toUpperCase() : '👩');
+      }
+    } catch (e) {
+      console.error('Could not populate topbar user info', e);
+    }
+  })();
 
   // Data storage
   let stylists = [];
@@ -772,8 +810,11 @@ input, select, button, textarea {
       const firstCell = document.querySelector(".grid-cell");
       if (firstCell) {
         const rect = firstCell.getBoundingClientRect();
-        cellHeight = rect.height || 110;
+        cellHeight = rect.height || Math.round(110 / SLOTS_PER_HOUR);
         cellWidth = rect.width;
+        // adjust visual time-slot height (hour labels) to span SLOTS_PER_HOUR rows
+        const hourSlotHeight = cellHeight * SLOTS_PER_HOUR;
+        document.querySelectorAll('.time-slot').forEach(el => el.style.height = hourSlotHeight + 'px');
       }
 
       // 5. Load Bookings
@@ -827,9 +868,13 @@ input, select, button, textarea {
     eventDiv.style.gridColumn = col;
     eventDiv.style.gridRow = `${row} / span ${duration}`;
 
-    const startHour = 7 + row;
-    const endHour = startHour + duration;
-
+    // compute start and end times based on slot rows
+    const totalStartMinutes = (START_HOUR * 60) + (row - 1) * SLOT_MINUTES;
+    const totalEndMinutes = totalStartMinutes + (duration * SLOT_MINUTES);
+    const startHour = Math.floor(totalStartMinutes / 60);
+    const startMin = totalStartMinutes % 60;
+    const endHour = Math.floor(totalEndMinutes / 60);
+    const endMin = totalEndMinutes % 60;
     const displayService = booking.serviceNames ? booking.serviceNames.join(", ") : "Service";
 
     const canCancel = userData.role === 'MANAGER' || userData.role === 'RECEPTIONIST';
@@ -837,8 +882,8 @@ input, select, button, textarea {
     eventDiv.innerHTML = `
       <div class="event-header">
         <div class="time-box">
-          <span>${String(startHour).padStart(2, "0")}:00</span>
-          <span>${String(endHour).padStart(2, "0")}:00</span>
+          <span>${String(startHour).padStart(2, "0")}:${String(startMin).padStart(2,'0')}</span>
+          <span>${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2,'0')}</span>
         </div>
         <div class="event-actions">
           ${(canCancel && booking.status !== 'CANCELED') ? '<span class="btn-delete"><img src="assets/icons/delete.svg" /></span>' : ''}
@@ -906,13 +951,15 @@ input, select, button, textarea {
 
       appointments = data.map(app => {
         const date = new Date(app.appointmentDateTime);
-        const row = date.getHours() - 7;
+        // map appointment time to grid row (1-based)
+        const row = ((date.getHours() - START_HOUR) * SLOTS_PER_HOUR) + Math.floor(date.getMinutes() / SLOT_MINUTES) + 1;
         const stylistIndex = stylists.findIndex(s => s.id === app.staffId);
         const col = stylistIndex >= 0 ? stylistIndex + 1 : -1; // -1 means stylist not found
 
-        // Duration in hours
+        // Duration in slots (15-min units)
         const end = new Date(app.endDateTime);
-        const duration = Math.max(1, Math.ceil((end - date) / (1000 * 60 * 60)));
+        const durationMinutes = Math.max(15, Math.ceil((end - date) / (1000 * 60))); // at least 15 minutes
+        const duration = Math.max(1, Math.ceil(durationMinutes / SLOT_MINUTES));
 
         const customer = customers.find(c => c.id === app.customerId);
         const customerName = customer ? `${customer.firstName} ${customer.lastName}` : "Unknown";
@@ -1012,16 +1059,19 @@ input, select, button, textarea {
     }
 
     const { booking } = currentEditingEvent;
-    const startHour = 7 + booking.row;
-    
-    // Use tomorrow's date to ensure it's in the future (sprinting 1 demo limitation)
+    // compute start time from slot row (supports 15-min slots)
+    const totalStartMinutes = (START_HOUR * 60) + (booking.row - 1) * SLOT_MINUTES;
+    const startHour = Math.floor(totalStartMinutes / 60);
+    const startMin = totalStartMinutes % 60;
+
+    // Use tomorrow's date to ensure it's in the future (demo limitation)
     const date = new Date();
     date.setDate(date.getDate() + 1);
-    date.setHours(startHour, 0, 0, 0);
+    date.setHours(startHour, startMin, 0, 0);
 
     // Format: yyyy-MM-dd HH:mm:ss
     const pad = (n) => String(n).padStart(2, '0');
-    const dateStr = `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(startHour)}:00:00`;
+    const dateStr = `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(startHour)}:${pad(startMin)}:00`;
 
     const payload = {
       customerId: customer.id,

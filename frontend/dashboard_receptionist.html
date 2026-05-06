@@ -14,7 +14,7 @@
 
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background: #fae3c8;
+      background: white;
       height: 100vh;
       overflow: hidden;
     }
@@ -24,25 +24,34 @@
       height: 100vh;
     }
 
-    /* SIDEBAR */
+     /* SIDEBAR TRÁI - GUTSALON style */
     .sidebar {
       width: 260px;
-      background: #fae3c8;
+      background: #fdf0d9;
+      color: #362e1b;
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
     }
 
-    .logo {
+     .logo {
       padding: 28px 24px;
       font-size: 22px;
       font-weight: 800;
       color: #362e1b;
-      border-bottom: 1px solid #e8d0b4;
+      border-bottom: 1px solid #2a2a2a;
       margin-bottom: 24px;
     }
     .logo span {
       color: #eab308;
+    }
+
+
+    .logo small {
+      font-size: 10px;
+      color: #64748b;
+      display: block;
+      margin-top: 4px;
     }
 
     .nav-item {
@@ -53,21 +62,21 @@
       align-items: center;
       gap: 12px;
       font-size: 14px;
-      font-weight: 600;
-      color: #8b6b4a;
-      cursor: pointer;
+      font-weight: 700;
+      color: #4e3927;
       transition: all 0.2s;
+      cursor: pointer;
       text-decoration: none;
     }
 
     .nav-item:hover {
-      background: #e8d0b4;
-      color: #362e1b;
+      background: #1e293b;
+      color: #f1f5f9;
     }
 
     .nav-item.active {
-      background: #d7a157;
-      color: #362e1b;
+      background: #f5e3c2;
+      color: #4e3927;
     }
 
     .logout {
@@ -82,34 +91,93 @@
     .main {
       flex: 1;
       overflow-y: auto;
-      padding: 28px 36px;
+      background: #fdf0d9;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* HEADER */
-    .header {
+    /* TOPBAR */
+    .topbar {
+      padding: 16px 28px;
+      background: #fdf0d9;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 28px;
+      flex-shrink: 0;
+      border-bottom: 1px solid rgba(226, 213, 192, 0.3);
     }
-    .header h1 {
-      font-size: 26px;
-      font-weight: 700;
-      color: #362e1b;
+
+    .left-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
-    .header p {
-      font-size: 14px;
-      color: #8b6b4a;
-      margin-top: 4px;
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #34281d;
+    }
+
+    .left-section .page-title {
+      margin: 0;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #8b7d64;
+    }
+
+    .breadcrumb .separator {
+      font-size: 10px;
+      color: #c48c47;
+    }
+
+    .breadcrumb .active {
+      color: #2e70ff;
+      font-weight: 600;
+    }
+
+    .search-bar-center {
+      flex: 1;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .search-bar-center input {
+      width: 100%;
+      padding: 10px 18px;
+      border: 1px solid #fff9ee;
+      border-radius: 12px;
+      font-size: 13px;
+      outline: none;
+      background: #fff9ee;
+      transition: all 0.2s;
+    }
+
+    .search-bar-center input:focus {
+      border-color: #c48c47;
+      box-shadow: 0 0 0 2px rgba(196, 140, 71, 0.1);
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 36px;
     }
     .user-info {
       display: flex;
       align-items: center;
       gap: 16px;
-      background: white;
+      background: #fff9ee;
       padding: 8px 20px 8px 12px;
-      border-radius: 60px;
+      border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      white-space: nowrap;
     }
     .user-avatar {
       width: 48px;
@@ -120,17 +188,19 @@
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      color: #362e1b;
+      color: #1a1a1a;
       font-size: 18px;
+      flex-shrink: 0;
     }
     .user-name h4 {
       font-size: 14px;
       font-weight: 700;
-      color: #362e1b;
+      color: #4e3927;
+      margin: 0;
     }
     .user-name p {
       font-size: 11px;
-      color: #8b6b4a;
+      color: #4e3927;
       margin: 0;
     }
 
@@ -247,37 +317,52 @@
 </head>
 <body>
 <div class="app">
-  <!-- SIDEBAR -->
+ <!-- SIDEBAR -->
   <div class="sidebar">
-    <div class="logo">GOUTSALON<span>✦</span></div>
-    <a href="dashboard_receptionist.html" class="nav-item active">📊 Dashboard</a>
-    <a href="schedule.html" class="nav-item">📅 Schedule</a>
-    <a href="inventory.html" class="nav-item">📦 Inventory</a>
-    <a href="customers.html" class="nav-item">👥 Customers</a>
-    <div class="logout" onclick="logout()">🚪 Đăng xuất</div>
+    <div class="logo">G<img src="assets/icons/logo_flower.svg" width="20" height="20" alt="">UTSALON<span></span></div>
+    <a href="dashboard_receptionist.html" class="nav-item active">
+      <img src="assets/icons/dashboard.svg" width="24" height="24" alt=""> Dashboard
+    </a>
+    <a href="schedule.html" class="nav-item">
+      <img src="assets/icons/schedule.svg" width="24" height="24" alt=""> Schedule
+    </a>
+
+    <a href="inventory.html" class="nav-item">
+      <img src="assets/icons/inventory.svg" width="24" height="24" alt=""> Inventory
+    </a>
+    <a href="customers.html" class="nav-item">
+      <img src="assets/icons/customers.svg" width="24" height="24" alt=""> Customers
+    </a>
+    <div class="logout" onclick="logout()">🚪 Logout</div>
   </div>
 
   <!-- MAIN CONTENT -->
+  <!-- MAIN CONTENT -->
   <div class="main">
-    <div class="header">
-      <div>
-        <h1>Receptionist Dashboard</h1>
-        <p>Today's overview & all stylist appointments</p>
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="left-section">
+        <div class="page-title">Receptionist Dashboard</div>
+        <div class="breadcrumb">
+          <span>Dashboard</span>
+          <span class="separator">▶</span>
+          <span class="active">Appointments</span>
+        </div>
       </div>
-      <div class="user-info">
-        <div class="user-avatar">👩</div>
-        <div class="user-name">
+      <div class="search-bar-center">
+        <input type="text" placeholder="Search by customer or stylist..." style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
+      </div>
+      <div class="stylist-info">
+        <div class="stylist-avatar">👩</div>
+        <div class="stylist-name">
           <h4 id="userName">Receptionist</h4>
-          <p>Receptionist</p>
+          <p id="userRole">Receptionist</p>
         </div>
       </div>
     </div>
 
-    <!-- Search Bar -->
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="🔍 Search by customer or stylist..." onkeyup="filterAppointments()">
-    </div>
-
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
     <!-- STATS CARDS -->
     <div class="stats-row">
       <div class="stat-card">
@@ -301,17 +386,36 @@
         <!-- dynamic table -->
       </div>
     </div>
+    </div>
   </div>
 </div>
 
 <script>
 // ========== KIỂM TRA ĐĂNG NHẬP ==========
-const user = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
-if (!user) {
+const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+if (!userStr) {
   window.location.href = 'login.html';
 }
-const userData = JSON.parse(user);
-document.getElementById('userName').innerText = userData.username || 'Receptionist';
+const userData = JSON.parse(userStr);
+
+// Populate topbar user info (avatar, name, role)
+(function populateTopbarUser() {
+  try {
+    const userNameEl = document.getElementById('userName');
+    const userRoleEl = document.getElementById('userRole');
+    const avatarEl = document.querySelector('.stylist-avatar');
+    if (userNameEl) userNameEl.innerText = userData.username || userData.userName || userData.name || 'User';
+    if (userRoleEl) {
+      const r = userData.role || '';
+      userRoleEl.innerText = r ? (r.charAt(0).toUpperCase() + r.slice(1).toLowerCase()) : '';
+    }
+    if (avatarEl) {
+      avatarEl.textContent = userData.avatarEmoji || userData.avatar || (userData.username ? userData.username.charAt(0).toUpperCase() : '👩');
+    }
+  } catch (e) {
+    console.error('Could not populate topbar user info', e);
+  }
+})();
 
 function logout() {
   localStorage.removeItem('salonUser');

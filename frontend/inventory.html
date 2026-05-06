@@ -97,6 +97,12 @@
       align-items: center;
     }
 
+    .left-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
     .page-title h2, h2.page-title {
       font-size: 20px;
       font-weight: 600;
@@ -673,8 +679,8 @@
       <div class="stylist-info">
         <div class="stylist-avatar">👩</div>
         <div class="stylist-name">
-          <h4 id="userName">admin</h4>
-          <p>Manager</p>
+          <h4 id="userName">Alissa</h4>
+          <p id="userRole">Manager</p>
         </div>
       </div>
     </div>
@@ -763,12 +769,30 @@
   const API_BASE_URL = "http://localhost:8080/api";
 
   // ==================== AUTH CHECK ====================
-  const user = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
-  if (!user) {
+  const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+  if (!userStr) {
     window.location.href = 'login.html';
   }
-  const userData = JSON.parse(user);
-  document.getElementById('userName').innerText = userData.username || 'Manager';
+  const userData = JSON.parse(userStr);
+
+  // Populate topbar user info (avatar, name, role)
+  (function populateTopbarUser() {
+    try {
+      const userNameEl = document.getElementById('userName');
+      const userRoleEl = document.getElementById('userRole');
+      const avatarEl = document.querySelector('.stylist-avatar');
+      if (userNameEl) userNameEl.innerText = userData.username || userData.userName || userData.name || 'User';
+      if (userRoleEl) {
+        const r = userData.role || '';
+        userRoleEl.innerText = r ? (r.charAt(0).toUpperCase() + r.slice(1).toLowerCase()) : '';
+      }
+      if (avatarEl) {
+        avatarEl.textContent = userData.avatarEmoji || userData.avatar || (userData.username ? userData.username.charAt(0).toUpperCase() : '👩');
+      }
+    } catch (e) {
+      console.error('Could not populate topbar user info', e);
+    }
+  })();
 
   // Get access token
   function getAccessToken() {
@@ -891,8 +915,8 @@
   const userRole = userData.role;
   const dashboardLink = document.querySelector('.sidebar a[href*="dashboard"]');
   if (dashboardLink) {
-    if (userRole === 'admin') dashboardLink.href = 'dashboard.html';
-    else if (userRole === 'stylist') dashboardLink.href = 'dashboard_stylist.html';
+    if (userRole === 'MANAGER') dashboardLink.href = 'dashboard.html';
+    else if (userRole === 'STYLIST') dashboardLink.href = 'dashboard_stylist.html';
     else dashboardLink.href = 'dashboard_receptionist.html';
   }
 

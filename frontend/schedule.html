@@ -25,6 +25,12 @@
     .app {
       display: flex;
       height: 100vh;
+      transition: filter 0.3s ease, transform 0.3s ease;
+    }
+    body.modal-active .app {
+      filter: blur(10px);
+      transform: scale(0.98);
+      pointer-events: none;
     }
 
     /* SIDEBAR TRÁI - GUTSALON style */
@@ -37,7 +43,7 @@
       flex-shrink: 0;
     }
 
-     .logo {
+    .logo {
       padding: 28px 24px;
       font-size: 22px;
       font-weight: 800;
@@ -344,7 +350,7 @@
     }
 
     /* EVENT STYLES */
-    
+
     .event strong {
       font-size: 13px;
       color: #4e3927;
@@ -397,195 +403,222 @@
       background: #f8fafc;
     }
     .modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-  }
-  .modal-actions button {
-  padding: 8px 16px;
-  border-radius: 999px;
-  border: none;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-}
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    .modal-actions button {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
 
-#saveBtn {
-  background: linear-gradient(135deg, #e0d3a2, #ffdda1);
-  color: #1a1a1a;
-  box-shadow: 0 4px 10px rgba(250, 204, 21, 0.3);
-}
-  .hidden {
-    display: none;
-  }
+    #saveBtn {
+      background: linear-gradient(135deg, #e0d3a2, #ffdda1);
+      color: #1a1a1a;
+      box-shadow: 0 4px 10px rgba(250, 204, 21, 0.3);
+    }
+    .hidden {
+      display: none;
+    }
 
-  .modal-content {
-  background: #fff9ee;
-  padding: 24px;
-  border-radius: 20px;
+    .modal-content {
+      background: #fff9ee;
+      padding: 24px;
+      border-radius: 20px;
 
-  width: 90%;
-  max-width: 480px;
+      width: 90%;
+      max-width: 480px;
 
-  max-height: 90vh;
-  overflow-y: auto;
+      max-height: 90vh;
+      overflow-y: auto;
 
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
 
-  .modal-content input,
-.modal-content select {
-  width: 100%;
-  margin: 6px 0 12px;
-  padding: 10px 12px;
+    .modal-content input,
+    .modal-content select {
+      width: 100%;
+      margin: 6px 0 12px;
+      padding: 10px 12px;
 
-  border: 1px solid #ffffff;
-  border-radius: 12px;
+      border: 1px solid #ffffff;
+      border-radius: 12px;
 
-  background: #fff;
-  font-size: 13px;
+      background: #fff;
+      font-size: 13px;
 
-  transition: all 0.2s ease;
-}
+      transition: all 0.2s ease;
+    }
 
-.modal-content input:focus,
-.modal-content select:focus {
-  outline: none;
-  border-color: #c48c47;
-  box-shadow: 0 0 0 2px rgba(196, 140, 71, 0.15);
-}
+    .modal-content input:focus,
+    .modal-content select:focus {
+      outline: none;
+      border-color: #c48c47;
+      box-shadow: 0 0 0 2px rgba(196, 140, 71, 0.15);
+    }
 
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-  }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
 
-  #addServiceBtn {
-  width: 100%;
-  padding: 8px;
-  border-radius: 12px;
-  border: 1px dashed #c48c47;
-  background: #fff9ee;
-  color: #a3713f;
-  cursor: pointer;
-  font-size: 12px;
-}
+    #addServiceBtn {
+      width: 100%;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px dashed #c48c47;
+      background: #fff9ee;
+      color: #a3713f;
+      cursor: pointer;
+      font-size: 12px;
+    }
 
-#addServiceBtn:hover {
-  background: #fef3c7;
-}
-/* ===== NEW EVENT STYLE ===== */
-.event {
-  border-radius: 14px;
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+    #addServiceBtn:hover {
+      background: #fef3c7;
+    }
+    /* ===== NEW EVENT STYLE ===== */
+    .event {
+      border-radius: 14px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
 
-  background: #ecfdf5;
-  border: 2px solid #22c55e;
+      background: #ecfdf5;
+      border: 2px solid #22c55e;
 
-  font-size: 12px;
-  overflow: hidden;
-}
+      font-size: 12px;
+      overflow: hidden;
+    }
 
-.event-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+    .event-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-.time-box {
-  display: flex;
-  gap: 4px;
-}
+    .time-box {
+      display: flex;
+      gap: 4px;
+    }
 
-.time-box span {
-  background: #22c55e;
-  color: white;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 10px;
-}
+    .time-box span {
+      background: #22c55e;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 10px;
+    }
 
-.event-actions {
-  display: flex;
-  gap: 4px;
-}
+    .event-actions {
+      display: flex;
+      gap: 4px;
+    }
 
-.event-actions span {
-  width: 18px;
-  height: 18px;
-  font-size: 10px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
+    .event-actions span {
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
 
-.event-actions img {
-  width: 20px;
-  height:20px;
-  pointer-events: none;
-}
+    .event-actions img {
+      width: 20px;
+      height:20px;
+      pointer-events: none;
+    }
 
-.btn-delete {
-  border: 1px solid #000;
-}
+    .btn-delete {
+      border: 1px solid #000;
+    }
 
-.btn-complete {
-  background: #22c55e;
-  color: white;
-}
+    .btn-complete {
+      background: #22c55e;
+      color: white;
+    }
 
-.event-body strong {
-  font-size: 12px;
-  font-weight: 600;
-}
+    .event-body strong {
+      font-size: 12px;
+      font-weight: 600;
+    }
 
-.event-body .service {
-  font-size: 10px;
-  color: #64748b;
-}
+    .event-body .service {
+      font-size: 10px;
+      color: #64748b;
+    }
 
-.checkout {
-  font-size: 10px;
-  text-align: right;
-  color: #22c55e;
-}
+    .checkout {
+      font-size: 10px;
+      text-align: right;
+      color: #22c55e;
+      cursor: pointer;
+      margin-top: 6px;
+      font-weight: 600;
+    }
 
-.event.completed {
-  opacity: 0.5;
-}
-.event.completed {
-  opacity: 0.6;
-
-}
+    .event.completed {
+      opacity: 0.6;
+    }
 
 
-/* Đảm bảo toàn bộ phần tử đều dùng Plus Jakarta Sans */
-*,
-*::before,
-*::after {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-}
+    /* Đảm bảo toàn bộ phần tử đều dùng Plus Jakarta Sans */
+    *,
+    *::before,
+    *::after {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
 
-/* Riêng input, select, button vẫn giữ đúng font */
-input, select, button, textarea {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-}
-</style>
+    /* Riêng input, select, button vẫn giữ đúng font */
+    input, select, button, textarea {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* BILLING MODAL STYLES - từ schedule2 */
+    .billing-overlay {
+      position: fixed; inset: 0; background: rgba(39, 30, 22, 0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    }
+    .billing-overlay.active { opacity: 1; visibility: visible; }
+    .billing-card {
+      background: #fff9ee; width: 90%; max-width: 650px; max-height: 85vh;
+      border-radius: 30px; padding: 30px; border: 1px solid #fde0c6;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.2); overflow-y: auto;
+      transform: translateY(30px); transition: 0.3s ease;
+    }
+    .billing-overlay.active .billing-card { transform: translateY(0); }
+    .section-title { font-size: 13px; font-weight: 800; color: #c48c47; margin: 15px 0 10px; text-transform: uppercase; }
+    .bill-grid { display: grid; grid-template-columns: 2.5fr 1fr 1.2fr 40px; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .bill-grid select, .bill-grid input { width: 100%; border: 1px solid #fff; border-radius: 10px; padding: 8px; font-size: 13px; background: white; }
+    .btn-add-item { background: #fff9ee; border: 1.5px dashed #c0ac94; color: #c0ac94; padding: 10px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; margin: 5px 0; }
+    .summary-box { background: white; border-radius: 20px; padding: 20px; border: 1px solid #fde0c6; margin-top: 20px; }
+    .total-line { display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; color: #c48c47; border-top: 2px solid #fdf0d9; margin-top: 10px; padding-top: 10px; }
+    .bill-btns { display: flex; gap: 12px; margin-top: 25px; justify-content: flex-end; }
+    .btn-p { background: linear-gradient(135deg, #e0d3a2, #ffdda1); color: #362e1b; border: none; padding: 14px 30px; border-radius: 15px; font-weight: 700; cursor: pointer; }
+    .btn-c { background: #f1f5f9; color: #64748b; border: none; padding: 14px 30px; border-radius: 15px; cursor: pointer; }
+    @media (max-width: 900px) {
+      .products-table { font-size: 12px; }
+      .products-table th, .customers-table td { padding: 8px 4px; }
+    }
+  </style>
 </head>
 <body>
 <div class="app">
- <!-- SIDEBAR -->
+  <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="logo">G<img src="assets/icons/logo_flower.svg" width="20" height="20" alt="">UTSALON<span></span></div>
     <a href="dashboard_receptionist.html" class="nav-item">
@@ -616,10 +649,10 @@ input, select, button, textarea {
         </div>
       </div>
       <div class="search-bar">
-       <input type="text" placeholder="Search" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center;background-size: 20px; padding-left: 35px;"> 
+        <input type="text" placeholder="Search" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center;background-size: 20px; padding-left: 35px;">
       </div>
       <!-- Bên phải: Thông tin tài khoản -->
-  <div class="stylist-info">
+      <div class="stylist-info">
         <div class="stylist-avatar">👩</div>
         <div class="stylist-name">
           <h4 id="userName">Alissa</h4>
@@ -631,10 +664,10 @@ input, select, button, textarea {
     <div class="calendar-container">
       <div class="calendar-card">
         <div class="view-switcher">
-        <button class="view-btn active">Today</button>
-        <button class="view-btn">Week</button>
-        <button class="view-btn">Month</button>
-        <button class="view-btn">Day</button>
+          <button class="view-btn active">Today</button>
+          <button class="view-btn">Week</button>
+          <button class="view-btn">Month</button>
+          <button class="view-btn">Day</button>
         </div>
         <!-- Header staff avatars -->
         <div id="calendar-header" class="calendar-header">
@@ -668,6 +701,8 @@ input, select, button, textarea {
     </div>
   </div>
 </div>
+
+<!-- Modal chỉnh sửa appointment (giữ nguyên) -->
 <div id="eventModal" class="modal hidden">
   <div class="modal-content">
     <h3>Edit Appointment</h3>
@@ -691,7 +726,46 @@ input, select, button, textarea {
     </div>
   </div>
 </div>
+
+<!-- BILLING MODAL từ schedule2 -->
+<div id="billingOverlay" class="billing-overlay">
+  <div class="billing-card">
+    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #fde0c6; padding-bottom: 10px; margin-bottom: 20px;">
+      <h2 style="margin:0; color: #271e16;">BILLING</h2>
+      <div style="text-align: right; color: #c48c47; font-weight: 800;">GOUTSALON</div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-size: 12px; font-weight: 700; color: #8b7d64;">Customer's Name:</p>
+      <p id="billCustName" style="font-size: 18px; font-weight: 800; color: #271e16;"></p>
+    </div>
+
+    <div class="section-title">SERVICES</div>
+    <div id="billServiceArea"></div>
+    <button class="btn-add-item" onclick="addBillRow('service')">+ Add service</button>
+
+    <div class="section-title">PRODUCTS</div>
+    <div id="billProductArea"></div>
+    <button class="btn-add-item" onclick="addBillRow('product')">+ Add product</button>
+
+    <div class="summary-box">
+      <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 14px; margin-bottom: 5px;">
+        <span>Subtotal</span><span id="billSubtotal">0 đ</span>
+      </div>
+      <div class="total-line">
+        <span>TOTAL</span><span id="billTotal">0 đ</span>
+      </div>
+    </div>
+
+    <div class="bill-btns">
+      <button class="btn-c" onclick="closeBilling()">Cancel</button>
+      <button class="btn-p" onclick="printBill()">Print receipt & Complete</button>
+    </div>
+  </div>
+</div>
+
 <script>
+  // ================= GIỮ NGUYÊN TOÀN BỘ CODE GỐC CỦA schedule.html =================
   // -------------------- CONFIG --------------------
   const gridEl = document.getElementById("calendar-grid");
   const API_BASE_URL = 'http://localhost:8080/api';
@@ -756,8 +830,6 @@ input, select, button, textarea {
       return null;
     }
     const user = JSON.parse(userStr);
-    console.log('User data:', user);
-    console.log('Token:', user.token);
     if (!user.token) {
       console.error('Token is missing from user data!');
     }
@@ -774,7 +846,7 @@ input, select, button, textarea {
 
     try {
       console.log('Fetching initial data...');
-      
+
       // 1. Load Stylists
       const staffRes = await fetch(`${API_BASE_URL}/staffs?role=STYLIST`, { headers });
       if (staffRes.ok) {
@@ -806,7 +878,7 @@ input, select, button, textarea {
 
       // 4. Build Grid
       generateGrid();
-      
+
       const firstCell = document.querySelector(".grid-cell");
       if (firstCell) {
         const rect = firstCell.getBoundingClientRect();
@@ -893,8 +965,10 @@ input, select, button, textarea {
         <strong>${booking.customerName || "No name"}</strong>
         <div class="service">${displayService}</div>
       </div>
+      <div class="checkout">Checkout</div>
     `;
 
+    // Xóa appointment
     if (canCancel && booking.status !== 'CANCELED') {
       eventDiv.querySelector(".btn-delete").onclick = async (e) => {
         e.stopPropagation();
@@ -904,8 +978,8 @@ input, select, button, textarea {
             const res = await fetch(`${API_BASE_URL}/appointments/${booking.id}/cancel`, { method: 'PATCH', headers });
             if (res.ok) {
               console.log('Appointment canceled successfully, removing from display...');
-              eventDiv.remove(); // Remove the element immediately from display
-              await loadAllBookings(); // Reload to refresh the data
+              eventDiv.remove();
+              await loadAllBookings();
             } else {
               const err = await res.json();
               alert('Could not cancel appointment: ' + (err.message || JSON.stringify(err)));
@@ -918,7 +992,22 @@ input, select, button, textarea {
       };
     }
 
-    eventDiv.onclick = () => openModal(eventDiv, booking);
+    // Mở billing khi click vào "Checkout"
+    eventDiv.querySelector(".checkout").onclick = (e) => {
+      e.stopPropagation();
+      if (booking.status === 'DONE' || booking.status === 'PAID') {
+        alert('This appointment has already been completed.');
+        return;
+      }
+      openBilling(booking);
+    };
+
+    // Click vào event để edit (giữ nguyên chức năng gốc)
+    eventDiv.onclick = (e) => {
+      if (e.target.classList.contains('checkout')) return;
+      openModal(eventDiv, booking);
+    };
+
     gridEl.appendChild(eventDiv);
     console.log('Event rendered successfully');
   }
@@ -930,11 +1019,11 @@ input, select, button, textarea {
       const today = new Date();
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      
+
       const pad = (n) => String(n).padStart(2, '0');
       const todayStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
       const tomorrowStr = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth()+1)}-${pad(tomorrow.getDate())}`;
-      
+
       // Query appointments for today and tomorrow (since appointments are created for tomorrow)
       const url = `${API_BASE_URL}/appointments?startDate=${todayStr}&endDate=${tomorrowStr}`;
       console.log('Fetching appointments from:', url);
@@ -1017,7 +1106,7 @@ input, select, button, textarea {
     console.log('Grid generation complete.');
   }
 
-  // -------------------- MODAL LOGIC --------------------
+  // -------------------- MODAL LOGIC (giữ nguyên) --------------------
   function openModal(eventDiv, booking) {
     currentEditingEvent = { eventDiv, booking };
     inputName.value = booking.customerName || "";
@@ -1033,8 +1122,8 @@ input, select, button, textarea {
 
   function addServiceSelect(selectedId = "") {
     const select = document.createElement("select");
-    select.innerHTML = '<option value="">-- Select Service --</option>' + 
-      services.map(s => `<option value="${s.id}" ${s.id == selectedId ? 'selected' : ''}>${s.name}</option>`).join('');
+    select.innerHTML = '<option value="">-- Select Service --</option>' +
+            services.map(s => `<option value="${s.id}" ${s.id == selectedId ? 'selected' : ''}>${s.name}</option>`).join('');
     servicesContainer.appendChild(select);
   }
 
@@ -1050,8 +1139,8 @@ input, select, button, textarea {
 
     const staffId = inputStylist.value;
     const sIds = Array.from(servicesContainer.querySelectorAll('select'))
-      .map(s => s.value)
-      .filter(v => v);
+            .map(s => s.value)
+            .filter(v => v);
 
     if (sIds.length === 0) {
       alert('Please select at least one service.');
@@ -1059,17 +1148,15 @@ input, select, button, textarea {
     }
 
     const { booking } = currentEditingEvent;
-    // compute start time from slot row (supports 15-min slots)
+    // compute start time from slot row
     const totalStartMinutes = (START_HOUR * 60) + (booking.row - 1) * SLOT_MINUTES;
     const startHour = Math.floor(totalStartMinutes / 60);
     const startMin = totalStartMinutes % 60;
 
-    // Use tomorrow's date to ensure it's in the future (demo limitation)
     const date = new Date();
     date.setDate(date.getDate() + 1);
     date.setHours(startHour, startMin, 0, 0);
 
-    // Format: yyyy-MM-dd HH:mm:ss
     const pad = (n) => String(n).padStart(2, '0');
     const dateStr = `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(startHour)}:${pad(startMin)}:00`;
 
@@ -1117,7 +1204,7 @@ input, select, button, textarea {
   }
   document.getElementById("closeBtn").onclick = closeModal;
 
-  // -------------------- DRAG & DROP --------------------
+  // -------------------- DRAG & DROP (giữ nguyên) --------------------
   function getGridPosition(clientX, clientY) {
     const rect = gridEl.getBoundingClientRect();
     const x = clientX - rect.left;
@@ -1159,7 +1246,7 @@ input, select, button, textarea {
     const { row: endRowRaw } = getGridPosition(e.clientX, e.clientY);
     const endRow = Math.max(endRowRaw, startRow);
     const duration = endRow - startRow + 1;
-    const newBooking = { row: startRow, col: startCol, duration: duration };
+    const newBooking = { row: startRow, col: startCol, duration: duration, serviceIds: [], customerName: '' };
     cleanupDrag();
     openModal(null, newBooking);
   }
@@ -1190,6 +1277,95 @@ input, select, button, textarea {
     else if (userData.role === 'STYLIST') dashboardLink.href = 'dashboard_stylist.html';
     else dashboardLink.href = 'dashboard_receptionist.html';
   }
+
+  function logout() {
+    localStorage.removeItem('salonUser');
+    sessionStorage.removeItem('salonUser');
+    window.location.href = 'login.html';
+  }
+
+  // ================= BILLING FUNCTIONS (từ schedule2, chưa kết nối API) =================
+  const salonServices = [
+    {id: 1, name: "Cắt tóc Men's Cut", price: 150000},
+    {id: 2, name: "Nhuộm màu Gout", price: 500000},
+    {id: 3, name: "Gội đầu thảo dược", price: 100000}
+  ];
+  const salonProducts = [
+    {id: 101, name: "Sáp Gout Wax", price: 250000},
+    {id: 102, name: "Gôm xịt tạo kiểu", price: 180000}
+  ];
+
+  function openBilling(booking) {
+    document.body.classList.add('modal-active');
+    document.getElementById('billingOverlay').classList.add('active');
+    document.getElementById('billCustName').innerText = booking.customerName || "Khách lẻ";
+
+    document.getElementById('billServiceArea').innerHTML = '';
+    document.getElementById('billProductArea').innerHTML = '';
+
+    // Tự động nạp dịch vụ từ lịch hẹn
+    if(booking.serviceIds && booking.serviceIds.length > 0) {
+      booking.serviceIds.forEach(id => {
+        const s = salonServices.find(x => x.id == id);
+        if(s) addBillRow('service', s);
+      });
+    } else {
+      addBillRow('service');
+    }
+    calculateBill();
+  }
+
+  function closeBilling() {
+    document.body.classList.remove('modal-active');
+    document.getElementById('billingOverlay').classList.remove('active');
+  }
+
+  function addBillRow(type, data = null) {
+    const container = type === 'service' ? document.getElementById('billServiceArea') : document.getElementById('billProductArea');
+    const options = type === 'service' ? salonServices : salonProducts;
+    const row = document.createElement('div');
+    row.className = 'bill-grid';
+    row.innerHTML = `
+      <select onchange="updateRowPrice(this)">
+        <option value="0" data-price="0">-- Chọn --</option>
+        ${options.map(item => `<option value="${item.id}" data-price="${item.price}" ${data && data.id == item.id ? 'selected' : ''}>${item.name}</option>`).join('')}
+      </select>
+      <input type="number" value="1" min="1" oninput="calculateBill()">
+      <input type="text" value="${data ? data.price : 0}" readonly style="background:#f8fafc">
+      <button onclick="this.parentElement.remove(); calculateBill();" style="border:none; background:none; color:#ef4444; font-size:20px; cursor:pointer;">🗑</button>
+    `;
+    container.appendChild(row);
+    calculateBill();
+  }
+
+  function updateRowPrice(el) {
+    const price = el.options[el.selectedIndex].dataset.price;
+    el.parentElement.querySelectorAll('input')[1].value = price;
+    calculateBill();
+  }
+
+  function calculateBill() {
+    let subtotal = 0;
+    document.querySelectorAll('.bill-grid').forEach(r => {
+      const p = parseFloat(r.querySelectorAll('input')[1].value) || 0;
+      const q = parseInt(r.querySelector('input[type="number"]').value) || 0;
+      subtotal += (p * q);
+    });
+    document.getElementById('billSubtotal').innerText = subtotal.toLocaleString() + " đ";
+    document.getElementById('billTotal').innerText = (subtotal * 1.1).toLocaleString() + " đ";
+  }
+
+  function printBill() {
+    alert("Đang in hóa đơn.");
+    closeBilling();
+  }
+
+  // Make billing functions global for inline onclick
+  window.addBillRow = addBillRow;
+  window.updateRowPrice = updateRowPrice;
+  window.calculateBill = calculateBill;
+  window.closeBilling = closeBilling;
+  window.printBill = printBill;
 </script>
 </body>
 </html>

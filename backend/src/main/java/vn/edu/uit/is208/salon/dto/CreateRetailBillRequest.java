@@ -9,10 +9,10 @@ import java.util.List;
 
 @Data
 public class CreateRetailBillRequest {
-    @NotNull(message = "customerId không được để trống")
+    @NotNull(message = "customerId must not be null")
     private Long customerId;
 
-    @NotEmpty(message = "retailProducts không được để trống")
+    @NotEmpty(message = "retailProducts must not be empty")
     @Valid
     private List<AddRetailProductRequest> retailProducts;
 }

@@ -62,6 +62,6 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
-                .body(Map.of("message", "Đăng xuất thành công"));
+                .body(Map.of("message", "Logged out successfully"));
     }
 }

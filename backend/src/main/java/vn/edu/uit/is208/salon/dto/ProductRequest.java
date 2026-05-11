@@ -7,26 +7,26 @@ import java.math.BigDecimal;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class ProductRequest {
-    @NotBlank(message = "Tên sản phẩm không được để trống")
-    @Size(max = 100, message = "Tên sản phẩm không được vượt quá 100 ký tự")
+    @NotBlank(message = "Product name must not be blank")
+    @Size(max = 100, message = "Product name must not exceed 100 characters")
     private String name;
 
-    @NotNull(message = "Loại sản phẩm không được để trống")
+    @NotNull(message = "Product type must not be null")
     private ProductType productType;
 
-    @Size(max = 50, message = "Danh mục không được vượt quá 50 ký tự")
+    @Size(max = 50, message = "Category must not exceed 50 characters")
     private String category;
 
-    @NotNull(message = "Giá không được để trống")
-    @PositiveOrZero(message = "Giá bán không được nhỏ hơn 0")
+    @NotNull(message = "Price must not be null")
+    @PositiveOrZero(message = "Price must be greater than or equal to 0")
     private BigDecimal price;
 
-    @NotBlank(message = "Đơn vị tính cơ bản không được để trống")
-    @Size(max = 20, message = "Đơn vị tính không được vượt quá 20 ký tự")
+    @NotBlank(message = "Base unit of measure must not be blank")
+    @Size(max = 20, message = "Unit of measure must not exceed 20 characters")
     private String baseUom;
 
-    @NotBlank(message = "Đơn vị tính mua hàng không được để trống")
-    @Size(max = 20, message = "Đơn vị tính không được vượt quá 20 ký tự")
+    @NotBlank(message = "Purchasing unit of measure must not be blank")
+    @Size(max = 20, message = "Unit of measure must not exceed 20 characters")
     private String purchasingUom;
 
     private BigDecimal conversionFactor;

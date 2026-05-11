@@ -7,8 +7,8 @@ import lombok.Data;
 @Data
 public class UpdateRetailProductQuantityRequest {
 
-    @NotNull(message = "Số lượng không được để trống")
-    @Min(value = 1, message = "Số lượng mới phải lớn hơn 0")
+    @NotNull(message = "Quantity must not be null")
+    @Min(value = 1, message = "New quantity must be greater than 0")
     private Long quantity;
 
 }

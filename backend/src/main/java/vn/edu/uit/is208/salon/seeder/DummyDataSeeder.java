@@ -24,13 +24,13 @@ import java.util.*;
 public class DummyDataSeeder implements CommandLineRunner {
 
     private static final List<String> SERVICES = List.of(
-            "Cắt tóc nam", "Cắt tóc nữ", "Uốn tóc", "Nhuộm tóc",
-            "Gội đầu massage", "Ép tóc", "Phục hồi tóc hư tổn",
-            "Tạo kiểu cô dâu", "Cắt tỉa râu", "Duỗi tóc Keratin"
+            "Men's haircut", "Women's haircut", "Hair perm", "Hair coloring",
+            "Shampoo & massage", "Hair straightening", "Hair repair treatment",
+            "Bridal styling", "Beard trim", "Keratin hair straightening"
     );
     private static final List<String> PRODUCT_CATEGORIES = List.of(
-            "Dầu gội", "Dầu xả", "Thuốc nhuộm", "Dưỡng tóc",
-            "Sáp/Gel tạo kiểu", "Tinh dầu", "Dụng cụ"
+            "Shampoo", "Conditioner", "Hair dye", "Hair care",
+            "Wax/Gel", "Essential oil", "Tools"
     );
     private static final List<StaffRole> STAFF_ROLES = List.of(
             StaffRole.MANAGER,
@@ -53,17 +53,17 @@ public class DummyDataSeeder implements CommandLineRunner {
     private final BillRepository billRepository;
 
     private final PasswordEncoder passwordEncoder;
-    private final Faker faker = new Faker(new Locale("vi"));
+    private final Faker faker = new Faker(new Locale("en"));
 
     @Override
     @Transactional
     public void run(String... args) {
         if (customerRepository.count() > 0) {
-            System.out.println("[Seeder] Dữ liệu đã tồn tại, bỏ qua seeding.");
+            System.out.println("[Seeder] Data already exists, skipping seeding.");
             return;
         }
 
-        System.out.println("[Seeder] Bắt đầu tạo dữ liệu giả...");
+        System.out.println("[Seeder] Starting dummy data seeding...");
 
         List<Customer> customers = seedCustomers(20);
         List<Staff> staffList = seedStaff(10);
@@ -77,20 +77,20 @@ public class DummyDataSeeder implements CommandLineRunner {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                System.out.println("[Seeder] Hoàn tất! Đã tạo: \n"
-                        + "- " + customers.size() + " khách hàng\n"
-                        + "- " + staffList.size() + " nhân viên\n"
-                        + "- " + services.size() + " dịch vụ\n"
-                        + "- " + appointments.size() + " lịch hẹn\n"
-                        + "- " + products.size() + " sản phẩm (kèm công thức & kho)\n"
-                        + "- " + bills.size() + " hóa đơn.");
+                System.out.println("[Seeder] Done! Created: \n"
+                        + "- " + customers.size() + " customers\n"
+                        + "- " + staffList.size() + " staff members\n"
+                        + "- " + services.size() + " services\n"
+                        + "- " + appointments.size() + " appointments\n"
+                        + "- " + products.size() + " products (with recipes & inventory)\n"
+                        + "- " + bills.size() + " bills.");
             }
         });
     }
 
     private List<Customer> seedCustomers(int count) {
         List<Customer> customers = new ArrayList<>();
-        String[] genders = {"Nam", "Nữ", "Khác"};
+        String[] genders = {"Male", "Female", "Other"};
 
         for (int i = 0; i < count; i++) {
             Customer customer = new Customer();
@@ -109,7 +109,7 @@ public class DummyDataSeeder implements CommandLineRunner {
         List<Staff> staffList = new ArrayList<>();
         String encodedPassword = passwordEncoder.encode("123456");
 
-        // 1. Tạo các tài khoản test mặc định
+        // 1. Create default test accounts
         Staff manager = new Staff();
         manager.setFirstName("Admin");
         manager.setLastName("Manager");
@@ -119,22 +119,22 @@ public class DummyDataSeeder implements CommandLineRunner {
         staffList.add(manager);
 
         Staff receptionist = new Staff();
-        receptionist.setFirstName("Nhân viên");
-        receptionist.setLastName("Lễ tân");
+        receptionist.setFirstName("Reception");
+        receptionist.setLastName("Staff");
         receptionist.setRole(StaffRole.RECEPTIONIST);
         receptionist.setUsername("receptionist");
         receptionist.setPasswordHash(encodedPassword);
         staffList.add(receptionist);
 
         Staff stylist = new Staff();
-        stylist.setFirstName("Thợ");
-        stylist.setLastName("Cắt tóc");
+        stylist.setFirstName("Stylist");
+        stylist.setLastName("Staff");
         stylist.setRole(StaffRole.STYLIST);
         stylist.setUsername("stylist");
         stylist.setPasswordHash(encodedPassword);
         staffList.add(stylist);
 
-        // 2. Tạo thêm các nhân viên random để đủ số lượng (trừ đi 3 tài khoản đã tạo ở trên)
+        // 2. Create additional random staff to reach the requested count (excluding the 3 accounts above)
         int randomCount = Math.max(0, count - 3);
         for (int i = 0; i < randomCount; i++) {
             Staff staff = new Staff();
@@ -214,7 +214,7 @@ public class DummyDataSeeder implements CommandLineRunner {
             product.setPrice(BigDecimal.valueOf(faker.number().numberBetween(50, 1500) * 1000L));
 
             product.setBaseUom("ml");
-            product.setPurchasingUom("Chai");
+            product.setPurchasingUom("Bottle");
             product.setConversionFactor(BigDecimal.valueOf(faker.number().numberBetween(100, 1000)));
 
             product.setQuantityOnHand(BigDecimal.valueOf(faker.number().randomDouble(2, 10000, 20000)));

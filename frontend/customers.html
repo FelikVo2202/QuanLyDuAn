@@ -768,7 +768,7 @@ async function saveCustomer() {
   const gender = document.getElementById('gender').value;
   
   if (!firstName || !lastName || !phone) {
-    alert('Vui lòng nhập First Name, Last Name và Phone');
+    alert('Please enter First Name, Last Name and Phone');
     return;
   }
   
@@ -799,16 +799,16 @@ async function saveCustomer() {
       closeModal();
     } else {
       const errorData = await response.json();
-      alert('Lỗi: ' + (errorData.message || 'Không thể lưu khách hàng'));
+      alert('Error: ' + (errorData.message || 'Cannot save customer'));
     }
   } catch (error) {
     console.error('Error saving customer:', error);
-    alert('Lỗi kết nối máy chủ');
+    alert('Server connection error');
   }
 }
 
 async function deleteCustomer(id) {
-  if (!confirm('Bạn có chắc muốn xóa khách hàng này?')) return;
+  if (!confirm('Are you sure you want to delete this customer?')) return;
 
   const headers = getAuthHeaders();
   if (!headers) return;
@@ -822,11 +822,11 @@ async function deleteCustomer(id) {
     if (response.ok) {
       await loadCustomers();
     } else {
-      alert('Không thể xóa khách hàng');
+      alert('Cannot delete customer');
     }
   } catch (error) {
     console.error('Error deleting customer:', error);
-    alert('Lỗi kết nối máy chủ');
+    alert('Server connection error');
   }
 }
 
@@ -834,11 +834,11 @@ async function deleteSelectedCustomers() {
   const selectedIds = getSelectedCustomerIds();
   
   if (selectedIds.length === 0) {
-    alert('Vui lòng chọn ít nhất một khách hàng để xóa.');
+    alert('Please select at least one customer to delete.');
     return;
   }
   
-  if (confirm(`Bạn có chắc muốn xóa ${selectedIds.length} khách hàng đã chọn?`)) {
+  if (confirm(`Are you sure you want to delete ${selectedIds.length} selected customers?`)) {
     const headers = getAuthHeaders();
     if (!headers) return;
 
@@ -852,7 +852,7 @@ async function deleteSelectedCustomers() {
       await loadCustomers();
     } catch (error) {
       console.error('Error deleting customers:', error);
-      alert('Lỗi trong quá trình xóa khách hàng');
+      alert('Error during customer deletion');
     }
   }
 }
@@ -862,7 +862,7 @@ loadCustomers();
 // ========== FILTER (hiển thị hộp thoại lọc nhanh) ==========
 function openFilterModal() {
   // Tạo một prompt đơn giản để lọc theo giới tính (có thể nâng cao sau)
-  let filterGender = prompt("Lọc theo giới tính:\nNhập: Male, Female, Other hoặc để trống để xóa lọc", "");
+  let filterGender = prompt("Filter by gender:\nEnter: Male, Female, Other or leave empty to remove filter", "");
   if (filterGender !== null) {
     if (filterGender.trim() === "") {
       // Xóa filter: lưu lại biến toàn cục filterGenderValue
@@ -872,7 +872,7 @@ function openFilterModal() {
       if (genderVal === "Male" || genderVal === "Female" || genderVal === "Other") {
         window.currentFilterGender = genderVal;
       } else {
-        alert("Chỉ chấp nhận: Male, Female, Other");
+        alert("Only accepts: Male, Female, Other");
         return;
       }
     }
@@ -991,7 +991,7 @@ function exportCustomersToCSV() {
   }
   
   if (dataToExport.length === 0) {
-    alert("Không có dữ liệu để xuất!");
+    alert("No data to export!");
     return;
   }
   
@@ -1086,11 +1086,11 @@ function deleteSelectedCustomers() {
   const selectedIds = getSelectedCustomerIds();
   
   if (selectedIds.length === 0) {
-    alert('Vui lòng chọn ít nhất một khách hàng để xóa.');
+    alert('Please select at least one customer to delete.');
     return;
   }
   
-  if (confirm(`Bạn có chắc muốn xóa ${selectedIds.length} khách hàng đã chọn?`)) {
+  if (confirm(`Are you sure you want to delete ${selectedIds.length} selected customers?`)) {
     customers = customers.filter(c => !selectedIds.includes(c.id));
     // Cập nhật lại ID cho tất cả khách hàng còn lại
     reindexCustomerIds();

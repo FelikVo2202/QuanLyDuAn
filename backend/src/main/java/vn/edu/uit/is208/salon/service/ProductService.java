@@ -38,7 +38,7 @@ public class ProductService {
 
     public ProductResponse get(Long id) {
         return productMapper.toResponse(productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm với ID: " + id)));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + id)));
     }
 
     @Transactional
@@ -46,7 +46,7 @@ public class ProductService {
         String normalizedName = request.getName().trim();
 
         if (productRepository.existsByNameIgnoreCase(normalizedName)) {
-            throw new BusinessRuleException("Tên sản phẩm '" + normalizedName + "' đã tồn tại trong hệ thống");
+            throw new BusinessRuleException("Product name '" + normalizedName + "' already exists in the system");
         }
 
         Product product = productMapper.toEntity(request);
@@ -56,7 +56,7 @@ public class ProductService {
             product.setConversionFactor(BigDecimal.ONE);
         } else {
             if (product.getConversionFactor() == null || product.getConversionFactor().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new BusinessRuleException("Hệ số quy đổi phải lớn hơn 0 khi Đơn vị nhập và Đơn vị bán khác nhau.");
+                throw new BusinessRuleException("Conversion factor must be greater than 0 when purchasing UOM and base UOM are different.");
             }
         }
 
@@ -68,11 +68,11 @@ public class ProductService {
     @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         Product existingProduct = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + id));
 
         String normalizedName = request.getName().trim();
         if (productRepository.existsByNameIgnoreCaseAndIdNot(normalizedName, id)) {
-            throw new BusinessRuleException("Tên sản phẩm '" + normalizedName + "' đã tồn tại trong hệ thống");
+            throw new BusinessRuleException("Product name '" + normalizedName + "' already exists in the system");
         }
 
         boolean isUomChanged = !existingProduct.getBaseUom().equalsIgnoreCase(request.getBaseUom()) ||
@@ -82,14 +82,14 @@ public class ProductService {
         if (isUomChanged) {
             boolean hasTransactions = inventoryLedgerRepository.existsByProduct_Id(id) || billDetailRepository.existsByProductId(id);
             if (hasTransactions) {
-                throw new BusinessRuleException("Không thể thay đổi đơn vị tính hoặc hệ số quy đổi vì sản phẩm này đã phát sinh giao dịch kho hoặc hóa đơn");
+                throw new BusinessRuleException("Cannot change unit of measure or conversion factor because this product already has inventory or billing transactions");
             }
 
             if (request.getBaseUom().equalsIgnoreCase(request.getPurchasingUom())) {
                 existingProduct.setConversionFactor(BigDecimal.ONE);
             } else {
                 if (request.getConversionFactor() == null || request.getConversionFactor().compareTo(BigDecimal.ZERO) <= 0) {
-                    throw new BusinessRuleException("Hệ số quy đổi phải lớn hơn 0 khi Đơn vị nhập và Đơn vị bán khác nhau.");
+                    throw new BusinessRuleException("Conversion factor must be greater than 0 when purchasing UOM and base UOM are different.");
                 }
                 existingProduct.setConversionFactor(request.getConversionFactor());
             }
@@ -102,7 +102,7 @@ public class ProductService {
                 boolean isUsedInRecipe = serviceRecipeRepository.existsByProductId(id);
                 if (isUsedInRecipe) {
                     throw new BusinessRuleException(
-                            "Không thể đổi loại sản phẩm thành Bán lẻ (RETAIL) vì sản phẩm này đang được sử dụng làm vật tư tiêu hao trong Dịch vụ"
+                            "Cannot change product type to RETAIL because this product is used as a consumable ingredient in a service"
                     );
                 }
             }
@@ -119,21 +119,21 @@ public class ProductService {
     @Transactional
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + id));
 
         if (product.getQuantityOnHand() != null && product.getQuantityOnHand().compareTo(BigDecimal.ZERO) > 0) {
             throw new BusinessRuleException(
-                    "Không thể xóa sản phẩm khi số lượng tồn kho vẫn còn (" + product.getQuantityOnHand() + ")");
+                    "Cannot delete product while inventory on hand is still greater than 0 (" + product.getQuantityOnHand() + ")");
         }
 
         if (serviceRecipeRepository.existsByProductId(id)) {
             throw new BusinessRuleException(
-                    "Không thể xóa sản phẩm vì đang được sử dụng làm vật tư tiêu hao cho một Dịch vụ");
+                    "Cannot delete product because it is used as a consumable ingredient for a service");
         }
 
         boolean isLockedInPendingBill = billDetailRepository.existsByProductIdAndBillPaymentStatus(id, PaymentStatus.PENDING);
         if (isLockedInPendingBill) {
-            throw new BusinessRuleException("Không thể xóa sản phẩm vì đang có Hóa đơn chưa thanh toán");
+            throw new BusinessRuleException("Cannot delete product because it is used in a bill that has not been paid yet");
         }
 
         product.setDeletedAt(LocalDateTime.now());

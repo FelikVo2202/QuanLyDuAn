@@ -8,10 +8,10 @@ import java.math.BigDecimal;
 
 @Data
 public class CreateRecipeRequest {
-    @NotNull(message = "ID sản phẩm không được để trống")
+    @NotNull(message = "Product ID must not be null")
     private Long productId;
 
-    @NotNull(message = "Lượng tiêu hao không được để trống")
-    @Positive(message = "Lượng tiêu hao phải lớn hơn 0")
+    @NotNull(message = "Consumption quantity must not be null")
+    @Positive(message = "Consumption quantity must be greater than 0")
     private BigDecimal quantityConsumed;
 }

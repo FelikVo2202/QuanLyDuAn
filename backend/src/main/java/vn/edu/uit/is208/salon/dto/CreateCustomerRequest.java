@@ -14,22 +14,22 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CreateCustomerRequest {
 
-    @NotBlank(message = "Tên không được để trống")
-    @Size(max = 50, message = "Tên không được quá 50 ký tự")
+    @NotBlank(message = "First name must not be blank")
+    @Size(max = 50, message = "First name must not exceed 50 characters")
     private String firstName;
 
-    @NotBlank(message = "Họ không được để trống")
-    @Size(max = 50, message = "Họ không được quá 50 ký tự")
+    @NotBlank(message = "Last name must not be blank")
+    @Size(max = 50, message = "Last name must not exceed 50 characters")
     private String lastName;
 
-    @NotBlank(message = "Số điện thoại không được để trống")
-    @Size(max = 15, message = "Số điện thoại không quá 15 số")
+    @NotBlank(message = "Phone number must not be blank")
+    @Size(max = 15, message = "Phone number must not exceed 15 characters")
     private String phoneNumber;
 
-    @Email(message = "Email không đúng định dạng")
-    @Size(max = 100, message = "Email không được quá 100 ký tự")
+    @Email(message = "Email is not in a valid format")
+    @Size(max = 100, message = "Email must not exceed 100 characters")
     private String email;
 
-    @Size(max = 10, message = "Giới tính không quá 10 ký tự")
+    @Size(max = 10, message = "Gender must not exceed 10 characters")
     private String gender;
 }

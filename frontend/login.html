@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng nhập - GOUTSALON</title>
+  <title>Login - GOUTSALON</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * {
@@ -279,7 +279,7 @@
 
     // Kiểm tra nhập liệu
     if (!username || !password) {
-      showError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu');
+      showError('Please enter both username and password');
       return;
     }
 
@@ -330,11 +330,11 @@
         alert(`Welcome back ${userData.username}`);
         window.location.href = redirect;
       } else {
-        showError(data.message || '❌ Sai tên đăng nhập hoặc mật khẩu');
+        showError(data.message || '❌ Invalid username or password');
       }
     } catch (error) {
       console.error('Login error:', error);
-      showError('❌ Lỗi kết nối đến máy chủ');
+      showError('❌ Could not connect to server');
     }
   }
 
@@ -362,7 +362,7 @@
     if (savedUser) {
       const user = JSON.parse(savedUser);
       // Có thể tự động chuyển hướng, nhưng để an toàn thì không auto
-      console.log('Có phiên đăng nhập cũ:', user.username);
+      console.log('Previous login session found:', user.username);
     }
   }
 

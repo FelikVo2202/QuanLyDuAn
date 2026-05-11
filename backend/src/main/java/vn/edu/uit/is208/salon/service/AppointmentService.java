@@ -1,7 +1,9 @@
 package vn.edu.uit.is208.salon.service;
 
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -102,6 +104,7 @@ public class AppointmentService {
     public AppointmentDto updateAppointment(Long id, UpdateAppointmentRequest request) {
         Appointment appointment = getAppointment(id);
         ensureAppointmentIsModifiable(appointment);
+        validateAppointmentDateTime(request.getAppointmentDateTime(), appointment.getAppointmentDateTime());
         Staff staff = getStaff(request.getStaffId());
         validateStylistRole(staff);
         List<SalonService> services = getSalonServices(request.getServiceIds());
@@ -117,6 +120,12 @@ public class AppointmentService {
         appointment.setEndDateTime(endDateTime);
 
         return appointmentMapper.toDto(appointment);
+    }
+
+    private void validateAppointmentDateTime( LocalDateTime newDateTime, LocalDateTime oldDateTime) {
+        if (!newDateTime.isEqual(oldDateTime) && newDateTime.isBefore(LocalDateTime.now())) {
+            throw new BusinessRuleException("Thời gian dời lịch phải là một thời điểm trong tương lai");
+        }
     }
 
     @Transactional

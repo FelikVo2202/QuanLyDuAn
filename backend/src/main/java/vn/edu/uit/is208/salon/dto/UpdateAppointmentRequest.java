@@ -22,7 +22,7 @@ public class UpdateAppointmentRequest {
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @NotNull(message = "Khung giờ không được trống")
-    @Future(message = "Thời gian hẹn phải là một thời điểm trong tương lai")
+//    @Future(message = "Thời gian hẹn phải là một thời điểm trong tương lai")
     private LocalDateTime appointmentDateTime;
 
     @NotEmpty(message = "Dịch vụ không được trống")

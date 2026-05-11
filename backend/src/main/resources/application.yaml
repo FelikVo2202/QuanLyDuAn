@@ -26,7 +26,7 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET}
-    access-token-expiration: 15m
+    access-token-expiration: 7d
     refresh-token-expiration: 7d
 
 salon:

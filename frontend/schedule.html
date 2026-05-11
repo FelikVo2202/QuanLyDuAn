@@ -225,6 +225,65 @@
       margin: 0;
     }
 
+    /* CALENDAR CONTROLS & DATE NAVIGATOR */
+    .calendar-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      background: white;
+      border-radius: 24px 24px 0 0;
+    }
+
+    .date-navigator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      background: #fff9ee;
+      color: #c48c47;
+      border: 1px solid #fde0c6;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      background: #fde0c6;
+    }
+
+    .date-label-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    #dateLabel {
+      font-size: 15px;
+      font-weight: 700;
+      color: #362e1b;
+      cursor: pointer;
+      padding: 0 8px;
+    }
+
+    .hidden-date-input {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border: none;
+      padding: 0;
+      margin: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
     /* VIEW SWITCHER (Today | Week | Month | Day) */
     .view-switcher {
       display: flex;
@@ -672,11 +731,22 @@
 
     <div class="calendar-container">
       <div class="calendar-card">
-        <div class="view-switcher">
-          <button class="view-btn active">Today</button>
-          <button class="view-btn">Week</button>
-          <button class="view-btn">Month</button>
-          <button class="view-btn">Day</button>
+        <div class="calendar-controls">
+          <div class="date-navigator">
+            <button class="nav-btn" id="btnToday">Today</button>
+            <button class="nav-btn" id="btnPrevDate">&lt;</button>
+            <div class="date-label-container">
+              <span id="dateLabel"></span>
+              <input type="date" id="datePicker" class="hidden-date-input" />
+            </div>
+            <button class="nav-btn" id="btnNextDate">&gt;</button>
+          </div>
+          <div class="view-switcher">
+            <button class="view-btn active">Today</button>
+            <button class="view-btn">Week</button>
+            <button class="view-btn">Month</button>
+            <button class="view-btn">Day</button>
+          </div>
         </div>
         <!-- Header staff avatars -->
         <div id="calendar-header" class="calendar-header">
@@ -792,6 +862,7 @@
   let startCol = null;
   let tempDiv = null;
   let currentEditingEvent = null;
+  let currentDate = new Date();
 
   // ========== GET USER DATA ==========
   const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
@@ -1024,14 +1095,12 @@
   async function loadAllBookings() {
     const headers = getAuthHeaders();
     try {
-      // Get today's date
-      const today = new Date();
-
+      // Use currentDate instead of today
       const pad = (n) => String(n).padStart(2, '0');
-      const todayStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+      const targetDateStr = `${currentDate.getFullYear()}-${pad(currentDate.getMonth()+1)}-${pad(currentDate.getDate())}`;
 
-      // Query appointments only for today
-      const url = `${API_BASE_URL}/appointments?startDate=${todayStr}&endDate=${todayStr}`;
+      // Query appointments for the selected date
+      const url = `${API_BASE_URL}/appointments?startDate=${targetDateStr}&endDate=${targetDateStr}`;
       console.log('Fetching appointments from:', url);
       const res = await fetch(url, { headers });
       if (!res.ok) {
@@ -1098,7 +1167,14 @@
     gridEl.innerHTML = "";
     gridEl.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
     gridEl.style.gridAutoRows = `${cellHeight}px`;
+    
     const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+
+    const isPastDay = selectedDay < today;
+    const isToday = selectedDay.getTime() === today.getTime();
+
     for (let row = 1; row <= ROWS; row++) {
       for (let col = 1; col <= COLS; col++) {
         const cell = document.createElement("div");
@@ -1109,14 +1185,18 @@
         cell.style.gridColumn = col;
         
         // Check if this slot is in the past
-        const totalStartMinutes = (START_HOUR * 60) + (row - 1) * SLOT_MINUTES;
-        const slotHour = Math.floor(totalStartMinutes / 60);
-        const slotMin = totalStartMinutes % 60;
-        const slotTime = new Date();
-        slotTime.setHours(slotHour, slotMin, 0, 0);
-        
-        if (slotTime < now) {
+        if (isPastDay) {
           cell.classList.add("past");
+        } else if (isToday) {
+          const totalStartMinutes = (START_HOUR * 60) + (row - 1) * SLOT_MINUTES;
+          const slotHour = Math.floor(totalStartMinutes / 60);
+          const slotMin = totalStartMinutes % 60;
+          const slotTime = new Date();
+          slotTime.setHours(slotHour, slotMin, 0, 0);
+          
+          if (slotTime < now) {
+            cell.classList.add("past");
+          }
         }
         
         gridEl.appendChild(cell);
@@ -1172,7 +1252,7 @@
     const startHour = Math.floor(totalStartMinutes / 60);
     const startMin = totalStartMinutes % 60;
 
-    const date = new Date();
+    const date = new Date(currentDate);
     date.setHours(startHour, startMin, 0, 0);
 
     const pad = (n) => String(n).padStart(2, '0');
@@ -1278,7 +1358,65 @@
     document.body.classList.remove("dragging");
   }
 
+  function updateDateNavigator() {
+    const btnToday = document.getElementById("btnToday");
+    const btnPrevDate = document.getElementById("btnPrevDate");
+    const btnNextDate = document.getElementById("btnNextDate");
+    const dateLabel = document.getElementById("dateLabel");
+    const datePicker = document.getElementById("datePicker");
+    const dateLabelContainer = document.querySelector(".date-label-container");
+
+    function renderDate() {
+      const dd = String(currentDate.getDate()).padStart(2, '0');
+      const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const yyyy = currentDate.getFullYear();
+      dateLabel.innerText = `${dd}/${mm}/${yyyy}`;
+      datePicker.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    function handleDateChange() {
+      renderDate();
+      console.log("Current Date changed to:", currentDate);
+      generateGrid();
+      loadAllBookings();
+    }
+
+    dateLabelContainer.addEventListener("click", () => {
+      try {
+        datePicker.showPicker();
+      } catch (e) {
+        datePicker.focus();
+      }
+    });
+
+    btnToday.onclick = () => {
+      currentDate = new Date();
+      handleDateChange();
+    };
+
+    btnPrevDate.onclick = () => {
+      currentDate.setDate(currentDate.getDate() - 1);
+      handleDateChange();
+    };
+
+    btnNextDate.onclick = () => {
+      currentDate.setDate(currentDate.getDate() + 1);
+      handleDateChange();
+    };
+
+    datePicker.onchange = (e) => {
+      if (e.target.value) {
+        currentDate = new Date(e.target.value);
+        handleDateChange();
+      }
+    };
+
+    // Initial render
+    renderDate();
+  }
+
   function init() {
+    updateDateNavigator();
     gridEl.addEventListener("mousedown", onMouseDown);
     loadInitialData();
     document.getElementById("resetBtn").onclick = () => {

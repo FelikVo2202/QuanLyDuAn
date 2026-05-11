@@ -348,6 +348,14 @@
     .grid-cell:hover {
       background: #fefce8;
     }
+    .grid-cell.past {
+      background: #f3f4f6;
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .grid-cell.past:hover {
+      background: #f3f4f6;
+    }
 
     /* EVENT STYLES */
 
@@ -488,6 +496,7 @@
     }
     /* ===== NEW EVENT STYLE ===== */
     .event {
+      z-index: 10;
       border-radius: 14px;
       padding: 8px 10px;
       display: flex;
@@ -1015,17 +1024,14 @@
   async function loadAllBookings() {
     const headers = getAuthHeaders();
     try {
-      // Get today's date and tomorrow's date for the query
+      // Get today's date
       const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
 
       const pad = (n) => String(n).padStart(2, '0');
       const todayStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
-      const tomorrowStr = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth()+1)}-${pad(tomorrow.getDate())}`;
 
-      // Query appointments for today and tomorrow (since appointments are created for tomorrow)
-      const url = `${API_BASE_URL}/appointments?startDate=${todayStr}&endDate=${tomorrowStr}`;
+      // Query appointments only for today
+      const url = `${API_BASE_URL}/appointments?startDate=${todayStr}&endDate=${todayStr}`;
       console.log('Fetching appointments from:', url);
       const res = await fetch(url, { headers });
       if (!res.ok) {
@@ -1092,6 +1098,7 @@
     gridEl.innerHTML = "";
     gridEl.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
     gridEl.style.gridAutoRows = `${cellHeight}px`;
+    const now = new Date();
     for (let row = 1; row <= ROWS; row++) {
       for (let col = 1; col <= COLS; col++) {
         const cell = document.createElement("div");
@@ -1100,6 +1107,18 @@
         cell.dataset.col = col;
         cell.style.gridRow = row;
         cell.style.gridColumn = col;
+        
+        // Check if this slot is in the past
+        const totalStartMinutes = (START_HOUR * 60) + (row - 1) * SLOT_MINUTES;
+        const slotHour = Math.floor(totalStartMinutes / 60);
+        const slotMin = totalStartMinutes % 60;
+        const slotTime = new Date();
+        slotTime.setHours(slotHour, slotMin, 0, 0);
+        
+        if (slotTime < now) {
+          cell.classList.add("past");
+        }
+        
         gridEl.appendChild(cell);
       }
     }
@@ -1154,7 +1173,6 @@
     const startMin = totalStartMinutes % 60;
 
     const date = new Date();
-    date.setDate(date.getDate() + 1);
     date.setHours(startHour, startMin, 0, 0);
 
     const pad = (n) => String(n).padStart(2, '0');
@@ -1218,7 +1236,7 @@
 
   function onMouseDown(e) {
     const cell = e.target.closest(".grid-cell");
-    if (!cell || e.target.closest(".event")) return;
+    if (!cell || e.target.closest(".event") || cell.classList.contains("past")) return;
     isDragging = true;
     startRow = parseInt(cell.dataset.row);
     startCol = parseInt(cell.dataset.col);

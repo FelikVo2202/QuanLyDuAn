@@ -782,6 +782,9 @@
             <div class="time-slot">18</div>
             <div class="time-slot">19</div>
             <div class="time-slot">20</div>
+            <div class="time-slot">21</div>
+            <div class="time-slot">22</div>
+            <div class="time-slot">23</div>
           </div>
           <div id="calendar-grid" class="grid"></div>
         </div>
@@ -862,7 +865,7 @@
   const API_BASE_URL = 'http://localhost:8080/api';
   // Time grid configuration: use 15-minute slots
   const START_HOUR = 8; // first hour shown
-  const END_HOUR = 20;  // last hour shown (inclusive)
+  const END_HOUR = 23;  // last hour shown (inclusive)
   const SLOT_MINUTES = 15; // minutes per grid row
   const SLOTS_PER_HOUR = 60 / SLOT_MINUTES; // 4 for 15-min slots
   const ROWS = (END_HOUR - START_HOUR + 1) * SLOTS_PER_HOUR; // total grid rows

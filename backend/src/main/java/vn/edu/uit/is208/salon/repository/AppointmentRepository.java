@@ -41,7 +41,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                 WHERE a.staff.id = :staffId
                 AND a.id != :excludeAppointmentId
                 AND a.appointmentDateTime < :endDateTime AND a.endDateTime > :startDateTime
-                AND a.status != 'Canceled'
+                AND a.status != 'CANCELED'
             """)
     boolean isStaffBusyForUpdate(
             @Param("staffId") Long staffId,

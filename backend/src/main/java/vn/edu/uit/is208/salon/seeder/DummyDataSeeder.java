@@ -37,12 +37,6 @@ public class DummyDataSeeder implements CommandLineRunner {
             StaffRole.RECEPTIONIST,
             StaffRole.STYLIST
     );
-    private static final List<AppointmentStatus> APPOINTMENT_STATUSES = List.of(
-            AppointmentStatus.CONFIRMED,
-            AppointmentStatus.PAID,
-            AppointmentStatus.DONE,
-            AppointmentStatus.CANCELED
-    );
     private final CustomerRepository customerRepository;
     private final StaffRepository staffRepository;
     private final SalonServiceRepository salonServiceRepository;
@@ -55,6 +49,8 @@ public class DummyDataSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final Faker faker = new Faker(new Locale("en"));
 
+    private record TimeSlot(LocalDateTime start, LocalDateTime end) {}
+
     @Override
     @Transactional
     public void run(String... args) {
@@ -65,10 +61,10 @@ public class DummyDataSeeder implements CommandLineRunner {
 
         System.out.println("[Seeder] Starting dummy data seeding...");
 
-        List<Customer> customers = seedCustomers(20);
-        List<Staff> staffList = seedStaff(10);
+        List<Customer> customers = seedCustomers(50);
+        List<Staff> staffList = seedStaff(12);
         List<SalonService> services = seedServices();
-        List<Appointment> appointments = seedAppointments(30, customers, staffList, services);
+        List<Appointment> appointments = seedAppointments(150, customers, staffList, services);
         List<Product> products = seedProducts(30);
         seedServiceRecipes(services, products);
         seedInventoryLedger(products);
@@ -81,9 +77,9 @@ public class DummyDataSeeder implements CommandLineRunner {
                         + "- " + customers.size() + " customers\n"
                         + "- " + staffList.size() + " staff members\n"
                         + "- " + services.size() + " services\n"
-                        + "- " + appointments.size() + " appointments\n"
+                        + "- " + appointments.size() + " appointments (no overlapping for active slots)\n"
                         + "- " + products.size() + " products (with recipes & inventory)\n"
-                        + "- " + bills.size() + " bills.");
+                        + "- " + bills.size() + " bills (Past appointments only).");
             }
         });
     }
@@ -157,7 +153,8 @@ public class DummyDataSeeder implements CommandLineRunner {
             service.setName(serviceName);
             service.setPrice(BigDecimal.valueOf(
                     faker.number().numberBetween(50_000L, 500_000L)));
-            service.setDurationMinutes((long) faker.number().numberBetween(15, 120));
+            long durationBlocks = faker.number().numberBetween(3, 5);
+            service.setDurationMinutes(durationBlocks * 15);
             services.add(service);
         }
 
@@ -170,24 +167,30 @@ public class DummyDataSeeder implements CommandLineRunner {
                                                List<SalonService> services) {
         List<Appointment> appointments = new ArrayList<>();
         Random rnd = new Random();
+        LocalDateTime now = LocalDateTime.now();
+
+        int[] minuteBlocks = {0, 15, 30, 45};
+
+        List<Staff> stylists = staffList.stream()
+                .filter(staff -> staff.getRole() == StaffRole.STYLIST)
+                .toList();
+
+        if (stylists.isEmpty()) {
+            throw new IllegalStateException("Cannot seed appointments: No staff members with STYLIST role found.");
+        }
+
+        Map<Long, List<TimeSlot>> staffBusySlots = new HashMap<>();
+        for (Staff s : stylists) {
+            staffBusySlots.put(s.getId(), new ArrayList<>());
+        }
 
         for (int i = 0; i < count; i++) {
             Appointment appointment = new Appointment();
 
             appointment.setCustomer(customers.get(rnd.nextInt(customers.size())));
-            appointment.setStaff(staffList.get(rnd.nextInt(staffList.size())));
 
-            long offsetDays = faker.number().numberBetween(-30, 30);
-            long offsetHours = faker.number().numberBetween(8, 20);
-            LocalDateTime dateTime = LocalDateTime.now()
-                    .plus(offsetDays, ChronoUnit.DAYS)
-                    .truncatedTo(ChronoUnit.DAYS)
-                    .plus(offsetHours, ChronoUnit.HOURS);
-            appointment.setAppointmentDateTime(dateTime);
-            appointment.setEndDateTime(dateTime.plusHours(1));
-
-            appointment.setStatus(
-                    APPOINTMENT_STATUSES.get(rnd.nextInt(APPOINTMENT_STATUSES.size())));
+            Staff selectedStaff = stylists.get(rnd.nextInt(stylists.size()));
+            appointment.setStaff(selectedStaff);
 
             Set<SalonService> chosenServices = new LinkedHashSet<>();
             int serviceCount = faker.number().numberBetween(1, 4);
@@ -196,10 +199,73 @@ public class DummyDataSeeder implements CommandLineRunner {
             chosenServices.addAll(shuffled.subList(0, serviceCount));
             appointment.setServices(chosenServices);
 
+            long totalDurationMinutes = chosenServices.stream()
+                    .mapToLong(SalonService::getDurationMinutes)
+                    .sum();
+
+            long offsetDays;
+            long offsetHours = faker.number().numberBetween(8, 19);
+
+            if (i < count * 0.75) {
+                offsetDays = faker.number().numberBetween(0, 8);
+            } else {
+                offsetDays = faker.number().numberBetween(-15, 0);
+            }
+
+            int randomMinute = minuteBlocks[rnd.nextInt(minuteBlocks.length)];
+
+            LocalDateTime startDateTime = now.plusDays(offsetDays)
+                    .truncatedTo(ChronoUnit.DAYS)
+                    .plusHours(offsetHours)
+                    .plusMinutes(randomMinute);
+
+            LocalDateTime endDateTime = startDateTime.plusMinutes(totalDurationMinutes);
+
+            if (startDateTime.isAfter(now)) {
+                appointment.setStatus(rnd.nextDouble() < 0.85 ? AppointmentStatus.CONFIRMED : AppointmentStatus.CANCELED);
+            } else {
+                List<AppointmentStatus> pastStatuses = List.of(
+                        AppointmentStatus.DONE,
+                        AppointmentStatus.PAID,
+                        AppointmentStatus.CANCELED
+                );
+                appointment.setStatus(pastStatuses.get(rnd.nextInt(pastStatuses.size())));
+            }
+
+            if (appointment.getStatus() != AppointmentStatus.CANCELED) {
+                List<TimeSlot> busySlots = staffBusySlots.get(selectedStaff.getId());
+
+                while (isOverlapping(startDateTime, endDateTime, busySlots)) {
+                    startDateTime = startDateTime.plusMinutes(15);
+                    endDateTime = startDateTime.plusMinutes(totalDurationMinutes);
+
+                    if (startDateTime.getHour() >= 20) {
+                        startDateTime = startDateTime.plusDays(1)
+                                .truncatedTo(ChronoUnit.DAYS)
+                                .plusHours(8);
+                        endDateTime = startDateTime.plusMinutes(totalDurationMinutes);
+                    }
+                }
+
+                busySlots.add(new TimeSlot(startDateTime, endDateTime));
+            }
+
+            appointment.setAppointmentDateTime(startDateTime);
+            appointment.setEndDateTime(endDateTime);
+
             appointments.add(appointment);
         }
 
         return appointmentRepository.saveAll(appointments);
+    }
+
+    private boolean isOverlapping(LocalDateTime start, LocalDateTime end, List<TimeSlot> existingSlots) {
+        for (TimeSlot slot : existingSlots) {
+            if (start.isBefore(slot.end()) && end.isAfter(slot.start())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<Product> seedProducts(int count) {
@@ -278,7 +344,8 @@ public class DummyDataSeeder implements CommandLineRunner {
         PaymentStatus[] paymentStatuses = PaymentStatus.values();
 
         for (Appointment appointment : appointments) {
-            if (appointment.getStatus() == AppointmentStatus.CANCELED) {
+            if (appointment.getStatus() == AppointmentStatus.CANCELED ||
+                    appointment.getStatus() == AppointmentStatus.CONFIRMED) {
                 continue;
             }
 

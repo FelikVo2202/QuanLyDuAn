@@ -6,10 +6,10 @@ import lombok.Data;
 
 @Data
 public class AddRetailProductRequest {
-    @NotNull(message = "productId không được để trống")
+    @NotNull(message = "productId must not be null")
     private Long productId;
 
-    @NotNull(message = "quantity không được để trống")
-    @Min(value = 1, message = "Số lượng phải từ 1 trở lên")
+    @NotNull(message = "quantity must not be null")
+    @Min(value = 1, message = "Quantity must be at least 1")
     private Long quantity;
 }

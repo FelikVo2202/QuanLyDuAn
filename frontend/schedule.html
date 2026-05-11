@@ -225,6 +225,65 @@
       margin: 0;
     }
 
+    /* CALENDAR CONTROLS & DATE NAVIGATOR */
+    .calendar-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      background: white;
+      border-radius: 24px 24px 0 0;
+    }
+
+    .date-navigator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      background: #fff9ee;
+      color: #c48c47;
+      border: 1px solid #fde0c6;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      background: #fde0c6;
+    }
+
+    .date-label-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    #dateLabel {
+      font-size: 15px;
+      font-weight: 700;
+      color: #362e1b;
+      cursor: pointer;
+      padding: 0 8px;
+    }
+
+    .hidden-date-input {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border: none;
+      padding: 0;
+      margin: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
     /* VIEW SWITCHER (Today | Week | Month | Day) */
     .view-switcher {
       display: flex;
@@ -261,11 +320,20 @@
       background: #f8fafc;
     }
 
+    .sticky-header-wrapper {
+      position: sticky;
+      top: -20px;
+      z-index: 50;
+      background: white;
+      border-radius: 24px 24px 0 0;
+      box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.1);
+    }
+
     .calendar-card {
       background: white;
       border-radius: 24px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      overflow-x: auto;
+      /*overflow-x: auto;*/
       min-width: 720px;
     }
 
@@ -348,6 +416,14 @@
     .grid-cell:hover {
       background: #fefce8;
     }
+    .grid-cell.past {
+      background: #f3f4f6;
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .grid-cell.past:hover {
+      background: #f3f4f6;
+    }
 
     /* EVENT STYLES */
 
@@ -380,12 +456,12 @@
     .reset-btn {
       margin-top: 16px;
       padding: 8px 20px;
-      background: #fff1f0;
+      background: #f1ede4;
       border: none;
       border-radius: 40px;
       font-size: 12px;
       font-weight: 500;
-      color: #dc2626;
+      color: #8b6b4a;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -393,7 +469,8 @@
     }
 
     .reset-btn:hover {
-      background: #fee2e2;
+      background: #e5e0d3;
+      color: #4e3927;
     }
 
     .bottom-bar {
@@ -488,6 +565,7 @@
     }
     /* ===== NEW EVENT STYLE ===== */
     .event {
+      z-index: 10;
       border-radius: 14px;
       padding: 8px 10px;
       display: flex;
@@ -663,16 +741,29 @@
 
     <div class="calendar-container">
       <div class="calendar-card">
-        <div class="view-switcher">
-          <button class="view-btn active">Today</button>
-          <button class="view-btn">Week</button>
-          <button class="view-btn">Month</button>
-          <button class="view-btn">Day</button>
-        </div>
-        <!-- Header staff avatars -->
-        <div id="calendar-header" class="calendar-header">
-          <div></div>
-          <!-- Staff cards will be injected here -->
+        <div class="sticky-header-wrapper">
+          <div class="calendar-controls">
+            <div class="date-navigator">
+              <button class="nav-btn" id="btnToday">Today</button>
+              <button class="nav-btn" id="btnPrevDate">&lt;</button>
+              <div class="date-label-container">
+                <span id="dateLabel"></span>
+                <input type="date" id="datePicker" class="hidden-date-input" />
+              </div>
+              <button class="nav-btn" id="btnNextDate">&gt;</button>
+            </div>
+<!--            <div class="view-switcher">-->
+<!--              <button class="view-btn active">Today</button>-->
+<!--              <button class="view-btn">Week</button>-->
+<!--              <button class="view-btn">Month</button>-->
+<!--              <button class="view-btn">Day</button>-->
+<!--            </div>-->
+          </div>
+          <!-- Header staff avatars -->
+          <div id="calendar-header" class="calendar-header">
+            <div></div>
+            <!-- Staff cards will be injected here -->
+          </div>
         </div>
 
         <!-- Body: time + grid -->
@@ -691,12 +782,15 @@
             <div class="time-slot">18</div>
             <div class="time-slot">19</div>
             <div class="time-slot">20</div>
+            <div class="time-slot">21</div>
+            <div class="time-slot">22</div>
+            <div class="time-slot">23</div>
           </div>
           <div id="calendar-grid" class="grid"></div>
         </div>
       </div>
       <div class="bottom-bar">
-        <button id="resetBtn" class="reset-btn">🗑 Reset all bookings</button>
+        <button id="resetBtn" class="reset-btn">🔄 Refresh schedule</button>
       </div>
     </div>
   </div>
@@ -771,7 +865,7 @@
   const API_BASE_URL = 'http://localhost:8080/api';
   // Time grid configuration: use 15-minute slots
   const START_HOUR = 8; // first hour shown
-  const END_HOUR = 20;  // last hour shown (inclusive)
+  const END_HOUR = 23;  // last hour shown (inclusive)
   const SLOT_MINUTES = 15; // minutes per grid row
   const SLOTS_PER_HOUR = 60 / SLOT_MINUTES; // 4 for 15-min slots
   const ROWS = (END_HOUR - START_HOUR + 1) * SLOTS_PER_HOUR; // total grid rows
@@ -783,6 +877,7 @@
   let startCol = null;
   let tempDiv = null;
   let currentEditingEvent = null;
+  let currentDate = new Date();
 
   // ========== GET USER DATA ==========
   const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
@@ -1015,17 +1110,12 @@
   async function loadAllBookings() {
     const headers = getAuthHeaders();
     try {
-      // Get today's date and tomorrow's date for the query
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
+      // Use currentDate instead of today
       const pad = (n) => String(n).padStart(2, '0');
-      const todayStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
-      const tomorrowStr = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth()+1)}-${pad(tomorrow.getDate())}`;
+      const targetDateStr = `${currentDate.getFullYear()}-${pad(currentDate.getMonth()+1)}-${pad(currentDate.getDate())}`;
 
-      // Query appointments for today and tomorrow (since appointments are created for tomorrow)
-      const url = `${API_BASE_URL}/appointments?startDate=${todayStr}&endDate=${tomorrowStr}`;
+      // Query appointments for the selected date
+      const url = `${API_BASE_URL}/appointments?startDate=${targetDateStr}&endDate=${targetDateStr}`;
       console.log('Fetching appointments from:', url);
       const res = await fetch(url, { headers });
       if (!res.ok) {
@@ -1092,6 +1182,14 @@
     gridEl.innerHTML = "";
     gridEl.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
     gridEl.style.gridAutoRows = `${cellHeight}px`;
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+
+    const isPastDay = selectedDay < today;
+    const isToday = selectedDay.getTime() === today.getTime();
+
     for (let row = 1; row <= ROWS; row++) {
       for (let col = 1; col <= COLS; col++) {
         const cell = document.createElement("div");
@@ -1100,6 +1198,22 @@
         cell.dataset.col = col;
         cell.style.gridRow = row;
         cell.style.gridColumn = col;
+        
+        // Check if this slot is in the past
+        if (isPastDay) {
+          cell.classList.add("past");
+        } else if (isToday) {
+          const totalStartMinutes = (START_HOUR * 60) + (row - 1) * SLOT_MINUTES;
+          const slotHour = Math.floor(totalStartMinutes / 60);
+          const slotMin = totalStartMinutes % 60;
+          const slotTime = new Date();
+          slotTime.setHours(slotHour, slotMin, 0, 0);
+          
+          if (slotTime < now) {
+            cell.classList.add("past");
+          }
+        }
+        
         gridEl.appendChild(cell);
       }
     }
@@ -1153,8 +1267,7 @@
     const startHour = Math.floor(totalStartMinutes / 60);
     const startMin = totalStartMinutes % 60;
 
-    const date = new Date();
-    date.setDate(date.getDate() + 1);
+    const date = new Date(currentDate);
     date.setHours(startHour, startMin, 0, 0);
 
     const pad = (n) => String(n).padStart(2, '0');
@@ -1218,7 +1331,7 @@
 
   function onMouseDown(e) {
     const cell = e.target.closest(".grid-cell");
-    if (!cell || e.target.closest(".event")) return;
+    if (!cell || e.target.closest(".event") || cell.classList.contains("past")) return;
     isDragging = true;
     startRow = parseInt(cell.dataset.row);
     startCol = parseInt(cell.dataset.col);
@@ -1260,7 +1373,65 @@
     document.body.classList.remove("dragging");
   }
 
+  function updateDateNavigator() {
+    const btnToday = document.getElementById("btnToday");
+    const btnPrevDate = document.getElementById("btnPrevDate");
+    const btnNextDate = document.getElementById("btnNextDate");
+    const dateLabel = document.getElementById("dateLabel");
+    const datePicker = document.getElementById("datePicker");
+    const dateLabelContainer = document.querySelector(".date-label-container");
+
+    function renderDate() {
+      const dd = String(currentDate.getDate()).padStart(2, '0');
+      const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const yyyy = currentDate.getFullYear();
+      dateLabel.innerText = `${dd}/${mm}/${yyyy}`;
+      datePicker.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    function handleDateChange() {
+      renderDate();
+      console.log("Current Date changed to:", currentDate);
+      generateGrid();
+      loadAllBookings();
+    }
+
+    dateLabelContainer.addEventListener("click", () => {
+      try {
+        datePicker.showPicker();
+      } catch (e) {
+        datePicker.focus();
+      }
+    });
+
+    btnToday.onclick = () => {
+      currentDate = new Date();
+      handleDateChange();
+    };
+
+    btnPrevDate.onclick = () => {
+      currentDate.setDate(currentDate.getDate() - 1);
+      handleDateChange();
+    };
+
+    btnNextDate.onclick = () => {
+      currentDate.setDate(currentDate.getDate() + 1);
+      handleDateChange();
+    };
+
+    datePicker.onchange = (e) => {
+      if (e.target.value) {
+        currentDate = new Date(e.target.value);
+        handleDateChange();
+      }
+    };
+
+    // Initial render
+    renderDate();
+  }
+
   function init() {
+    updateDateNavigator();
     gridEl.addEventListener("mousedown", onMouseDown);
     loadInitialData();
     document.getElementById("resetBtn").onclick = () => {

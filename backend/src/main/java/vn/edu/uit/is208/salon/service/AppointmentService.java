@@ -1,7 +1,9 @@
 package vn.edu.uit.is208.salon.service;
 
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -45,7 +47,7 @@ public class AppointmentService {
 
     private static void validateDateRange(LocalDate resolvedEndDate, LocalDate resolvedStartDate) {
         if (resolvedEndDate.isBefore(resolvedStartDate)) {
-            throw new IllegalArgumentException("Ngày kết thúc không được nhỏ hơn ngày bắt đầu!");
+            throw new IllegalArgumentException("End date must not be before start date");
         }
     }
 
@@ -102,6 +104,7 @@ public class AppointmentService {
     public AppointmentDto updateAppointment(Long id, UpdateAppointmentRequest request) {
         Appointment appointment = getAppointment(id);
         ensureAppointmentIsModifiable(appointment);
+        validateAppointmentDateTime(request.getAppointmentDateTime(), appointment.getAppointmentDateTime());
         Staff staff = getStaff(request.getStaffId());
         validateStylistRole(staff);
         List<SalonService> services = getSalonServices(request.getServiceIds());
@@ -119,6 +122,12 @@ public class AppointmentService {
         return appointmentMapper.toDto(appointment);
     }
 
+    private void validateAppointmentDateTime( LocalDateTime newDateTime, LocalDateTime oldDateTime) {
+        if (!newDateTime.isEqual(oldDateTime) && newDateTime.isBefore(LocalDateTime.now())) {
+            throw new BusinessRuleException("The rescheduled time must be in the future");
+        }
+    }
+
     @Transactional
     public AppointmentDto cancelAppointment(Long id) {
         Appointment appointment = getAppointment(id);
@@ -128,23 +137,23 @@ public class AppointmentService {
 
     private @NonNull Appointment getAppointment(Long appointmentId) {
         return appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch hẹn với ID: " + appointmentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with ID: " + appointmentId));
     }
 
     private @NonNull Customer getCustomer(Long customerId) {
         return customerRepository.findById(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng với ID: " + customerId));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with ID: " + customerId));
     }
 
     private @NonNull Staff getStaff(Long staffId) {
         return staffRepository.findById(staffId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + staffId));
+                .orElseThrow(() -> new ResourceNotFoundException("Staff not found with ID: " + staffId));
     }
 
     private @NonNull List<SalonService> getSalonServices(Set<Long> serviceIds) {
         List<SalonService> services = salonServiceRepository.findAllById(serviceIds);
         if (services.size() != serviceIds.size()) {
-            throw new ResourceNotFoundException("Một số dịch vụ bạn chọn không tồn tại");
+            throw new ResourceNotFoundException("Some of the selected services do not exist");
         }
         return services;
     }
@@ -159,13 +168,13 @@ public class AppointmentService {
     private void ensureAppointmentIsModifiable(Appointment appointment) {
         AppointmentStatus status = appointment.getStatus();
         if (status == AppointmentStatus.CANCELED || status == AppointmentStatus.DONE) {
-            throw new IllegalStateException("Không thể chỉnh sửa lịch hẹn đã hủy hoặc đã hoàn thành");
+            throw new IllegalStateException("Cannot modify an appointment that is canceled or completed");
         }
     }
 
     private void validateStylistRole(Staff staff) {
         if (staff.getRole() != StaffRole.STYLIST) {
-            throw new BusinessRuleException("Nhân viên được chọn phải là thợ cắt tóc");
+            throw new BusinessRuleException("The selected staff member must be a stylist");
         }
     }
 
@@ -174,11 +183,11 @@ public class AppointmentService {
         LocalTime endTime = endDateTime.toLocalTime();
 
         if (startTime.isBefore(openingTime) || startTime.isAfter(closingTime)) {
-            throw new BusinessRuleException("Salon chỉ nhận khách từ " + openingTime + " đến " + closingTime);
+            throw new BusinessRuleException("Salon accepts appointments from " + openingTime + " to " + closingTime);
         }
 
         if (endTime.isAfter(closingTime) || !startDateTime.toLocalDate().isEqual(endDateTime.toLocalDate())) {
-            throw new BusinessRuleException("Thời gian dự kiến kết thúc (" + endTime + ") vượt quá giờ đóng cửa (" + closingTime + ")");
+            throw new BusinessRuleException("The estimated end time (" + endTime + ") exceeds closing time (" + closingTime + ")");
         }
     }
 
@@ -188,7 +197,7 @@ public class AppointmentService {
                 : appointmentRepository.isStaffBusyForUpdate(staffId, startDateTime, endDateTime, appointmentId);
 
         if (isBusy) {
-            throw new BusinessRuleException("Nhân viên " + staffId + " đã có lịch trong khung giờ này");
+            throw new BusinessRuleException("Staff " + staffId + " is not available during this time slot");
         }
     }
 }

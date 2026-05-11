@@ -7,10 +7,10 @@ import java.math.BigDecimal;
 
 @Data
 public class StockUpdateRequest {
-    @NotNull(message = "Mã sản phẩm không được trống")
+    @NotNull(message = "Product ID must not be null")
     private Long productId;
 
-    @NotNull(message = "Số lượng không được trống")
+    @NotNull(message = "Quantity must not be null")
     private BigDecimal quantity;
 
     private Long referenceId;

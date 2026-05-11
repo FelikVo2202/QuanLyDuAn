@@ -60,7 +60,7 @@ public class BillService {
 
     private Bill getBill(Long billId) {
         return billRepository.findById(billId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bill với ID: " + billId));
+                .orElseThrow(() -> new ResourceNotFoundException("Bill not found with ID: " + billId));
     }
 
     @Transactional
@@ -78,7 +78,7 @@ public class BillService {
 
     private Customer getCustomer(Long id) {
         return customerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with ID: " + id));
     }
 
     private BigDecimal appendRetailProductsToBill(
@@ -93,12 +93,12 @@ public class BillService {
         for (AddRetailProductRequest request : requests) {
             ProductSummary productSummary = productSummaryMap.get(request.getProductId());
             if (productSummary == null) {
-                throw new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + request.getProductId());
+                throw new ResourceNotFoundException("Product not found with ID: " + request.getProductId());
             }
 
             if (productSummary.getProductType() == ProductType.PROFESSIONAL) {
-                throw new BusinessRuleException("Sản phẩm có id: " + productSummary.getId() +
-                        " là nguyên liệu nội bộ, không được phép bán lẻ");
+                throw new BusinessRuleException("Product with id: " + productSummary.getId() +
+                        " is an internal ingredient and cannot be sold as retail");
             }
 
             mergeOrAddDetail(bill, request, productSummary);
@@ -145,12 +145,12 @@ public class BillService {
         inventoryCart.forEach((productId, requiredQuantity) -> {
             Product product = productMap.get(productId);
             if (product == null) {
-                throw new ResourceNotFoundException("Không tìm thấy sản phẩm hoặc nguyên liệu ID: " + productId);
+                throw new ResourceNotFoundException("Product or ingredient not found with ID: " + productId);
             }
 
             if (product.getQuantityOnHand().compareTo(requiredQuantity) < 0) {
                 throw new BusinessRuleException(String.format(
-                        "Không đủ tồn kho cho '%s'. Tổng cộng cần: %s, Hiện có: %s",
+                        "Insufficient inventory for '%s'. Required: %s, Available: %s",
                         product.getName(), requiredQuantity, product.getQuantityOnHand()));
             }
 
@@ -161,7 +161,7 @@ public class BillService {
     @Transactional
     public BillDto createAppointmentBill(Long appointmentId, CreateAppointmentBillRequest request) {
         if (billRepository.existsByAppointment_Id(appointmentId)) {
-            throw new BusinessRuleException("Lịch hẹn này đã được lập hóa đơn. Không thể tạo thêm.");
+            throw new BusinessRuleException("This appointment has already been billed. Cannot create another bill.");
         }
 
         Bill bill = new Bill();
@@ -187,7 +187,7 @@ public class BillService {
 
     private Appointment getAppointment(Long id) {
         return appointmentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch hẹn ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with ID: " + id));
     }
 
     private BigDecimal syncServicesFromAppointment(Bill bill, Appointment appointment, Map<Long, BigDecimal> inventoryCart) {
@@ -239,7 +239,7 @@ public class BillService {
 
     private void ensureBillIsPending(Bill bill) {
         if (bill.getPaymentStatus() != PaymentStatus.PENDING) {
-            throw new BusinessRuleException("Thao tác bị từ chối: Hóa đơn không ở trạng thái chờ xử lý (PENDING)");
+            throw new BusinessRuleException("Action denied: Bill is not in PENDING status");
         }
     }
 
@@ -269,11 +269,11 @@ public class BillService {
         BillDetail targetDetail = bill.getDetails().stream()
                 .filter(d -> d.getId() != null && d.getId().equals(detailId))
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy dòng chi tiết ID: " + detailId + " trong hóa đơn này"));
+                .orElseThrow(() -> new ResourceNotFoundException("Detail line not found with ID: " + detailId + " in this bill"));
 
         if (targetDetail.getProduct() == null) {
             throw new BusinessRuleException(
-                    "Bạn không thể xóa, sửa dịch vụ trực tiếp trên Hóa đơn. Vui lòng cập nhật thông qua Lịch hẹn"
+                    "You cannot edit or remove services directly on a bill. Please update them via the appointment"
             );
         }
 
@@ -283,7 +283,7 @@ public class BillService {
     private Product getSingleLockedProductOrThrow(Long productId) {
         return productRepository.findByIdsWithLock(Set.of(productId)).stream()
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + productId));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + productId));
     }
 
     @Transactional
@@ -317,7 +317,7 @@ public class BillService {
 
         if (diffQty.compareTo(BigDecimal.ZERO) > 0) {
             if (product.getQuantityOnHand().compareTo(diffInventory) < 0) {
-                throw new BusinessRuleException("Kho không đủ. Cần: " + diffInventory + ". Chỉ còn: " + product.getQuantityOnHand());
+                throw new BusinessRuleException("Insufficient inventory. Required: " + diffInventory + ". Available: " + product.getQuantityOnHand());
             }
         }
         return diffInventory;
@@ -391,7 +391,7 @@ public class BillService {
     private void restoreRetailProduct(Long productId, BigDecimal quantityToRestore, Map<Long, Product> lockedProducts) {
         Product p = lockedProducts.get(productId);
         if (p == null) {
-            throw new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + productId + ". Không thể hoàn kho");
+            throw new ResourceNotFoundException("Product not found with ID: " + productId + ". Cannot restore inventory");
         }
         BigDecimal factor = p.getConversionFactor() != null ? p.getConversionFactor() : BigDecimal.ONE;
         p.setQuantityOnHand(p.getQuantityOnHand().add(quantityToRestore.multiply(factor)));
@@ -402,7 +402,7 @@ public class BillService {
         for (ServiceRecipe r : serviceRecipes) {
             Product p = lockedProducts.get(r.getProduct().getId());
             if (p == null) {
-                throw new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + r.getProduct().getId() + ". Không thể hoàn kho");
+                throw new ResourceNotFoundException("Product not found with ID: " + r.getProduct().getId() + ". Cannot restore inventory");
             }
             p.setQuantityOnHand(p.getQuantityOnHand().add(r.getQuantityConsumed().multiply(serviceQuantity)));
         }

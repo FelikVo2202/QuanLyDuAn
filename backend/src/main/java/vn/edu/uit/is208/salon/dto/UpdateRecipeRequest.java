@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 @Data
 public class UpdateRecipeRequest {
-    @NotNull(message = "Định mức tiêu hao không được để trống")
-    @Positive(message = "Định mức tiêu hao phải là số dương")
+    @NotNull(message = "Consumption rate must not be null")
+    @Positive(message = "Consumption rate must be a positive number")
     private BigDecimal quantityConsumed;
 }

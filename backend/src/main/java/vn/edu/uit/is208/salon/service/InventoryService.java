@@ -41,7 +41,7 @@ public class InventoryService {
             Pageable pageable
     ) {
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
-            throw new BusinessRuleException("Ngày bắt đầu (startDate) phải nhỏ hơn hoặc bằng ngày kết thúc (endDate)");
+            throw new BusinessRuleException("Start date (startDate) must be less than or equal to end date (endDate)");
         }
 
         Pageable safePageable = pageable;
@@ -76,18 +76,18 @@ public class InventoryService {
     @Transactional
     public InventoryLedgerResponse adjustStock(StockUpdateRequest request) {
         if (request.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
-            throw new BusinessRuleException("Số lượng điều chỉnh phải khác 0.");
+            throw new BusinessRuleException("Adjustment quantity must not be 0.");
         }
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm với ID: " + request.getProductId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + request.getProductId()));
 
         BigDecimal changeAmount = request.getQuantity().multiply(product.getConversionFactor());
 
         int updatedRows = productRepository.adjustStock(product.getId(), changeAmount);
 
         if (updatedRows == 0) {
-            throw new BusinessRuleException("Lỗi: Số lượng tồn kho hiện tại không đủ để thực hiện lệnh trừ này");
+            throw new BusinessRuleException("Insufficient inventory to perform this stock deduction");
         }
 
         InventoryLedger ledger = new InventoryLedger();

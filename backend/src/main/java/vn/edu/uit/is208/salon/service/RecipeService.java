@@ -34,17 +34,17 @@ public class RecipeService {
     @Transactional
     public RecipeResponse createRecipe(Long serviceId, CreateRecipeRequest request) {
         SalonService service = salonServiceRepository.findById(serviceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy dịch vụ ID: " + serviceId));
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found with ID: " + serviceId));
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm ID: " + request.getProductId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + request.getProductId()));
 
         if (product.getProductType() == ProductType.RETAIL) {
-            throw new BusinessRuleException("Sản phẩm '" + product.getName() + "' là hàng chỉ bán lẻ (RETAIL), không thể dùng làm vật tư tiêu hao");
+            throw new BusinessRuleException("Product '" + product.getName() + "' is retail-only (RETAIL) and cannot be used as a consumable ingredient");
         }
 
         if (serviceRecipeRepository.existsByIdServiceIdAndIdProductId(serviceId, request.getProductId())) {
-            throw new BusinessRuleException("Sản phẩm '" + product.getName() + "' đã tồn tại trong công thức của dịch vụ này.");
+            throw new BusinessRuleException("Product '" + product.getName() + "' already exists in this service recipe.");
         }
 
         validateServiceNotInPendingBill(serviceId);
@@ -62,14 +62,14 @@ public class RecipeService {
     private void validateServiceNotInPendingBill(Long serviceId) {
         boolean isServiceInPendingBill = billDetailRepository.existsByServiceIdAndBillPaymentStatus(serviceId, PaymentStatus.PENDING);
         if (isServiceInPendingBill) {
-            throw new BusinessRuleException("Không thể thay đổi công thức vì dịch vụ này đang có khách sử dụng (Hóa đơn chưa thanh toán).");
+            throw new BusinessRuleException("Cannot modify recipe because this service is currently used in an unpaid bill (PENDING).");
         }
     }
 
     @Transactional(readOnly = true)
     public RecipeResponse getRecipesByServiceId(Long serviceId) {
         SalonService service = salonServiceRepository.findById(serviceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy dịch vụ ID: " + serviceId));
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found with ID: " + serviceId));
 
         List<RecipeItemResponse> ingredients = serviceRecipeRepository.findByServiceId(serviceId)
                 .stream()
@@ -88,7 +88,7 @@ public class RecipeService {
         validateServiceNotInPendingBill(serviceId);
 
         ServiceRecipe recipe = serviceRecipeRepository.findByIdServiceIdAndIdProductId(serviceId, productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy công thức với sản phẩm ID: " + productId + " trong dịch vụ này."));
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found with product ID: " + productId + " in this service."));
 
         recipe.setQuantityConsumed(request.getQuantityConsumed());
         serviceRecipeRepository.save(recipe);
@@ -101,7 +101,7 @@ public class RecipeService {
         validateServiceNotInPendingBill(serviceId);
 
         ServiceRecipe recipe = serviceRecipeRepository.findByIdServiceIdAndIdProductId(serviceId, productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy công thức với sản phẩm ID: " + productId + " trong dịch vụ này."));
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found with product ID: " + productId + " in this service."));
 
         serviceRecipeRepository.delete(recipe);
 

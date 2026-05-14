@@ -45,24 +45,24 @@ public class AuthService {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal())) {
-            throw new AuthenticationCredentialsNotFoundException("Người dùng chưa xác thực hoặc token không hợp lệ");
+            throw new AuthenticationCredentialsNotFoundException("User is not authenticated or the token is invalid");
         }
 
         var staffId = Long.valueOf(authentication.getPrincipal().toString());
 
         return staffRepository.findById(staffId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + staffId));
+                .orElseThrow(() -> new ResourceNotFoundException("Staff not found with ID: " + staffId));
     }
 
     public String refreshAccessToken(String refreshToken) {
         var claims = jwtService.parseToken(refreshToken);
         if (claims == null) {
-            throw new AuthenticationCredentialsNotFoundException("Refresh Token không hợp lệ hoặc đã hết hạn");
+            throw new AuthenticationCredentialsNotFoundException("Refresh token is invalid or expired");
         }
 
         var staffId = Long.valueOf(claims.getSubject());
         Staff staff = staffRepository.findById(staffId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + staffId));
+                .orElseThrow(() -> new ResourceNotFoundException("Staff not found with ID: " + staffId));
 
         return jwtService.generateAccessToken(staff);
     }

@@ -17,17 +17,17 @@ import java.util.Set;
 @Setter
 @Getter
 public class CreateAppointmentRequest {
-    @NotNull(message = "Khách hàng không được trống")
+    @NotNull(message = "Customer must not be null")
     private Long customerId;
 
-    @NotNull(message = "Nhân viên không được trống")
+    @NotNull(message = "Staff must not be null")
     private Long staffId;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @NotNull(message = "Thời gian hẹn không được trống")
-    @Future(message = "Thời gian hẹn phải là một thời điểm trong tương lai")
+    @NotNull(message = "Appointment time must not be null")
+    @Future(message = "Appointment time must be in the future")
     private LocalDateTime appointmentDateTime;
 
-    @NotEmpty(message = "Dịch vụ không được trống")
+    @NotEmpty(message = "Service list must not be empty")
     private Set<Long> serviceIds;
 }

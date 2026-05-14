@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng nhập - GOUTSALON</title>
+  <title>Login - GOUTSALON</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * {
@@ -267,15 +267,11 @@
     <button class="login-btn" onclick="handleLogin()">Login →</button>
   </div>
 <script>
-  // Tài khoản mẫu (có thể thay bằng API sau)
-  const validUsers = [
-  { username: "manager", password: "123456", role: "manager", redirect: "dashboard.html" },
-  { username: "stylist", password: "123456", role: "stylist", redirect: "dashboard_stylist.html" },
-  { username: "receptionist", password: "123456", role: "receptionist", redirect: "dashboard_receptionist.html" }
-];
+  // API URL
+  const API_BASE_URL = 'http://localhost:8080/api';
 
   // Hàm xử lý đăng nhập
-  function handleLogin() {
+  async function handleLogin() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const errorDiv = document.getElementById('errorMsg');
@@ -283,37 +279,62 @@
 
     // Kiểm tra nhập liệu
     if (!username || !password) {
-      showError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu');
+      showError('Please enter both username and password');
       return;
     }
 
-    // Tìm tài khoản
-    const user = validUsers.find(u => u.username === username && u.password === password);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
 
-    if (user) {
-      // Đăng nhập thành công
-      errorDiv.style.display = 'none';
-      
-      // Lưu thông tin user vào localStorage nếu chọn "Ghi nhớ"
-      const userData = {
-        username: user.username,
-        role: user.role,
-        loginTime: new Date().toISOString()
-      };
-      
-      if (remember) {
-        localStorage.setItem('salonUser', JSON.stringify(userData));
-        sessionStorage.removeItem('salonUser');
+      const data = await response.json();
+
+      if (response.ok) {
+        // Đăng nhập thành công
+        errorDiv.style.display = 'none';
+        
+        // Mapping role to redirect page
+        let redirect = 'dashboard.html';
+        const role = data.staff.role; // MANAGER, RECEPTIONIST, STYLIST
+        if (role === 'STYLIST') redirect = 'dashboard_stylist.html';
+        else if (role === 'RECEPTIONIST') redirect = 'dashboard_receptionist.html';
+        else if (role === 'MANAGER') redirect = 'dashboard.html';
+
+        // Lưu thông tin user và token
+        const userData = {
+          username: data.staff.username,
+          role: role,
+          token: data.accessToken,
+          loginTime: new Date().toISOString()
+        };
+        
+        console.log('Login successful. Token:', data.accessToken);
+        console.log('Storing userData:', userData);
+        
+        if (remember) {
+          localStorage.setItem('salonUser', JSON.stringify(userData));
+          sessionStorage.removeItem('salonUser');
+          console.log('Stored in localStorage');
+        } else {
+          sessionStorage.setItem('salonUser', JSON.stringify(userData));
+          localStorage.removeItem('salonUser');
+          console.log('Stored in sessionStorage');
+        }
+        
+        // Chuyển hướng
+        alert(`Welcome back ${userData.username}`);
+        window.location.href = redirect;
       } else {
-        sessionStorage.setItem('salonUser', JSON.stringify(userData));
-        localStorage.removeItem('salonUser');
+        showError(data.message || '❌ Invalid username or password');
       }
-      
-      // Chuyển hướng
-      alert(`Welcome back ${user.username}`);
-      window.location.href = user.redirect;
-    } else {
-      showError('❌ Sai tên đăng nhập hoặc mật khẩu');
+    } catch (error) {
+      console.error('Login error:', error);
+      showError('❌ Could not connect to server');
     }
   }
 
@@ -341,7 +362,7 @@
     if (savedUser) {
       const user = JSON.parse(savedUser);
       // Có thể tự động chuyển hướng, nhưng để an toàn thì không auto
-      console.log('Có phiên đăng nhập cũ:', user.username);
+      console.log('Previous login session found:', user.username);
     }
   }
 

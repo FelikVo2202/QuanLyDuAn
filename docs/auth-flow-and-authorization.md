@@ -147,7 +147,7 @@ POST /api/auth/logout
 
 | Method   | Endpoint                     | STYLIST | RECEPTIONIST | MANAGER |
 |----------|------------------------------|:-------:|:------------:|:-------:|
-| `*`      | `/api/staffs/**`             |    ❌    |      ❌       |    ✅    |
+| `POST`   | `/api/staffs/**`             |    ❌    |      ❌       |    ✅    |
 | `DELETE` | `/api/customers/**`          |    ❌    |      ❌       |    ✅    |
 | `POST`   | `/api/appointments/**`       |    ❌    |      ✅       |    ✅    |
 | `PATCH`  | `/api/appointments/*/cancel` |    ❌    |      ✅       |    ✅    |

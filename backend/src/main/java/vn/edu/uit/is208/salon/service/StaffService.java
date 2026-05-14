@@ -54,12 +54,12 @@ public class StaffService {
 
     private void validateUsernameUniqueness(String username) {
         if (staffRepository.existsByUsername(username)) {
-            throw new DuplicateResourceException("Tên đăng nhập '" + username + "' đã tồn tại");
+            throw new DuplicateResourceException("Username '" + username + "' already exists");
         }
     }
 
     private @NonNull Staff getStaff(Long staffId) {
         return staffRepository.findById(staffId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với ID: " + staffId));
+                .orElseThrow(() -> new ResourceNotFoundException("Staff not found with ID: " + staffId));
     }
 }

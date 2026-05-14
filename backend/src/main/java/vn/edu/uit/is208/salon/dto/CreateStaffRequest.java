@@ -8,19 +8,19 @@ import vn.edu.uit.is208.salon.constant.StaffRole;
 
 @Data
 public class CreateStaffRequest {
-    @NotBlank(message = "Tên không được trống")
+    @NotBlank(message = "First name must not be blank")
     private String firstName;
 
-    @NotBlank(message = "Họ không được trống")
+    @NotBlank(message = "Last name must not be blank")
     private String lastName;
 
-    @NotNull(message = "Vai trò không được trống")
+    @NotNull(message = "Role must not be null")
     private StaffRole role;
 
-    @NotBlank(message = "Tên đăng nhập không được trống")
+    @NotBlank(message = "Username must not be blank")
     private String username;
 
-    @NotBlank(message = "Mật khẩu không được trống")
-    @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự")
+    @NotBlank(message = "Password must not be blank")
+    @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
 }

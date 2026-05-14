@@ -20,7 +20,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public @NonNull UserDetails loadUserByUsername(@NonNull String username) throws UsernameNotFoundException {
         Staff staff = staffRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException("Account not found: " + username));
 
         return new StaffPrincipal(staff);
     }

@@ -49,13 +49,13 @@ public class CustomerService {
     public void deleteCustomer(Long id) {
         Customer customer = getCustomer(id);
         if (!customer.getAppointments().isEmpty()) {
-            throw new BusinessRuleException("Không thể xóa, khách hàng này đang có lịch hẹn");
+            throw new BusinessRuleException("Cannot delete this customer because they have existing appointments");
         }
         customerRepository.delete(customer);
     }
 
     private Customer getCustomer(Long id) {
         return customerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with ID: " + id));
     }
 }

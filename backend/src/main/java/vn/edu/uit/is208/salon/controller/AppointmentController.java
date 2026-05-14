@@ -4,11 +4,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import vn.edu.uit.is208.salon.dto.AppointmentDto;
 import vn.edu.uit.is208.salon.dto.CreateAppointmentRequest;
 import vn.edu.uit.is208.salon.dto.UpdateAppointmentRequest;
+import vn.edu.uit.is208.salon.security.StaffPrincipal;
 import vn.edu.uit.is208.salon.service.AppointmentService;
 
 import java.net.URI;
@@ -24,12 +27,14 @@ public class AppointmentController {
     @GetMapping
     public ResponseEntity<List<AppointmentDto>> getAllAppointments(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @AuthenticationPrincipal StaffPrincipal principal) {
 
-        return ResponseEntity.ok(appointmentService.getAllAppointments(startDate, endDate));
+        return ResponseEntity.ok(appointmentService.getAllAppointments(startDate, endDate, principal.staff()));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'RECEPTIONIST') or @appointmentSecurity.isOwner(#id, principal.staff.id)")
     public ResponseEntity<AppointmentDto> getAppointmentById(@PathVariable Long id) {
         return ResponseEntity.ok(appointmentService.getAppointmentById(id));
     }

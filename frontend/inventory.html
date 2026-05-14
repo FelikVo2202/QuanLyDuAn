@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory - GOUTSALON</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #fae3c8;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 260px;
+      background: #fdf0d9;
+      color: #362e1b;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      padding: 28px 24px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #362e1b;
+      border-bottom: 1px solid #2a2a2a;
+      margin-bottom: 24px;
+    }
+    .logo span {
+      color: #eab308;
+    }
+
+    .nav-item {
+      padding: 12px 24px;
+      margin: 4px 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #4e3927;
+      transition: all 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .nav-item:hover {
+      background: #1e293b;
+      color: #f1f5f9;
+    }
+
+    .nav-item.active {
+      background: #f5e3c2;
+      color: #4e3927;
+    }
+
+    .logout {
+      margin-top: auto;
+      padding: 16px 24px;
+      cursor: pointer;
+      color: #8b6b4a;
+      font-weight: 500;
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+      background: #fdf0d9;
+    }
+
+    .topbar {
+      padding: 16px 28px;
+      background: #fdf0d9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .left-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .page-title h2, h2.page-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #34281d;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #8b7d64;
+    }
+    .breadcrumb .separator { font-size: 10px; color: #c48c47; }
+    .breadcrumb .active { color: #2e70ff; font-weight: 600; }
+
+    .search-bar-center {
+      flex: 1;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .search-bar-center {
+      flex: 1;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .search-bar-center input {
+      width: 100%;
+      padding: 10px 18px;
+      border: 1px solid #fff9ee;
+      border-radius: 12px;
+      font-size: 13px;
+      outline: none;
+      background:#fff9ee ;
+      transition: all 0.2s;
+    }
+
+    .search-bar-center input:focus {
+      border-color: #c48c47;
+      box-shadow: 0 0 0 2px rgba(196, 140, 71, 0.1);
+    }
+
+
+    .stylist-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #fff9ee;
+      padding: 8px 20px 8px 12px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .stylist-avatar {
+      width: 48px;
+      height: 48px;
+      background: #eab308;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #1a1a1a;
+      font-size: 18px;
+    }
+    .stylist-name h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #4e3927;
+    }
+    .stylist-name p {
+      font-size: 11px;
+      color: #4e3927;
+      margin: 0;
+    }
+    /* INVENTORY SECTION */
+    .inventory-section {
+      background: white;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .search-bar {
+      min-width: 240px;
+      max-width: 360px;
+      flex: 1;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 10px 16px 10px 36px;
+      border: 1px solid #e2d5c0;
+      border-radius: 16px;
+      background: white;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .right-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn, .export-btn {
+      background: white;
+      border: 1px solid #e2d5c0;
+      padding: 10px 18px;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 13px;
+      color: #4e3927;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover, .export-btn:hover {
+      background: #f5e8d8;
+      border-color: #c48c47;
+    }
+
+    .add-btn {
+      background: #3330ff;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 13px;
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .add-btn:hover {
+      background: #0033bf;
+    }
+
+    .products-table {
+      width: 100%;
+      background: white;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .products-table th {
+      text-align: left;
+      padding: 12px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b6b4a;
+      border-bottom: 1px solid #f0e0d0;
+    }
+    .products-table td {
+      padding: 16px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid #f5ede4;
+      vertical-align: middle;
+    }
+    .badge-type {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .type-professional{ background: #e0f2fe; color: #0369a1; }
+    .type-retail { background: #dcfce7; color: #15803d; }
+    .type-both { background: #fef9c3; color: #854d0e; }
+
+    .stock-on-hand-cell { vertical-align: middle; line-height: 1.35; min-width: 140px; }
+    .stock-on-hand-primary {
+      font-size: 15px;
+      font-weight: 700;
+      color: #15803d;
+    }
+    .stock-on-hand-primary.stock-low {
+      color: #dc2626;
+    }
+    .stock-on-hand-uom {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b5340;
+    }
+    .stock-on-hand-sub {
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #a08b72;
+    }
+    .stock-pack-cell {
+      font-size: 12px;
+      color: #4e3927;
+      line-height: 1.45;
+      white-space: nowrap;
+      min-width: 130px;
+    }
+    .stock-pack-strong { font-weight: 700; color: #34281d; }
+
+    .actions-cell {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      flex-wrap: nowrap;
+      min-width: 150px;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .action-btn:hover {
+      background: #f0e0d0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px;
+      color: #aaa;
+    }
+
+    /* MODAL */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .hidden { display: none; }
+    .modal-content {
+      background: #fff9ee;
+      padding: 28px;
+      border-radius: 24px;
+      width: 90%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .modal-content input, .modal-content select {
+      width: 100%;
+      margin: 6px 0 14px;
+      padding: 10px 12px;
+      border: 1px solid #ffffff;
+      border-radius: 14px;
+      background: white;
+      font-size: 13px;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .save-btn { background: linear-gradient(135deg, #e0d3a2, #ffdda1); color: #1a1a1a; padding: 8px 20px; border-radius: 40px; border: none; font-weight: 700; cursor: pointer; }
+    .cancel-btn { background: #f0f0f0; color: #666; padding: 8px 20px; border-radius: 40px; border: none; cursor: pointer; }
+
+    .checkbox-cell { width: 30px; text-align: center; }
+    .select-all-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 20px;
+      gap: 12px;
+    }
+    .delete-selected-btn {
+      background: #ff9999;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgb(102, 102, 102);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .delete-selected-btn:hover {
+      background: #dc2626;
+    }
+
+    .delete-selected-btn.disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    /* Custom dialogs (filter, confirm, ledger) */
+    .dialog-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 22, 16, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1200;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+    .dialog-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .dialog-panel {
+      background: linear-gradient(165deg, #fffef9 0%, #fff9ee 100%);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 48px rgba(54, 46, 27, 0.18), 0 0 0 1px rgba(196, 140, 71, 0.15);
+      transform: translateY(8px);
+      transition: transform 0.25s ease;
+    }
+    .dialog-overlay.open .dialog-panel {
+      transform: translateY(0);
+    }
+    .dialog-panel--wide {
+      max-width: 720px;
+    }
+    .dialog-head {
+      padding: 20px 24px 12px;
+      border-bottom: 1px solid rgba(226, 213, 192, 0.6);
+    }
+    .dialog-head h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #34281d;
+      margin: 0;
+    }
+    .dialog-head p {
+      font-size: 13px;
+      color: #8b6b4a;
+      margin: 6px 0 0;
+    }
+    .dialog-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+    }
+    .dialog-body label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b5340;
+      margin-bottom: 6px;
+    }
+    .dialog-body input[type="text"],
+    .dialog-body select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #e8dcc8;
+      border-radius: 14px;
+      background: #fff;
+      font-size: 14px;
+      margin-bottom: 16px;
+      font-family: inherit;
+    }
+    .dialog-foot {
+      padding: 16px 24px 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      border-top: 1px solid rgba(226, 213, 192, 0.5);
+      background: rgba(255, 250, 240, 0.6);
+    }
+    .btn-pill {
+      border: none;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-pill:active { transform: scale(0.98); }
+    .btn-pill--ghost {
+      background: #fff;
+      color: #5c4a38;
+      border: 1px solid #e2d5c0;
+    }
+    .btn-pill--ghost:hover { background: #faf5eb; }
+    .btn-pill--primary {
+      background: linear-gradient(135deg, #c48c47, #e8b86d);
+      color: #1a140d;
+      box-shadow: 0 4px 12px rgba(196, 140, 71, 0.35);
+    }
+    .btn-pill--danger {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+    }
+    .ledger-table-wrap {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #ede4d6;
+      background: #fff;
+    }
+    .ledger-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .ledger-table th {
+      text-align: left;
+      padding: 12px 14px;
+      background: #fdf6ea;
+      color: #6b5340;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .ledger-table td {
+      padding: 12px 14px;
+      border-top: 1px solid #f0e8dc;
+      color: #34281d;
+    }
+    .ledger-table .amt-pos { color: #15803d; font-weight: 700; }
+    .ledger-table .ledger-amt-stack .amt-main { font-size: 14px; }
+    .ledger-table .ledger-amt-stack .amt-sub {
+      margin-top: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #a08b72;
+    }
+    .ledger-table .amt-neg { color: #b91c1c; font-weight: 700; }
+    .ledger-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #eef2ff;
+      color: #4338ca;
+    }
+    .ledger-empty, .ledger-loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #8b6b4a;
+      font-size: 14px;
+    }
+    .ledger-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .ledger-loading.hidden {
+      display: none !important;
+    }
+    .ledger-spinner {
+      width: 22px;
+      height: 22px;
+      border: 3px solid #e8dcc8;
+      border-top-color: #c48c47;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #34281d;
+      color: #fff9ee;
+      padding: 14px 22px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+      z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s, transform 0.25s, visibility 0.25s;
+      max-width: min(90vw, 420px);
+      text-align: center;
+    }
+    #toast.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (max-width: 900px) {
+      .main { padding: 20px; }
+      .products-table { font-size: 12px; }
+      .products-table th, .customers-table td { padding: 8px 4px; }
+    }
+    *,
+    *::before,
+    *::after {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">G<img src="assets/icons/logo_flower.svg" width="20" height="20" alt="">UTSALON<span></span></div>
+    <a href="dashboard_receptionist.html" class="nav-item">
+      <img src="assets/icons/dashboard.svg" width="24" height="24" alt=""> Dashboard
+    </a>
+    <a href="schedule.html" class="nav-item">
+      <img src="assets/icons/schedule.svg" width="24" height="24" alt=""> Schedule
+    </a>
+
+    <a href="inventory.html" class="nav-item active">
+      <img src="assets/icons/inventory.svg" width="24" height="24" alt=""> Inventory
+    </a>
+    <a href="customers.html" class="nav-item">
+      <img src="assets/icons/customers.svg" width="24" height="24" alt=""> Customers
+    </a>
+    <div class="logout" onclick="logout()">🚪 Logout</div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div class="topbar">
+      <div class="left-section">
+        <h2 class="page-title">Inventory</h2>
+        <div class="breadcrumb">
+          <span>Dashboard</span>
+          <span class="separator">▶</span>
+          <span class="active">Inventory</span>
+        </div>
+      </div>
+      <div class="search-bar-center">
+        <input type="text" id="topSearchInput" placeholder="Search" oninput="onSearchInput('top')" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
+      </div>
+      <div class="stylist-info">
+        <div class="stylist-avatar">👩</div>
+        <div class="stylist-name">
+          <h4 id="userName">Alissa</h4>
+          <p id="userRole">Manager</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="inventory-section">
+      <div class="action-bar">
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="Search by ID, name" oninput="onSearchInput('main')" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 18px; padding-left: 36px;">
+        </div>
+        <div class="right-group">
+          <button class="filter-btn" onclick="openFilterModal()">
+            Filter <img src="assets/icons/filter.svg" width="20" height="20" alt="">
+          </button>
+          <button class="export-btn" onclick="exportInventoryCSV()">
+            Export <img src="assets/icons/export.svg" width="20" height="20" alt="">
+          </button>
+          <button class="add-btn" onclick="openAddModal()">
+            Add Product <img src="assets/icons/plus.svg" width="20" height="20" alt="">
+          </button>
+        </div>
+      </div>
+
+      <div id="inventoryTableContainer">
+        <!-- dynamic table will be injected here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD/EDIT PRODUCT -->
+<div id="productModal" class="modal hidden">
+  <div class="modal-content">
+    <h3 id="modalTitle">Add New Product</h3>
+    <input type="hidden" id="editProductId">
+    <label>Product Name *</label>
+    <input type="text" id="productName" placeholder="e.g., Premium Hair Wax">
+    <label>Product Type *</label>
+    <select id="productType">
+      <option value="BOTH">Both (Retail & Professional)</option>
+      <option value="RETAIL">Retail only</option>
+      <option value="PROFESSIONAL">Professional only (salon use)</option>
+    </select>
+    <label>Category *</label>
+    <input type="text" id="category" placeholder="e.g., Wax, Hair Dye, Shampoo">
+    <label>Price *</label>
+    <input type="number" step="10000" id="price" placeholder="0">
+    <label>Base Unit *</label>
+    <input type="text" id="baseUom" placeholder="e.g., ml, gram">
+    <label>Purchasing Unit *</label>
+    <input type="text" id="purchasingUom" placeholder="e.g., Bottle, Tube">
+    <label>Conversion — base units per 1 purchase unit *</label>
+    <input type="number" step="0.5" id="conversionFactor" placeholder="e.g., 500 (1 bottle = 500 ml)">
+    <div class="modal-actions">
+      <button class="cancel-btn" onclick="closeProductModal()">Cancel</button>
+      <button class="save-btn" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADJUST STOCK -->
+<div id="adjustModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Adjust stock</h3>
+    <input type="hidden" id="adjustProductId">
+    <label>Product</label>
+    <input type="text" id="adjustProductName" disabled style="background:#f5f5f5;">
+    <label>Current stock</label>
+    <input type="text" id="adjustCurrentStock" disabled style="background:#f5f5f5;" title="Purchase unit is primary">
+    <label>Transaction type *</label>
+    <select id="adjustTransactionType">
+      <option value="RESTOCK">RESTOCK — Add stock (restock)</option>
+      <option value="ADJUSTMENT">ADJUSTMENT — Remove stock (shrinkage, count correction)</option>
+    </select>
+    <label id="adjustQuantityLabel">Quantity (purchase unit) *</label>
+    <input type="number" id="adjustQuantity" placeholder="e.g. 10" step="any" min="0">
+    <label>Reference ID (optional)</label>
+    <input type="number" id="adjustReferenceId" placeholder="e.g. receipt or order ID">
+    <div class="modal-actions">
+      <button type="button" class="cancel-btn" onclick="closeAdjustModal()">Cancel</button>
+      <button type="button" class="save-btn" onclick="submitAdjustment()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE_URL = "http://localhost:8080/api";
+
+  // ==================== AUTH CHECK ====================
+  const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+  if (!userStr) {
+    window.location.href = 'login.html';
+  }
+  const userData = JSON.parse(userStr);
+
+  // Populate topbar user info (avatar, name, role)
+  (function populateTopbarUser() {
+    try {
+      const userNameEl = document.getElementById('userName');
+      const userRoleEl = document.getElementById('userRole');
+      const avatarEl = document.querySelector('.stylist-avatar');
+      if (userNameEl) userNameEl.innerText = userData.username || userData.userName || userData.name || 'User';
+      if (userRoleEl) {
+        const r = userData.role || '';
+        userRoleEl.innerText = r ? (r.charAt(0).toUpperCase() + r.slice(1).toLowerCase()) : '';
+      }
+      if (avatarEl) {
+        avatarEl.textContent = userData.avatarEmoji || userData.avatar || (userData.username ? userData.username.charAt(0).toUpperCase() : '👩');
+      }
+    } catch (e) {
+      console.error('Could not populate topbar user info', e);
+    }
+  })();
+
+  // Get access token
+  function getAccessToken() {
+    const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+    if (!userStr) return null;
+
+    try {
+      const userData = JSON.parse(userStr);
+      return userData.token;
+    } catch (error) {
+      console.error("Error reading user data:", error);
+      return null;
+    }
+  }
+
+  // Helper function for headers
+  function getAuthHeaders() {
+    const token = getAccessToken();
+    if (!token) {
+      console.error('No access token found');
+      return null;
+    }
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  }
+
+  /** Turns backend error bodies (JSON or text) into a short user-facing message. */
+  function formatApiError(raw) {
+    if (raw == null || raw === '') return 'Something went wrong. Please try again.';
+    const s = String(raw).trim();
+    try {
+      const j = JSON.parse(s);
+      if (j.message && typeof j.message === 'string') return j.message;
+      if (Array.isArray(j.errors) && j.errors.length) {
+        const parts = j.errors.map(e =>
+          (e && (e.defaultMessage || e.message)) ? (e.defaultMessage || e.message) : String(e)
+        ).filter(Boolean);
+        if (parts.length) return parts.join('; ');
+      }
+      if (typeof j.status === 'number' && typeof j.error === 'string') {
+        const p = (j.path && typeof j.path === 'string') ? ` — ${j.path}` : '';
+        return j.error + p;
+      }
+      if (j.error && typeof j.error === 'string') return j.error;
+      if (j.detail && typeof j.detail === 'string') return j.detail;
+      if (j.title && typeof j.title === 'string') return j.title;
+    } catch (_) { /* not JSON */ }
+    if (s.length > 220) return s.slice(0, 217) + '…';
+    return s;
+  }
+
+  async function handleResponse(response) {
+    if (response.status === 401) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('salonUser');
+      sessionStorage.removeItem('accessToken');
+      sessionStorage.removeItem('salonUser');
+      window.location.href = 'login.html';
+      throw new Error('Unauthorized');
+    }
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(formatApiError(error) || `HTTP error (${response.status})`);
+    }
+
+    return response.json();
+  }
+
+  // ==================== TOAST & CUSTOM DIALOGS ====================
+  let toastTimer = null;
+  function showToast(message, durationMs = 3200) {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), durationMs);
+  }
+
+  let confirmResolve = null;
+  function openConfirmDialog({ title, message, okText = 'Confirm', danger = false }) {
+    return new Promise((resolve) => {
+      confirmResolve = resolve;
+      const overlay = document.getElementById('confirmDialog');
+      document.getElementById('confirmDialogTitle').textContent = title;
+      document.getElementById('confirmDialogMessage').textContent = message;
+      const okBtn = document.getElementById('confirmDialogOk');
+      okBtn.textContent = okText;
+      okBtn.className = 'btn-pill ' + (danger ? 'btn-pill--danger' : 'btn-pill--primary');
+      overlay.classList.add('open');
+    });
+  }
+  function closeConfirmDialog(value) {
+    const overlay = document.getElementById('confirmDialog');
+    if (overlay) overlay.classList.remove('open');
+    if (confirmResolve) {
+      confirmResolve(value);
+      confirmResolve = null;
+    }
+  }
+
+  // Logout function
+  function logout() {
+    localStorage.removeItem('salonUser');
+    sessionStorage.removeItem('salonUser');
+    localStorage.removeItem('accessToken');
+    sessionStorage.removeItem('accessToken');
+    window.location.href = 'login.html';
+  }
+
+  // ==================== INVENTORY DATA ====================
+  let products = [];
+  let currentFilterCategory = "";
+  let currentFilterType = "";
+
+  // Dashboard link by role
+  const userRole = userData.role;
+  const dashboardLink = document.querySelector('.sidebar a[href*="dashboard"]');
+  if (dashboardLink) {
+    if (userRole === 'MANAGER') dashboardLink.href = 'dashboard.html';
+    else if (userRole === 'STYLIST') dashboardLink.href = 'dashboard_stylist.html';
+    else dashboardLink.href = 'dashboard_receptionist.html';
+  }
+
+  // ==================== API PRODUCTS ====================
+  // Load products
+  async function loadInventory() {
+    const headers = getAuthHeaders();
+    if (!headers) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const container = document.getElementById('inventoryTableContainer');
+    if (container) {
+      container.innerHTML = '<div class="empty-state">Loading products…</div>';
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/products?size=1000`, {
+        method: "GET",
+        headers: headers
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        const productList = data.content || [];
+
+        products = productList.map(p => ({
+          ProductID: p.id,
+          Name: p.name,
+          ProductType: p.productType || 'BOTH',
+          Category: p.category,
+          Price: Number(p.price != null ? p.price : 0),
+          BaseUOM: p.baseUom,
+          PurchasingUOM: p.purchasingUom,
+          ConversionFactor: p.conversionFactor != null ? Number(p.conversionFactor) : 1,
+          currentStock: Number(p.quantityOnHand != null ? p.quantityOnHand : 0)
+        }));
+
+        renderProductTable();
+      } else if (response.status === 401) {
+        window.location.href = 'login.html';
+      } else {
+        console.error("Failed to load products");
+        products = [];
+        if (container) {
+          container.innerHTML = '<div class="empty-state">Could not load data. Please try again later.</div>';
+        }
+      }
+    } catch (err) {
+      console.error("API Error:", err);
+      products = [];
+      if (container) {
+        container.innerHTML = '<div class="empty-state">Server connection error. Check that the backend is running.</div>';
+      }
+    }
+  }
+
+  // Create product
+  async function createProduct(productData) {
+    const headers = getAuthHeaders();
+    if (!headers) return false;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/products`, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(productData)
+      });
+
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        return false;
+      }
+      if (response.ok) {
+        await loadInventory();
+        return true;
+      } else {
+        const error = await response.text();
+        showToast('Could not create product: ' + formatApiError(error));
+        return false;
+      }
+    } catch (err) {
+      console.error("Create error:", err);
+      showToast('Network error. Please try again.');
+      return false;
+    }
+  }
+
+  // Update product
+  async function updateProduct(id, productData) {
+    const headers = getAuthHeaders();
+    if (!headers) return false;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+        method: "PUT",
+        headers: headers,
+        body: JSON.stringify({...productData, id: id})
+      });
+
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        return false;
+      }
+      if (response.ok) {
+        await loadInventory();
+        return true;
+      } else {
+        const error = await response.text();
+        showToast('Could not update product: ' + formatApiError(error));
+        return false;
+      }
+    } catch (err) {
+      console.error("Update error:", err);
+      showToast('Network error. Please try again.');
+      return false;
+    }
+  }
+
+  // Delete product
+  async function deleteProduct(id) {
+    const product = products.find(p => p.ProductID === id);
+    const label = product ? product.Name : ('#' + id);
+    const ok = await openConfirmDialog({
+      title: 'Delete product',
+      message: 'Permanently delete "' + label + '"? This cannot be undone.',
+      okText: 'Delete',
+      danger: true
+    });
+    if (!ok) return;
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+        method: "DELETE",
+        headers: headers
+      });
+
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        return;
+      }
+      if (response.ok) {
+        showToast('Product deleted.');
+        await loadInventory();
+      } else {
+        const error = await response.text();
+        showToast('Could not delete: ' + formatApiError(error));
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      showToast('Network error. Please try again.');
+    }
+  }
+
+  // ==================== API INVENTORY ADJUSTMENT ====================
+  async function adjustInventory(productId, quantity, referenceId = null) {
+    const headers = getAuthHeaders();
+    if (!headers) return false;
+
+    const adjustmentData = {
+      productId: productId,
+      quantity: quantity
+    };
+
+    if (referenceId != null && referenceId !== '') {
+      adjustmentData.referenceId = referenceId;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/inventory-ledgers/adjust`, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(adjustmentData)
+      });
+
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        return false;
+      }
+      if (response.ok) {
+        return true;
+      } else {
+        const error = await response.text();
+        console.error("Adjustment failed:", error);
+        showToast('Stock adjustment failed: ' + formatApiError(error));
+        return false;
+      }
+    } catch (err) {
+      console.error("Adjustment error:", err);
+      showToast('Network error. Please try again.');
+      return false;
+    }
+  }
+
+  // ==================== API INVENTORY LEDGERS ====================
+  async function getInventoryLedgers({
+                                       productId = null,
+                                       transactionType = null,
+                                       referenceId = null,
+                                       startDate = null,
+                                       endDate = null,
+                                       page = 0,
+                                       size = 20,
+                                       sort = null
+                                     } = {}) {
+    const headers = getAuthHeaders();
+    if (!headers) return null;
+
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('size', size);
+
+    if (productId) params.append('productId', productId);
+    if (transactionType) params.append('transactionType', transactionType);
+    if (referenceId) params.append('referenceId', referenceId);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    if (sort) params.append('sort', sort);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/inventory-ledgers?${params.toString()}`, {
+        method: "GET",
+        headers: headers
+      });
+
+      if (response.status === 401) {
+        window.location.href = 'login.html';
+        return null;
+      }
+      if (response.ok) {
+        return await response.json();
+      } else {
+        console.error("Failed to fetch ledgers");
+        return null;
+      }
+    } catch (err) {
+      console.error("Ledgers error:", err);
+      return null;
+    }
+  }
+
+  // ==================== UI RENDER FUNCTIONS ====================
+  function getFilteredProducts() {
+    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+
+    let filtered = [...products];
+    if (searchTerm) {
+      filtered = filtered.filter(p =>
+              p.Name.toLowerCase().includes(searchTerm) ||
+              (p.Category && p.Category.toLowerCase().includes(searchTerm)) ||
+              p.ProductID.toString().includes(searchTerm)
+      );
+    }
+    if (currentFilterCategory) {
+      filtered = filtered.filter(p => p.Category === currentFilterCategory);
+    }
+    if (currentFilterType) {
+      filtered = filtered.filter(p => p.ProductType === currentFilterType);
+    }
+    return filtered;
+  }
+
+  function filterProducts() {
+    renderProductTable();
+  }
+
+  function onSearchInput(from) {
+    const top = document.getElementById('topSearchInput');
+    const main = document.getElementById('searchInput');
+    if (top && main) {
+      if (from === 'top') main.value = top.value;
+      else top.value = main.value;
+    }
+    filterProducts();
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m){
+      if(m==='&') return '&amp;';
+      if(m==='<') return '&lt;';
+      if(m==='>') return '&gt;';
+      return m;
+    });
+  }
+
+  /** Backend: on-hand qty is base UOM; 1 purchase unit = factor base units */
+  function purchasingConvFactor(p) {
+    if (!p || p.ConversionFactor == null) return 1;
+    const cf = Number(p.ConversionFactor);
+    if (!isFinite(cf) || cf === 0) return 1;
+    return cf;
+  }
+
+  function stockBaseAmount(p) {
+    return Number(p.currentStock != null ? p.currentStock : 0);
+  }
+
+  function stockPurchaseAmount(p) {
+    return stockBaseAmount(p) / purchasingConvFactor(p);
+  }
+
+  function fmtQty(n, maxFrac = 4) {
+    const x = Number(n);
+    if (!isFinite(x)) return '—';
+    return x.toLocaleString('en-US', { maximumFractionDigits: maxFrac });
+  }
+
+  function purchaseUomLabel(p) {
+    const b = String(p.BaseUOM || '').trim();
+    const u = String(p.PurchasingUOM || '').trim();
+    return u || b || '—';
+  }
+
+  /** Plain text line for inputs (adjust modal etc.) */
+  function formatStockLinePurchaseFirstPlain(p) {
+    const pu = purchaseUomLabel(p);
+    const bu = String(p.BaseUOM || '').trim() || '?';
+    return `${fmtQty(stockPurchaseAmount(p))} ${pu} (= ${fmtQty(stockBaseAmount(p))} ${bu})`;
+  }
+
+  /** How purchase package maps to counted base units (matches backend multiply) */
+  function renderPackagingCellHtml(p) {
+    const puRaw = String(p.PurchasingUOM || '').trim();
+    const buRaw = String(p.BaseUOM || '').trim() || '?';
+    const puEsc = escapeHtml(purchaseUomLabel(p));
+    const buEsc = escapeHtml(buRaw);
+    const cf = purchasingConvFactor(p);
+    if (!puRaw || puRaw === buRaw) {
+      return `<span class="stock-pack-strong">${buEsc}</span><div style="margin-top:4px;font-size:11px;color:#a08b72">Counted in ${buEsc}</div>`;
+    }
+    return `<span class="stock-pack-strong">1 ${escapeHtml(puRaw)}</span> = <span class="stock-pack-strong">${escapeHtml(fmtQty(cf))}</span> ${buEsc}`;
+  }
+
+  /** HTML block: purchase qty primary + base qty secondary */
+  function renderStockOnHandCell(p) {
+    const pu = escapeHtml(purchaseUomLabel(p));
+    const bu = escapeHtml(String(p.BaseUOM || '').trim() || '?');
+    const pq = fmtQty(stockPurchaseAmount(p), 2);
+    const bq = fmtQty(stockBaseAmount(p), 0);
+    const low = stockBaseAmount(p) < 10;
+    const strongCls = low ? 'stock-on-hand-primary stock-low' : 'stock-on-hand-primary';
+    const packInner = renderPackagingCellHtml(p);
+    return `
+      <td class="stock-on-hand-cell">
+        <div class="${strongCls}">${pq} <span class="stock-on-hand-uom">${pu}</span></div>
+        <div class="stock-on-hand-sub">${bq} ${bu}</div>
+      </td>
+      <td class="stock-pack-cell">${packInner}</td>`;
+  }
+
+  /** Ledger: base Δ from API → purchase Δ */
+  function ledgerPurchaseDelta(baseDelta, product) {
+    const cf = purchasingConvFactor(product);
+    return baseDelta / cf;
+  }
+
+  function renderProductTable() {
+    const filtered = getFilteredProducts();
+    const container = document.getElementById('inventoryTableContainer');
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state">📦 No products found. Click "Add Product" to create inventory.</div>';
+      return;
+    }
+
+    const html = `
+    <table class="products-table">
+      <thead>
+        <tr>
+          <th class="checkbox-cell"><input type="checkbox" id="selectAllCheckboxHeader" onclick="toggleSelectAll()"></th>
+          <th>ID</th>
+          <th>Product Name</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>On hand</th>
+          <th>Unit Conversion</th>
+          <th>Actions</th>
+         </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(p => `
+          <tr>
+            <td class="checkbox-cell"><input type="checkbox" class="product-checkbox" data-id="${p.ProductID}" onchange="updateDeleteButtonState()"></td>
+            <td>${p.ProductID}</td>
+            <td><strong>${escapeHtml(p.Name)}</strong></td>
+            <td><span class="badge-type ${p.ProductType === 'PROFESSIONAL' ? 'type-professional' : (p.ProductType === 'RETAIL' ? 'type-retail' : 'type-both')}">${p.ProductType}</span></td>
+            <td>${p.Category || '—'}</td>
+            <td>${Number(p.Price).toLocaleString('en-US')}₫</td>
+            ${renderStockOnHandCell(p)}
+            <td class="actions-cell">
+              <button class="action-btn edit-btn" onclick="openEditProductModal(${p.ProductID})" title="Edit">✏️</button>
+              <button class="action-btn adjust-btn" onclick="openAdjustModalForProduct(${p.ProductID})" title="Adjust Stock">📦</button>
+              <button class="action-btn" onclick="viewProductHistory(${p.ProductID})" title="History">📜</button>
+              <button class="action-btn delete-btn" onclick="deleteProduct(${p.ProductID})" title="Delete">🗑️</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <div class="select-all-row">
+      <button id="deleteSelectedBtn" class="delete-selected-btn disabled" onclick="deleteSelectedProducts()" disabled>🗑️ Delete Selected</button>
+    </div>
+  `;
+    container.innerHTML = html;
+    updateDeleteButtonState();
+  }
+
+  // ==================== BULK DELETE ====================
+  function getSelectedProductIds() {
+    const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+    return Array.from(checkboxes).map(cb => parseInt(cb.getAttribute('data-id')));
+  }
+
+  function updateDeleteButtonState() {
+    const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteBtn) {
+      if (checkedBoxes.length > 0) {
+        deleteBtn.disabled = false;
+        deleteBtn.classList.remove('disabled');
+      } else {
+        deleteBtn.disabled = true;
+        deleteBtn.classList.add('disabled');
+      }
+    }
+    const allCheckboxes = document.querySelectorAll('.product-checkbox');
+    const allCheckedCount = allCheckboxes.length;
+    const checkedCount = checkedBoxes.length;
+    const selectAllHeader = document.getElementById('selectAllCheckboxHeader');
+    if (selectAllHeader && allCheckedCount > 0) {
+      selectAllHeader.checked = (allCheckedCount === checkedCount);
+    }
+  }
+
+  function toggleSelectAll() {
+    const headerCheck = document.getElementById('selectAllCheckboxHeader');
+    const isChecked = headerCheck ? headerCheck.checked : false;
+    const allCheckboxes = document.querySelectorAll('.product-checkbox');
+    allCheckboxes.forEach(cb => { cb.checked = isChecked; });
+    if (headerCheck) headerCheck.checked = isChecked;
+    updateDeleteButtonState();
+  }
+
+  async function deleteSelectedProducts() {
+    const selectedIds = getSelectedProductIds();
+    if (selectedIds.length === 0) {
+      showToast('Select at least one product.');
+      return;
+    }
+
+    const ok = await openConfirmDialog({
+      title: 'Bulk delete',
+      message: `Delete ${selectedIds.length} selected product(s)? This cannot be undone.`,
+      okText: 'Delete',
+      danger: true
+    });
+    if (!ok) return;
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    try {
+      const deletePromises = selectedIds.map(id =>
+              fetch(`${API_BASE_URL}/products/${id}`, {
+                method: "DELETE",
+                headers: headers
+              })
+      );
+
+      const results = await Promise.all(deletePromises);
+      if (results.some(r => r.status === 401)) {
+        window.location.href = 'login.html';
+        return;
+      }
+      const allSuccessful = results.every(r => r.ok);
+
+      if (allSuccessful) {
+        showToast('Selected products deleted.');
+        await loadInventory();
+      } else {
+        showToast('Some products could not be deleted.');
+        await loadInventory();
+      }
+    } catch (err) {
+      console.error("Bulk delete error:", err);
+      showToast('Network error. Please try again.');
+    }
+  }
+
+  // ==================== FILTER ====================
+  function getUniqueCategories() {
+    const set = new Set();
+    products.forEach(p => {
+      const c = p.Category != null ? String(p.Category).trim() : '';
+      if (c) set.add(c);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }
+
+  function populateFilterCategorySelect() {
+    const sel = document.getElementById('filterCategorySelect');
+    if (!sel) return;
+    const keep = currentFilterCategory;
+    sel.replaceChildren();
+    const optAll = document.createElement('option');
+    optAll.value = '';
+    optAll.textContent = 'All';
+    sel.appendChild(optAll);
+    getUniqueCategories().forEach(cat => {
+      const o = document.createElement('option');
+      o.value = cat;
+      o.textContent = cat;
+      sel.appendChild(o);
+    });
+    if (keep && ![...sel.options].some(o => o.value === keep)) {
+      const o = document.createElement('option');
+      o.value = keep;
+      o.textContent = keep;
+      sel.appendChild(o);
+    }
+    sel.value = keep || '';
+  }
+
+  function openFilterModal() {
+    populateFilterCategorySelect();
+    document.getElementById('filterTypeSelect').value = currentFilterType || '';
+    document.getElementById('filterDialog').classList.add('open');
+  }
+  function closeFilterDialog() {
+    document.getElementById('filterDialog').classList.remove('open');
+  }
+  function applyFilterDialog() {
+    currentFilterCategory = document.getElementById('filterCategorySelect').value.trim();
+    currentFilterType = document.getElementById('filterTypeSelect').value.trim();
+    renderProductTable();
+    closeFilterDialog();
+  }
+  function clearFilterDialog() {
+    currentFilterCategory = '';
+    currentFilterType = '';
+    populateFilterCategorySelect();
+    document.getElementById('filterTypeSelect').value = '';
+    renderProductTable();
+    closeFilterDialog();
+  }
+
+  // ==================== EXPORT CSV ====================
+  function exportInventoryCSV() {
+    const dataToExport = getFilteredProducts();
+    if (dataToExport.length === 0) {
+      showToast('No data to export.');
+      return;
+    }
+    let rows = [["ProductID","Name","ProductType","Category","Price","StockPurchaseQty","StockBaseQty","PurchaseUOM","BaseUOM","BasePerPurchaseUnit"]];
+    dataToExport.forEach(p => {
+      rows.push([
+        p.ProductID, p.Name, p.ProductType, p.Category || "", p.Price,
+        stockPurchaseAmount(p), stockBaseAmount(p),
+        purchaseUomLabel(p), (p.BaseUOM || ''),
+        purchasingConvFactor(p)
+      ]);
+    });
+    const csvContent = rows.map(row => row.join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], {type: "text/csv;charset=utf-8;"});
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute("download", "inventory_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('Exported inventory_export.csv');
+  }
+
+  // ==================== PRODUCT MODAL ====================
+  const modal = document.getElementById('productModal');
+
+  function openAddModal() {
+    document.getElementById('modalTitle').innerText = "Add New Product";
+    document.getElementById('editProductId').value = "";
+    document.getElementById('productName').value = "";
+    document.getElementById('productType').value = "BOTH";
+    document.getElementById('category').value = "";
+    document.getElementById('price').value = "";
+    document.getElementById('baseUom').value = "";
+    document.getElementById('purchasingUom').value = "";
+    document.getElementById('conversionFactor').value = "";
+    modal.classList.remove('hidden');
+  }
+
+  function openEditProductModal(id) {
+    const product = products.find(p => p.ProductID === id);
+    if (!product) return;
+    document.getElementById('modalTitle').innerText = "Edit Product";
+    document.getElementById('editProductId').value = product.ProductID;
+    document.getElementById('productName').value = product.Name;
+    document.getElementById('productType').value = product.ProductType;
+    document.getElementById('category').value = product.Category || "";
+    document.getElementById('price').value = product.Price;
+    document.getElementById('baseUom').value = product.BaseUOM;
+    document.getElementById('purchasingUom').value = product.PurchasingUOM || "";
+    document.getElementById('conversionFactor').value = product.ConversionFactor !== undefined ? product.ConversionFactor : "";
+    modal.classList.remove('hidden');
+  }
+
+  function closeProductModal() {
+    modal.classList.add('hidden');
+  }
+
+  async function saveProduct() {
+    const name = document.getElementById('productName').value.trim();
+    const productType = document.getElementById('productType').value;
+    const category = document.getElementById('category').value.trim();
+    const price = parseFloat(document.getElementById('price').value);
+    const baseUom = document.getElementById('baseUom').value.trim();
+    const purchasingUom = document.getElementById('purchasingUom').value.trim();
+    const conversionFactor = document.getElementById('conversionFactor').value ?
+            parseFloat(document.getElementById('conversionFactor').value) : 1;
+
+    if (!name || !baseUom || isNaN(price) || price <= 0) {
+      showToast('Fill in name, base unit, and a price greater than 0.');
+      return;
+    }
+
+    const editId = document.getElementById('editProductId').value;
+    const productData = {
+      name: name,
+      productType: productType,
+      category: category || null,
+      price: price,
+      baseUom: baseUom,
+      purchasingUom: (purchasingUom || baseUom).trim(),
+      conversionFactor: conversionFactor
+    };
+
+    let success;
+    if (editId) {
+      success = await updateProduct(parseInt(editId), productData);
+    } else {
+      success = await createProduct(productData);
+    }
+
+    if (success) {
+      closeProductModal();
+    }
+  }
+
+  // ==================== ADJUST MODAL ====================
+  const adjustModal = document.getElementById('adjustModal');
+
+  function openAdjustModalForProduct(productId) {
+    const product = products.find(p => p.ProductID === productId);
+    if (!product) return;
+    openAdjustModal(product);
+  }
+
+  function adjustModalProductLookup() {
+    const idStr = document.getElementById('adjustProductId').value;
+    if (!idStr) return null;
+    return products.find(pp => pp.ProductID === parseInt(idStr, 10)) || null;
+  }
+
+  function openAdjustModal(product) {
+    document.getElementById('adjustProductId').value = product.ProductID;
+    document.getElementById('adjustProductName').value = product.Name;
+    document.getElementById('adjustCurrentStock').value = formatStockLinePurchaseFirstPlain(product);
+    document.getElementById('adjustQuantity').value = '';
+    document.getElementById('adjustReferenceId').value = '';
+    document.getElementById('adjustTransactionType').value = 'RESTOCK';
+    adjustModal.classList.remove('hidden');
+  }
+
+  function closeAdjustModal() {
+    adjustModal.classList.add('hidden');
+  }
+
+  async function submitAdjustment() {
+    const productId = parseInt(document.getElementById('adjustProductId').value, 10);
+    const quantity = parseFloat(document.getElementById('adjustQuantity').value);
+    const transactionType = document.getElementById('adjustTransactionType').value;
+    const refRaw = document.getElementById('adjustReferenceId').value.trim();
+    let referenceId = null;
+    if (refRaw !== '') {
+      referenceId = parseInt(refRaw, 10);
+      if (isNaN(referenceId)) {
+        showToast('Reference ID must be an integer.');
+        return;
+      }
+    }
+
+    if (isNaN(quantity) || quantity <= 0) {
+      showToast('Enter a valid quantity greater than 0.');
+      return;
+    }
+
+    const finalQuantity = transactionType === 'ADJUSTMENT' ? -quantity : quantity;
+    const abs = Math.abs(finalQuantity);
+    const prod = adjustModalProductLookup();
+    const cf = prod ? purchasingConvFactor(prod) : 1;
+    const bu = prod ? String(prod.BaseUOM || '').trim() || '?' : '?';
+    const pu = prod ? purchaseUomLabel(prod || {}) : 'unit';
+    const baseEff = quantity * cf;
+    const msg = transactionType === 'RESTOCK'
+      ? `Add ${fmtQty(abs)} ${pu}? On-hand (${bu}) increases by ${fmtQty(baseEff)}.`
+      : `Remove ${fmtQty(abs)} ${pu} from stock (adjustment)? On-hand (${bu}) decreases by ${fmtQty(baseEff)}.`;
+
+    const ok = await openConfirmDialog({
+      title: 'Confirm stock adjustment',
+      message: msg,
+      okText: 'Apply'
+    });
+    if (!ok) return;
+
+    const success = await adjustInventory(productId, finalQuantity, referenceId);
+
+    if (success) {
+      showToast('Stock updated.');
+      closeAdjustModal();
+      await loadInventory();
+    }
+  }
+
+  // ==================== VIEW LEDGERS ====================
+  function closeLedgerDialog() {
+    document.getElementById('ledgerDialog').classList.remove('open');
+  }
+
+  function formatLedgerDate(rawDate) {
+    if (!rawDate) return '—';
+    const s = String(rawDate);
+    const d = /^\d{4}-\d{2}-\d{2} \d/.test(s) ? new Date(s.replace(' ', 'T')) : new Date(s);
+    return isNaN(d.getTime()) ? String(rawDate) : d.toLocaleString('en-US');
+  }
+
+  async function viewProductHistory(productId) {
+    const product = products.find(p => p.ProductID === productId);
+    if (!product) return;
+
+    const overlay = document.getElementById('ledgerDialog');
+    const loadingEl = document.getElementById('ledgerLoading');
+    const host = document.getElementById('ledgerTableHost');
+
+    document.getElementById('ledgerDialogTitle').textContent = 'Inventory ledger';
+    document.getElementById('ledgerDialogSubtitle').textContent =
+      product.Name + ' · Now: ' + formatStockLinePurchaseFirstPlain(product);
+
+    loadingEl.classList.remove('hidden');
+    host.classList.add('hidden');
+    host.innerHTML = '';
+    overlay.classList.add('open');
+
+    const ledgers = await getInventoryLedgers({
+      productId: productId,
+      page: 0,
+      size: 50,
+      sort: 'transactionDate,desc'
+    });
+
+    loadingEl.classList.add('hidden');
+
+    if (!ledgers || !ledgers.content) {
+      host.innerHTML = '<div class="ledger-empty">Could not load history. Check your connection or permissions.</div>';
+      host.classList.remove('hidden');
+      return;
+    }
+
+    if (ledgers.content.length === 0) {
+      host.innerHTML = '<div class="ledger-empty">No inventory transactions for this product yet.</div>';
+      host.classList.remove('hidden');
+      return;
+    }
+
+    const puLbl = escapeHtml(purchaseUomLabel(product));
+    const buLbl = escapeHtml(String(product.BaseUOM || '').trim() || '?');
+
+    function fmtSignedLedger(n) {
+      const x = Number(n);
+      if (!isFinite(x)) return '—';
+      const s = Math.abs(x).toLocaleString('en-US', { maximumFractionDigits: 4 });
+      if (x > 0) return '+' + s;
+      if (x < 0) return '−' + s;
+      return x.toLocaleString('en-US', { maximumFractionDigits: 4 });
+    }
+
+    let rows = ledgers.content.map(ledger => {
+      const amtBase = ledger.changeAmount != null ? Number(ledger.changeAmount) : Number(ledger.quantity || 0);
+      const amtPur = ledgerPurchaseDelta(amtBase, product);
+      const ref = ledger.referenceId != null ? ledger.referenceId : '—';
+      const typeLabel = ledger.transactionType != null ? String(ledger.transactionType) : '—';
+      const mainCls = amtPur >= 0 ? 'amt-pos' : 'amt-neg';
+      return `<tr>
+        <td>${formatLedgerDate(ledger.transactionDate || ledger.createdAt)}</td>
+        <td><span class="ledger-badge">${escapeHtml(typeLabel)}</span></td>
+        <td class="ledger-amt-stack">
+          <div class="${mainCls} amt-main">${fmtSignedLedger(amtPur)} ${puLbl}</div>
+          <div class="amt-sub">${fmtSignedLedger(amtBase)} ${buLbl}</div>
+        </td>
+        <td>${ref}</td>
+      </tr>`;
+    }).join('');
+
+    host.innerHTML = `
+      <div class="ledger-table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Type</th>
+              <th>AMOUNT CHANGE</th>
+              <th>Reference</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    host.classList.remove('hidden');
+  }
+
+  // ==================== INITIALIZATION ====================
+  document.addEventListener('DOMContentLoaded', () => {
+    loadInventory();
+
+    document.getElementById('confirmDialogOk').addEventListener('click', () => closeConfirmDialog(true));
+    document.getElementById('confirmDialogCancel').addEventListener('click', () => closeConfirmDialog(false));
+    document.getElementById('confirmDialog').addEventListener('click', (e) => {
+      if (e.target.id === 'confirmDialog') closeConfirmDialog(false);
+    });
+    document.getElementById('filterDialog').addEventListener('click', (e) => {
+      if (e.target.id === 'filterDialog') closeFilterDialog();
+    });
+    document.getElementById('ledgerDialog').addEventListener('click', (e) => {
+      if (e.target.id === 'ledgerDialog') closeLedgerDialog();
+    });
+  });
+
+  // Close modal when clicking outside
+  window.onclick = function(event) {
+    const modal = document.getElementById('productModal');
+    const adjustModalEl = document.getElementById('adjustModal');
+    if (event.target === modal) {
+      closeProductModal();
+    }
+    if (event.target === adjustModalEl) {
+      closeAdjustModal();
+    }
+  }
+</script>
+
+<!-- FILTER DIALOG -->
+<div id="filterDialog" class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="filterDialogTitle">
+  <div class="dialog-panel" onclick="event.stopPropagation()">
+    <div class="dialog-head">
+      <h3 id="filterDialogTitle">Filter list</h3>
+      <p>Narrow down by category or product type.</p>
+    </div>
+    <div class="dialog-body">
+      <label for="filterTypeSelect">Type</label>
+      <select id="filterTypeSelect">
+        <option value="">All</option>
+        <option value="PROFESSIONAL">PROFESSIONAL</option>
+        <option value="RETAIL">RETAIL</option>
+        <option value="BOTH">BOTH</option>
+      </select>
+      <label for="filterCategorySelect">Category</label>
+      <select id="filterCategorySelect"></select>
+    </div>
+    <div class="dialog-foot">
+      <button type="button" class="btn-pill btn-pill--ghost" onclick="clearFilterDialog()">Clear filters</button>
+      <button type="button" class="btn-pill btn-pill--ghost" onclick="closeFilterDialog()">Close</button>
+      <button type="button" class="btn-pill btn-pill--primary" onclick="applyFilterDialog()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div id="confirmDialog" class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle">
+  <div class="dialog-panel" onclick="event.stopPropagation()">
+    <div class="dialog-head">
+      <h3 id="confirmDialogTitle">Confirm</h3>
+      <p id="confirmDialogMessage"></p>
+    </div>
+    <div class="dialog-foot">
+      <button type="button" class="btn-pill btn-pill--ghost" id="confirmDialogCancel">Cancel</button>
+      <button type="button" class="btn-pill btn-pill--primary" id="confirmDialogOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEDGER DIALOG -->
+<div id="ledgerDialog" class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="ledgerDialogTitle">
+  <div class="dialog-panel dialog-panel--wide" onclick="event.stopPropagation()">
+    <div class="dialog-head">
+      <h3 id="ledgerDialogTitle">Inventory ledger</h3>
+      <p id="ledgerDialogSubtitle"></p>
+    </div>
+    <div class="dialog-body" id="ledgerDialogBody">
+      <div class="ledger-loading" id="ledgerLoading"><span class="ledger-spinner"></span> Loading…</div>
+      <div id="ledgerTableHost" class="hidden"></div>
+    </div>
+    <div class="dialog-foot">
+      <button type="button" class="btn-pill btn-pill--primary" onclick="closeLedgerDialog()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

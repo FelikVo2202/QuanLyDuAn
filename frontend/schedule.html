@@ -1540,6 +1540,17 @@
 
   function addBillRow(type, data = null) {
     const isService = type === 'service';
+
+    if (!isService && !data) {
+      const existingSelects = document.querySelectorAll('#billProductArea .bill-grid select');
+      for (const sel of existingSelects) {
+        if (!sel.value || sel.value === '0') {
+          sel.closest('.bill-grid').querySelector('select').focus();
+          return;
+        }
+      }
+    }
+
     const container = isService ? document.getElementById('billServiceArea') : document.getElementById('billProductArea');
     const options = isService ? services : salonProducts;
     const row = document.createElement('div');
@@ -1550,7 +1561,7 @@
 
     row.innerHTML = `
       <select ${isService ? 'disabled style="background:#f8fafc; color:black; appearance: none; font-weight: 600;"' : 'onchange="updateRowPrice(this)"'}>
-        <option value="0" data-price="0">-- Chọn --</option>
+        <option disabled selected hidden value="0" data-price="0">-- Select --</option>
         ${options.map(item => `<option value="${item.id}" data-price="${item.price}" ${data && data.id == item.id ? 'selected' : ''}>${item.name}</option>`).join('')}
       </select>
       <input type="number" value="${initQty}" min="1" ${isService ? 'readonly style="background:#f8fafc; color:black; pointer-events: none;"' : 'oninput="calculateBill(); saveBillProducts();"'}>

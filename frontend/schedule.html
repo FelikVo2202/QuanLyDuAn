@@ -1462,8 +1462,47 @@
 
   // ================= BILLING FUNCTIONS (từ schedule2, chưa kết nối API) =================
   let salonProducts = [];
+  let currentBillingAppointmentId = null;
+
+  const BILL_STORAGE_PREFIX = 'goutsalon_bill_products_';
+
+  function saveBillProducts() {
+    if (!currentBillingAppointmentId) return;
+    const rows = document.querySelectorAll('#billProductArea .bill-grid');
+    const data = [];
+    rows.forEach(row => {
+      const sel = row.querySelector('select');
+      const qtyInput = row.querySelector('input[type="number"]');
+      if (sel && sel.value && sel.value !== '0') {
+        data.push({
+          productId: sel.value,
+          qty: parseInt(qtyInput?.value) || 1
+        });
+      }
+    });
+    try {
+      localStorage.setItem(BILL_STORAGE_PREFIX + currentBillingAppointmentId, JSON.stringify(data));
+    } catch(e) {
+      console.warn('Could not save bill products to localStorage:', e);
+    }
+  }
+
+  function loadSavedBillProducts(appointmentId) {
+    try {
+      return JSON.parse(localStorage.getItem(BILL_STORAGE_PREFIX + appointmentId) || '[]');
+    } catch(e) {
+      return [];
+    }
+  }
+
+  function clearSavedBillProducts(appointmentId) {
+    try {
+      localStorage.removeItem(BILL_STORAGE_PREFIX + appointmentId);
+    } catch(e) {}
+  }
 
   function openBilling(booking) {
+    currentBillingAppointmentId = booking.id || null;
     document.body.classList.add('modal-active');
     document.getElementById('billingOverlay').classList.add('active');
     document.getElementById('billCustName').innerText = booking.customerName || "Khách lẻ";
@@ -1478,12 +1517,25 @@
         if(s) addBillRow('service', s);
       });
     }
+
+    if (currentBillingAppointmentId) {
+      const saved = loadSavedBillProducts(currentBillingAppointmentId);
+      saved.forEach(item => {
+        const product = salonProducts.find(x => String(x.id) === String(item.productId));
+        if (product) {
+          addBillRow('product', { ...product, _savedQty: item.qty });
+        }
+      });
+    }
+
     calculateBill();
   }
 
   function closeBilling() {
     document.body.classList.remove('modal-active');
     document.getElementById('billingOverlay').classList.remove('active');
+    saveBillProducts();
+    currentBillingAppointmentId = null;
   }
 
   function addBillRow(type, data = null) {
@@ -1492,23 +1544,32 @@
     const options = isService ? services : salonProducts;
     const row = document.createElement('div');
     row.className = 'bill-grid';
+
+    const initQty = (data && data._savedQty) ? data._savedQty : 1;
+    const initPrice = data ? data.price : 0;
+
     row.innerHTML = `
       <select ${isService ? 'disabled style="background:#f8fafc; color:black; appearance: none; font-weight: 600;"' : 'onchange="updateRowPrice(this)"'}>
         <option value="0" data-price="0">-- Chọn --</option>
         ${options.map(item => `<option value="${item.id}" data-price="${item.price}" ${data && data.id == item.id ? 'selected' : ''}>${item.name}</option>`).join('')}
       </select>
-      <input type="number" value="1" min="1" ${isService ? 'readonly style="background:#f8fafc; color:black; pointer-events: none;"' : 'oninput="calculateBill()"'} >
-      <input type="text" value="${data ? data.price : 0}" readonly style="background:#f8fafc; color:black;">
-      ${isService ? '<div style="width: 40px;"></div>' : '<button onclick="this.parentElement.remove(); calculateBill();" style="border:none; background:none; color:#ef4444; font-size:20px; cursor:pointer;">🗑</button>'}
+      <input type="number" value="${initQty}" min="1" ${isService ? 'readonly style="background:#f8fafc; color:black; pointer-events: none;"' : 'oninput="calculateBill(); saveBillProducts();"'}>
+      <input type="text" value="${initPrice}" readonly style="background:#f8fafc; color:black;">
+      ${isService ? '<div style="width: 40px;"></div>' : '<button onclick="this.parentElement.remove(); calculateBill(); saveBillProducts();" style="border:none; background:none; color:#ef4444; font-size:20px; cursor:pointer;">🗑</button>'}
     `;
     container.appendChild(row);
     calculateBill();
+
+    if (!isService) {
+      saveBillProducts();
+    }
   }
 
   function updateRowPrice(el) {
     const price = el.options[el.selectedIndex].dataset.price;
     el.parentElement.querySelectorAll('input')[1].value = price;
     calculateBill();
+    saveBillProducts();
   }
 
   function calculateBill() {
@@ -1523,14 +1584,20 @@
   }
 
   function printBill() {
+    if (currentBillingAppointmentId) {
+      clearSavedBillProducts(currentBillingAppointmentId);
+    }
     alert("Đang in hóa đơn.");
-    closeBilling();
+    document.body.classList.remove('modal-active');
+    document.getElementById('billingOverlay').classList.remove('active');
+    currentBillingAppointmentId = null;
   }
 
   // Make billing functions global for inline onclick
   window.addBillRow = addBillRow;
   window.updateRowPrice = updateRowPrice;
   window.calculateBill = calculateBill;
+  window.saveBillProducts = saveBillProducts;
   window.closeBilling = closeBilling;
   window.printBill = printBill;
 </script>

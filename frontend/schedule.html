@@ -836,7 +836,6 @@
 
     <div class="section-title">SERVICES</div>
     <div id="billServiceArea"></div>
-    <button class="btn-add-item" onclick="addBillRow('service')">+ Add service</button>
 
     <div class="section-title">PRODUCTS</div>
     <div id="billProductArea"></div>
@@ -969,6 +968,12 @@
       const serviceRes = await fetch(`${API_BASE_URL}/services`, { headers });
       if (serviceRes.ok) {
         services = await serviceRes.json();
+      }
+
+      const retailRes = await fetch(`${API_BASE_URL}/products?productType=RETAIL&size=200`, { headers });
+      if (retailRes.ok) {
+        const retailPage = await retailRes.json();
+        salonProducts = retailPage.content || [];
       }
 
       // 4. Build Grid
@@ -1456,15 +1461,7 @@
   }
 
   // ================= BILLING FUNCTIONS (từ schedule2, chưa kết nối API) =================
-  const salonServices = [
-    {id: 1, name: "Cắt tóc Men's Cut", price: 150000},
-    {id: 2, name: "Nhuộm màu Gout", price: 500000},
-    {id: 3, name: "Gội đầu thảo dược", price: 100000}
-  ];
-  const salonProducts = [
-    {id: 101, name: "Sáp Gout Wax", price: 250000},
-    {id: 102, name: "Gôm xịt tạo kiểu", price: 180000}
-  ];
+  let salonProducts = [];
 
   function openBilling(booking) {
     document.body.classList.add('modal-active');
@@ -1477,11 +1474,9 @@
     // Tự động nạp dịch vụ từ lịch hẹn
     if(booking.serviceIds && booking.serviceIds.length > 0) {
       booking.serviceIds.forEach(id => {
-        const s = salonServices.find(x => x.id == id);
+        const s = services.find(x => x.id == id);
         if(s) addBillRow('service', s);
       });
-    } else {
-      addBillRow('service');
     }
     calculateBill();
   }
@@ -1492,18 +1487,19 @@
   }
 
   function addBillRow(type, data = null) {
-    const container = type === 'service' ? document.getElementById('billServiceArea') : document.getElementById('billProductArea');
-    const options = type === 'service' ? salonServices : salonProducts;
+    const isService = type === 'service';
+    const container = isService ? document.getElementById('billServiceArea') : document.getElementById('billProductArea');
+    const options = isService ? services : salonProducts;
     const row = document.createElement('div');
     row.className = 'bill-grid';
     row.innerHTML = `
-      <select onchange="updateRowPrice(this)">
+      <select ${isService ? 'disabled style="background:#f8fafc; color:black; appearance: none; font-weight: 600;"' : 'onchange="updateRowPrice(this)"'}>
         <option value="0" data-price="0">-- Chọn --</option>
         ${options.map(item => `<option value="${item.id}" data-price="${item.price}" ${data && data.id == item.id ? 'selected' : ''}>${item.name}</option>`).join('')}
       </select>
-      <input type="number" value="1" min="1" oninput="calculateBill()">
-      <input type="text" value="${data ? data.price : 0}" readonly style="background:#f8fafc">
-      <button onclick="this.parentElement.remove(); calculateBill();" style="border:none; background:none; color:#ef4444; font-size:20px; cursor:pointer;">🗑</button>
+      <input type="number" value="1" min="1" ${isService ? 'readonly style="background:#f8fafc; color:black; pointer-events: none;"' : 'oninput="calculateBill()"'} >
+      <input type="text" value="${data ? data.price : 0}" readonly style="background:#f8fafc; color:black;">
+      ${isService ? '<div style="width: 40px;"></div>' : '<button onclick="this.parentElement.remove(); calculateBill();" style="border:none; background:none; color:#ef4444; font-size:20px; cursor:pointer;">🗑</button>'}
     `;
     container.appendChild(row);
     calculateBill();

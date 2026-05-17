@@ -640,16 +640,45 @@
     }
 
     .checkout {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: auto;
+      align-self: flex-end;
+      padding: 4px 14px;
       font-size: 10px;
-      text-align: right;
-      color: #22c55e;
+      font-weight: 700;
+      color: #ffffff;
+      background: #10b981;
+      border-radius: 99px;
       cursor: pointer;
-      margin-top: 6px;
-      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.25);
+      width: fit-content;
+      z-index: 2;
+    }
+
+    .checkout:hover {
+      background: #059669;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(16, 185, 129, 0.35);
+    }
+
+    .checkout:active {
+      transform: translateY(0);
+      box-shadow: none;
     }
 
     .checkout.pending-payment {
-      color: #d97706;
+      background: #f59e0b;
+      box-shadow: 0 2px 4px rgba(245, 158, 11, 0.25);
+    }
+
+    .checkout.pending-payment:hover {
+      background: #d97706;
+      box-shadow: 0 4px 6px rgba(245, 158, 11, 0.35);
     }
 
     .event.completed {

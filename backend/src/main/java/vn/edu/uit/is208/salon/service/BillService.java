@@ -160,8 +160,8 @@ public class BillService {
 
     @Transactional
     public BillDto createAppointmentBill(Long appointmentId, CreateAppointmentBillRequest request) {
-        if (billRepository.existsByAppointment_Id(appointmentId)) {
-            throw new BusinessRuleException("This appointment has already been billed. Cannot create another bill.");
+        if (billRepository.existsByAppointment_IdAndPaymentStatusNot(appointmentId, PaymentStatus.FAILED)) {
+            throw new BusinessRuleException("This appointment already has an active bill. Cannot create another bill.");
         }
 
         Bill bill = new Bill();

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>GOUTSALON | Lịch hẹn</title>
+  <title>GOUTSALON | Appointments</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <style>
@@ -949,8 +949,8 @@
       `.event[data-appointment-id="${appointmentId}"] .checkout`
     );
     if (!checkoutEl) return;
+    checkoutEl.className = 'checkout pending-payment';
     checkoutEl.textContent = 'Checkout';
-    checkoutEl.classList.add('pending-payment');
   }
 
   // Time grid configuration: use 15-minute slots
@@ -1702,7 +1702,7 @@
     setBillEditingEnabled(true);
     document.body.classList.add('modal-active');
     document.getElementById('billingOverlay').classList.add('active');
-    document.getElementById('billCustName').innerText = booking.customerName || "Khách lẻ";
+    document.getElementById('billCustName').innerText = booking.customerName || "Walk-in Customer";
 
     document.getElementById('billServiceArea').innerHTML = '';
     document.getElementById('billProductArea').innerHTML = '';
@@ -1872,9 +1872,54 @@
     console.log('Pay bill — UI only, API not wired yet');
   }
 
-  function cancelBill() {
-    // TODO: gọi API hủy hóa đơn
-    console.log('Cancel bill — UI only, API not wired yet');
+  async function cancelBill() {
+    if (!currentBillingAppointmentId) return;
+
+    const billId = localStorage.getItem(BILL_ID_STORAGE_PREFIX + currentBillingAppointmentId);
+    if (!billId) {
+      alert("Bill information not found.");
+      return;
+    }
+
+    if (!confirm('Are you sure you want to cancel this bill to recreate it?')) return;
+
+    const btnCancel = document.getElementById('btnCancelBill');
+    btnCancel.disabled = true;
+    btnCancel.textContent = 'Canceling...';
+
+    const headers = getAuthHeaders();
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/bills/${billId}/cancel`, {
+        method: 'POST',
+        headers
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert('Could not cancel bill: ' + (err.message || 'System error'));
+        btnCancel.disabled = false;
+        btnCancel.textContent = 'Cancel Bill';
+        return;
+      }
+
+      localStorage.removeItem(BILL_ID_STORAGE_PREFIX + currentBillingAppointmentId);
+      clearSavedBillProducts(currentBillingAppointmentId);
+
+      alert("Old bill canceled. You can now create a new bill for this appointment.");
+      closeBilling();
+
+      await loadAllBookings();
+
+      btnCancel.disabled = false;
+      btnCancel.textContent = 'Cancel Bill';
+
+    } catch (error) {
+      console.error('Cancel bill error:', error);
+      alert('Network error while canceling bill.');
+      btnCancel.disabled = false;
+      btnCancel.textContent = 'Cancel Bill';
+    }
   }
 
   // Make billing functions global for inline onclick

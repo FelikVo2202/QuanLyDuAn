@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bills - GOUTSALON</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #fae3c8;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* LAYOUT CHÍNH */
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* SIDEBAR TRÁI - GUTSALON style */
+    .sidebar {
+      width: 260px;
+      background: #fdf0d9;
+      color: #362e1b;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+     .logo {
+      padding: 28px 24px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #362e1b;
+      border-bottom: 1px solid #2a2a2a;
+      margin-bottom: 24px;
+    }
+    .logo span {
+      color: #eab308;
+    }
+
+    .logo small {
+      font-size: 10px;
+      color: #64748b;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .nav-item {
+      padding: 12px 24px;
+      margin: 4px 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #4e3927;
+      transition: all 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .nav-item:hover {
+      background: #1e293b;
+      color: #f1f5f9;
+    }
+
+    .nav-item.active {
+      background: #f5e3c2;
+      color: #4e3927;
+    }
+
+    .logout {
+      margin-top: auto;
+      padding: 16px 24px;
+      cursor: pointer;
+      color: #8b6b4a;
+      font-weight: 500;
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background: #fdf0d9;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      padding: 16px 28px;
+      background: #fdf0d9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .page-title h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #34281d;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #8b7d64;
+    }
+
+    .breadcrumb .separator {
+      font-size: 10px;
+      color: #c48c47;
+    }
+
+    .breadcrumb .active {
+      color: #2e70ff;
+      font-weight: 600;
+    }
+
+    .stylist-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #fff9ee;
+      padding: 8px 20px 8px 12px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .stylist-avatar {
+      width: 48px;
+      height: 48px;
+      background: #eab308;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #1a1a1a;
+      font-size: 18px;
+    }
+    .stylist-name h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #4e3927;
+    }
+    .stylist-name p {
+      font-size: 11px;
+      color: #4e3927;
+      margin: 0;
+    }
+
+    /* ACTION BAR */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .left-filters {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .left-filters input[type="date"], .left-filters select {
+      padding: 10px 16px;
+      border: 1px solid #e2d5c0;
+      border-radius: 16px;
+      background: white;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      color: #4e3927;
+      outline: none;
+    }
+    .filter-btn {
+      background: white;
+      border: 1px solid #e2d5c0;
+      padding: 10px 18px;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 13px;
+      color: #4e3927;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover {
+      background: #f5e8d8;
+      border-color: #c48c47;
+    }
+
+    .search-bar {
+      min-width: 240px;
+      max-width: 360px;
+      flex: 1;
+    }
+    .search-bar input {
+      width: 100%;
+      padding: 10px 16px 10px 36px;
+      border: 1px solid #e2d5c0;
+      border-radius: 16px;
+      background: white;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-bar input:focus {
+      border-color: #c48c47;
+      box-shadow: 0 0 0 2px rgba(196, 140, 71, 0.1);
+    }
+    .right-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .export-btn {
+      background: white;
+      border: 1px solid #e2d5c0;
+      padding: 10px 18px;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 13px;
+      color: #4e3927;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .export-btn:hover {
+      background: #f5e8d8;
+      border-color: #c48c47;
+    }
+
+    .add-btn {
+      background: #3330ff;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 13px;
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .add-btn:hover {
+      background: #0033bf;
+    }
+
+    .bill-date{
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .date-main{
+      font-size: 13px;
+      font-weight: 500;
+      color: #362e1b;
+    }
+
+    .date-time{
+      font-size: 11px;
+      color: #9a7b58;
+      font-weight: 500;
+    }
+
+    /* TABLE */
+    .customers-section {
+      background: white;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin: 0 28px 28px 28px;
+    }
+    .customers-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .customers-table th {
+      text-align: left;
+      padding: 12px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b6b4a;
+      border-bottom: 1px solid #f0e0d0;
+    }
+    .customers-table td {
+      padding: 16px 8px;
+      font-size: 13px;
+      border-bottom: 1px solid #f5ede4;
+      vertical-align: middle;
+      color: #362e1b;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px;
+      color: #aaa;
+    }
+
+    .bill-status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .status-PAID { background: #dcfce7; color: #166534; }
+    .status-PENDING { background: #fef9c3; color: #854d0e; }
+    .status-FAILED { background: #fee2e2; color: #991b1b; }
+
+    .amount-column, th.amount-column {
+      width: 180px;
+      text-align: right;
+      padding-right: calc(40px + 2vw) !important;
+    }
+
+    .amount-cell {
+      font-weight: 600;
+      color: #362e1b;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      color: #2e70ff;
+      cursor: pointer;
+      padding: 4px 0px;
+      border-radius: 8px;
+    }
+    .action-btn:hover {
+      background: #2e70ff15;
+    }
+
+    .status-filter {
+      padding: 10px 36px 10px 16px;
+      border: 1px solid #e2d5c0;
+      border-radius: 16px;
+      background-color: white;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      color: #4e3927;
+      outline: none;
+      cursor: pointer;
+
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%234e3927%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      background-size: 16px;
+    }
+
+    /* Hover nhẹ cho mượt */
+    .status-filter:hover {
+      border-color: #c48c47;
+    }
+
+    /* MODAL */
+    .billing-overlay {
+      position: fixed; inset: 0; background: rgba(39, 30, 22, 0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    }
+    .billing-overlay.active { opacity: 1; visibility: visible; }
+    .billing-card {
+      background: #fff9ee; width: 90%; max-width: 650px; max-height: 85vh;
+      border-radius: 30px; padding: 30px; border: 1px solid #fde0c6;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.2); overflow-y: auto;
+      transform: translateY(30px); transition: 0.3s ease;
+    }
+    .billing-overlay.active .billing-card { transform: translateY(0); }
+    .section-title { font-size: 13px; font-weight: 800; color: #c48c47; margin: 15px 0 10px; text-transform: uppercase; }
+    .bill-grid {
+      display: grid;
+      grid-template-columns: 2.5fr 1.2fr 0.8fr 1.3fr;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .bill-grid .name-box {
+      border: 1px solid #fff;
+      border-radius: 10px;
+      padding: 8px;
+      font-size: 13px;
+      background: #f8fafc;
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+    .bill-grid .value-box {
+      border: 1px solid #fff;
+      border-radius: 10px;
+      padding: 8px;
+      font-size: 13px;
+      background: #f8fafc;
+      color: #1a1a1a;
+      font-weight: 600;
+      text-align: right;
+    }
+    .retail-bill-grid {
+      grid-template-columns: 2.5fr 1.2fr 0.8fr 1.3fr auto;
+    }
+    .summary-box { background: white; border-radius: 20px; padding: 20px; border: 1px solid #fde0c6; margin-top: 20px; }
+    .total-line { display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; color: #c48c47; border-top: 2px solid #fdf0d9; margin-top: 10px; padding-top: 10px; }
+    .bill-btns { display: flex; gap: 12px; margin-top: 25px; justify-content: flex-end; }
+    .btn-c { background: #f1f5f9; color: #362e1b; border: none; padding: 14px 30px; border-radius: 15px; cursor: pointer; font-weight: 600; }
+    .btn-cancel-bill { background: #fee2e2; color: #b91c1c; border: none; padding: 14px 24px; border-radius: 15px; font-weight: 700; cursor: pointer; }
+    .btn-pay-bill { background: linear-gradient(135deg, #86efac, #4ade80); color: #14532d; border: none; padding: 14px 30px; border-radius: 15px; font-weight: 700; cursor: pointer; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">G<img src="assets/icons/logo_flower.svg" width="20" height="20" alt="">UTSALON<span></span></div>
+    <a href="dashboard_receptionist.html" class="nav-item">
+      <img src="assets/icons/dashboard.svg" width="24" height="24" alt=""> Dashboard
+    </a>
+    <a href="schedule.html" class="nav-item">
+      <img src="assets/icons/schedule.svg" width="24" height="24" alt=""> Schedule
+    </a>
+    <a href="inventory.html" class="nav-item">
+      <img src="assets/icons/inventory.svg" width="24" height="24" alt=""> Inventory
+    </a>
+    <a href="customers.html" class="nav-item">
+      <img src="assets/icons/customers.svg" width="24" height="24" alt=""> Customers
+    </a>
+    <a href="bills.html" class="nav-item active">
+      <img src="assets/icons/bills.svg" width="24" height="24" alt=""> Bills
+    </a>
+    <div class="logout" onclick="logout()">🚪 Logout</div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div class="topbar">
+      <div class="left-section">
+        <h2 class="page-title">Bills</h2>
+        <div class="breadcrumb">
+          <span>Dashboard</span>
+          <span class="separator">▶</span>
+          <span class="active">Bills</span>
+        </div>
+      </div>
+      <div class="stylist-info">
+        <div class="stylist-avatar">👩</div>
+        <div class="stylist-name">
+          <h4 id="userName">admin</h4>
+          <p id="userRole">Manager</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="customers-section">
+      <div class="action-bar">
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="Search by ID, Customer" onkeyup="renderBillsTable()" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 18px; padding-left: 36px;">
+        </div>
+        <div class="right-group">
+          <select id="filterStatus" class="status-filter">
+            <option value="">All Statuses</option>
+            <option value="PAID">PAID</option>
+            <option value="PENDING">PENDING</option>
+            <option value="FAILED">FAILED</option>
+          </select>
+          <button class="export-btn" onclick="exportBillsToCSV()">
+            Export <img src="assets/icons/export.svg" width="20" height="20" alt="">
+          </button>
+          <button class="add-btn" onclick="openRetailBilling()">
+            Create Retail Bill <img src="assets/icons/plus.svg" width="20" height="20" alt="">
+          </button>
+        </div>
+      </div>
+
+      <div id="billsTableContainer">
+        <!-- dynamic table -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BILL MODAL -->
+<div id="billingOverlay" class="billing-overlay">
+  <div class="billing-card">
+    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #fde0c6; padding-bottom: 10px; margin-bottom: 20px;">
+      <h2 style="margin:0; color: #271e16;">BILL DETAILS</h2>
+      <div style="text-align: right; color: #c48c47; font-weight: 800;">GOUTSALON</div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-size: 12px; font-weight: 700; color: #8b7d64;">Customer's Name:</p>
+      <p id="billCustName" style="font-size: 18px; font-weight: 800; color: #271e16;">-</p>
+    </div>
+
+    <div class="section-title" id="servicesTitle">SERVICES</div>
+    <div id="billServiceArea" style="font-variant-numeric: tabular-nums;"></div>
+
+    <div class="section-title" id="productsTitle">PRODUCTS</div>
+    <div id="billProductArea" style="font-variant-numeric: tabular-nums;"></div>
+
+    <div class="summary-box">
+      <div style="font-variant-numeric: tabular-nums; display: flex; justify-content: space-between; color: #64748b; font-size: 14px; margin-bottom: 5px;">
+        <span>Subtotal</span><span id="billSubtotal">0 đ</span>
+      </div>
+      <div style="font-variant-numeric: tabular-nums; display: flex; justify-content: space-between; color: #64748b; font-size: 14px; margin-bottom: 5px;">
+        <span>VAT (10%)</span><span id="billVat">0 đ</span>
+      </div>
+      <div class="total-line">
+        <span>TOTAL</span><span id="billTotal">0 đ</span>
+      </div>
+    </div>
+
+    <div class="bill-btns">
+      <button class="btn-c" onclick="closeBilling()">Close</button>
+      <button id="btnCancelBill" class="btn-cancel-bill" type="button" onclick="cancelBillAction()" style="display:none">Cancel</button>
+      <button id="btnPayBill" class="btn-pay-bill" type="button" onclick="payBillAction()" style="display:none">Pay</button>
+    </div>
+  </div>
+</div>
+
+<!-- RETAIL BILLING MODAL -->
+<div id="retailBillingOverlay" class="billing-overlay">
+  <div class="billing-card">
+    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #fde0c6; padding-bottom: 10px; margin-bottom: 20px;">
+      <h2 style="margin:0; color: #271e16;">RETAIL BILL</h2>
+      <div style="text-align: right; color: #c48c47; font-weight: 800;">GOUTSALON</div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-size: 12px; font-weight: 700; color: #8b7d64;">Customer:</p>
+      <select id="retailCustomerSelect" style="width: 100%; margin: 6px 0 12px; padding: 10px 12px; border: 1px solid #ffffff; border-radius: 12px; background: #fff; font-size: 13px; color: #1a1a1a;">
+      </select>
+    </div>
+
+    <div class="section-title">PRODUCTS</div>
+    <div id="retailBillProductArea"></div>
+    <button id="btnAddRetailProduct" class="btn-add-item" onclick="addRetailBillRow()" style="background: none; border: 1px dashed #c48c47; color: #c48c47; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; margin-top: 10px; width: 100%;">+ Add product</button>
+
+    <div class="summary-box">
+      <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 14px; margin-bottom: 5px;">
+        <span>Subtotal</span><span id="retailBillSubtotal">0 đ</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 14px; margin-bottom: 5px;">
+        <span>VAT (10%)</span><span id="retailBillVat">0 đ</span>
+      </div>
+      <div class="total-line">
+        <span>TOTAL</span><span id="retailBillTotal">0 đ</span>
+      </div>
+    </div>
+
+    <div class="bill-btns">
+      <button class="btn-c" onclick="closeRetailBilling()">Close</button>
+      <button id="btnCancelRetailBill" class="btn-cancel-bill" type="button" onclick="cancelRetailBillAction()" style="display:none">Cancel</button>
+      <button id="btnPayRetailBill" class="btn-pay-bill" type="button" onclick="payRetailBillAction()" style="display:none">Pay</button>
+      <button id="btnCreateRetailBill" class="btn-p" type="button" onclick="createRetailBillAction()" style="background: linear-gradient(135deg, #e0d3a2, #ffdda1); color: #362e1b; border: none; padding: 14px 30px; border-radius: 15px; font-weight: 700; cursor: pointer;">Create Bill</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+if (!userStr) window.location.href = 'login.html';
+const userData = JSON.parse(userStr);
+
+(function populateTopbarUser() {
+  try {
+    document.getElementById('userName').innerText = userData.username || userData.userName || userData.name || 'User';
+    document.getElementById('userRole').innerText = userData.role ? (userData.role.charAt(0).toUpperCase() + userData.role.slice(1).toLowerCase()) : '';
+    document.querySelector('.stylist-avatar').textContent = userData.avatarEmoji || userData.avatar || '👩';
+  } catch (e) {}
+})();
+
+function logout() {
+  localStorage.removeItem('salonUser');
+  sessionStorage.removeItem('salonUser');
+  window.location.href = 'login.html';
+}
+
+const dashboardLink = document.querySelector('.sidebar a[href*="dashboard"]');
+if (dashboardLink) {
+  if (userData.role === 'MANAGER') dashboardLink.href = 'dashboard.html';
+  else if (userData.role === 'STYLIST') dashboardLink.href = 'dashboard_stylist.html';
+  else dashboardLink.href = 'dashboard_receptionist.html';
+}
+
+const API_BASE_URL = 'http://localhost:8080/api';
+
+function getAuthHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${userData.token}`
+  };
+}
+
+let billsList = [];
+let customersMap = {};
+let servicesMap = {};
+let productsMap = {};
+
+let currentBillId = null;
+
+let allCustomers = [];
+let salonProducts = [];
+
+async function loadDependencies() {
+  const headers = getAuthHeaders();
+  try {
+    const [custRes, servRes, retailProdRes, bothProdRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/customers`, { headers }),
+      fetch(`${API_BASE_URL}/services`, { headers }),
+      fetch(`${API_BASE_URL}/products?productType=RETAIL&size=200`, { headers }),
+      fetch(`${API_BASE_URL}/products?productType=BOTH&size=200`, { headers })
+    ]);
+
+    if (custRes.ok) {
+      const data = await custRes.json();
+      allCustomers = data;
+      data.forEach(c => customersMap[c.id] = `${c.firstName} ${c.lastName}`);
+    }
+
+    if (servRes.ok) {
+      const data = await servRes.json();
+      data.forEach(s => servicesMap[s.id] = s.name || s.serviceName);
+    }
+
+    if (retailProdRes.ok) {
+      const data = await retailProdRes.json();
+      if (data.content) {
+        salonProducts = data.content;
+        data.content.forEach(p => productsMap[p.id] = p.name || p.productName);
+      }
+    }
+
+    if (bothProdRes.ok) {
+      const data = await bothProdRes.json();
+      if (data.content) {
+        salonProducts = [...salonProducts, ...data.content];
+        data.content.forEach(p => productsMap[p.id] = p.name || p.productName);
+      }
+    }
+  } catch (err) {
+    console.error("Failed to load dependencies", err);
+  }
+}
+
+async function loadBills() {
+  const headers = getAuthHeaders();
+  const status = document.getElementById('filterStatus').value;
+
+  let url = `${API_BASE_URL}/bills?size=200`;
+  if (status) url += `&paymentStatus=${status}`;
+
+  try {
+    const response = await fetch(url, { headers });
+    if (response.ok) {
+      const data = await response.json();
+      billsList = data.content || [];
+      billsList.sort((a,b) => b.id - a.id); // sort by id desc
+      renderBillsTable();
+    }
+  } catch (err) {
+    console.error("Failed to load bills", err);
+  }
+}
+
+function renderBillsTable() {
+  const container = document.getElementById('billsTableContainer');
+  const searchInput = document.getElementById('searchInput');
+  const search = searchInput ? searchInput.value.toLowerCase() : '';
+
+  let filteredBills = billsList;
+  if (search) {
+    filteredBills = filteredBills.filter(b => {
+      const custName = b.customerId && customersMap[b.customerId] ? customersMap[b.customerId].toLowerCase() : 'retail customer';
+      return custName.includes(search) || b.id.toString().includes(search);
+    });
+  }
+
+  if (filteredBills.length === 0) {
+    container.innerHTML = '<div class="empty-state">No bills found for the selected filters.</div>';
+    return;
+  }
+
+  const html = `
+    <table class="customers-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Customer</th>
+          <th>Date</th>
+          <th class="amount-column">Total Amount</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filteredBills.map(b => `
+          <tr>
+            <td>${b.id}</td>
+            <td><strong>${b.customerId && customersMap[b.customerId] ? customersMap[b.customerId] : 'Retail Customer'}</strong></td>
+            <td>
+              <div class="bill-date">
+                <div class="date-main">
+                  ${formatBillDate(b.billDate)}
+                </div>
+                <div class="date-time">
+                  ${formatBillTime(b.billDate)}
+                </div>
+              </div>
+            </td>
+            <td class="amount-cell amount-column">
+              ${b.totalAmount ? b.totalAmount.toLocaleString('vi-VN') : 0} đ
+            </td>
+            <td><span class="bill-status status-${b.paymentStatus}">${b.paymentStatus}</span></td>
+            <td>
+              <button class="action-btn" onclick="openBillModal(${b.id})">
+                ${b.paymentStatus === 'PENDING' ? 'Pay / Cancel' : 'View'}
+              </button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+  container.innerHTML = html;
+}
+function formatBillDate(dateStr) {
+  if (!dateStr) return '-';
+
+  const d = new Date(dateStr);
+
+  return d.toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+}
+
+function formatBillTime(dateStr) {
+  if (!dateStr) return '';
+
+  const d = new Date(dateStr);
+
+  return d.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+function openBillModal(id) {
+  const bill = billsList.find(b => b.id === id);
+  if (!bill) return;
+
+  currentBillId = id;
+  document.getElementById('billCustName').textContent = bill.customerId && customersMap[bill.customerId] ? customersMap[bill.customerId] : 'Retail Customer';
+
+  const sArea = document.getElementById('billServiceArea');
+  const pArea = document.getElementById('billProductArea');
+  sArea.innerHTML = ''; pArea.innerHTML = '';
+
+  let hasServices = false;
+  let hasProducts = false;
+
+  (bill.details || []).forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'bill-grid';
+    
+    let name = '';
+    if (d.serviceId) {
+      name = servicesMap[d.serviceId] || `Service #${d.serviceId}`;
+      hasServices = true;
+    } else if (d.productId) {
+      name = productsMap[d.productId] || `Product #${d.productId}`;
+      hasProducts = true;
+    }
+
+    const priceFormatted = d.unitPrice ? d.unitPrice.toLocaleString('vi-VN') : 0;
+    const totalFormatted = d.lineTotal ? d.lineTotal.toLocaleString('vi-VN') : 0;
+
+    row.innerHTML = `
+      <div class="name-box">${name}</div>
+      <div class="value-box">${priceFormatted} đ</div>
+      <div class="value-box">${d.quantity}</div>
+      <div class="value-box" style="background: #fdf0d9; border-color: #fde0c6">${totalFormatted} đ</div>
+    `;
+
+    if (d.serviceId) sArea.appendChild(row);
+    if (d.productId) pArea.appendChild(row);
+  });
+
+  document.getElementById('servicesTitle').style.display = hasServices ? '' : 'none';
+  document.getElementById('productsTitle').style.display = hasProducts ? '' : 'none';
+
+  const subtotal = bill.totalAmount / 1.1; // Simple reverse VAT
+  const vat = bill.totalAmount - subtotal;
+  
+  document.getElementById('billSubtotal').textContent = Math.round(subtotal).toLocaleString('vi-VN') + ' đ';
+  document.getElementById('billVat').textContent = Math.round(vat).toLocaleString('vi-VN') + ' đ';
+  document.getElementById('billTotal').textContent = (bill.totalAmount || 0).toLocaleString('vi-VN') + ' đ';
+
+  const btnCancel = document.getElementById('btnCancelBill');
+  const btnPay = document.getElementById('btnPayBill');
+
+  if (bill.paymentStatus === 'PENDING') {
+    btnCancel.style.display = '';
+    btnPay.style.display = '';
+  } else {
+    btnCancel.style.display = 'none';
+    btnPay.style.display = 'none';
+  }
+
+  document.getElementById('billingOverlay').classList.add('active');
+}
+
+function closeBilling() {
+  document.getElementById('billingOverlay').classList.remove('active');
+  currentBillId = null;
+}
+
+async function payBillAction() {
+  if (!currentBillId) return;
+
+  const btnPay = document.getElementById('btnPayBill');
+  btnPay.disabled = true;
+  btnPay.textContent = 'Processing...';
+
+  const headers = getAuthHeaders();
+  try {
+    const res = await fetch(`${API_BASE_URL}/bills/${currentBillId}/pay`, {
+      method: 'POST',
+      headers
+    });
+    if (!res.ok) throw new Error('Payment failed');
+    
+    alert('Payment successful!');
+    closeBilling();
+    loadBills(); // refresh list
+  } catch (error) {
+    console.error('Pay error:', error);
+    alert('Error processing payment.');
+  } finally {
+    btnPay.disabled = false;
+    btnPay.textContent = 'Pay';
+  }
+}
+
+async function cancelBillAction() {
+  if (!currentBillId) return;
+  if (!confirm('Are you sure you want to cancel this bill?')) return;
+
+  const btnCancel = document.getElementById('btnCancelBill');
+  btnCancel.disabled = true;
+  btnCancel.textContent = 'Canceling...';
+
+  const headers = getAuthHeaders();
+  try {
+    const res = await fetch(`${API_BASE_URL}/bills/${currentBillId}/cancel`, {
+      method: 'POST',
+      headers
+    });
+    if (!res.ok) throw new Error('Cancel failed');
+    
+    alert('Bill canceled.');
+    closeBilling();
+    loadBills(); // refresh list
+  } catch (error) {
+    console.error('Cancel error:', error);
+    alert('Error canceling bill.');
+  } finally {
+    btnCancel.disabled = false;
+    btnCancel.textContent = 'Cancel Bill';
+  }
+}
+
+async function init() {
+  await loadDependencies();
+  await loadBills();
+}
+
+// ================= RETAIL BILLING FUNCTIONS =================
+let currentRetailBillId = null;
+let retailBillLocked = false;
+
+function setRetailBillEditingEnabled(enabled, isPaid = false) {
+  retailBillLocked = !enabled;
+  const addBtn = document.getElementById('btnAddRetailProduct');
+  const createBtn = document.getElementById('btnCreateRetailBill');
+  const payBtn = document.getElementById('btnPayRetailBill');
+  const cancelBtn = document.getElementById('btnCancelRetailBill');
+  const custSelect = document.getElementById('retailCustomerSelect');
+  
+  if (addBtn) addBtn.style.display = enabled ? '' : 'none';
+  if (createBtn) {
+    createBtn.style.display = enabled ? '' : 'none';
+    if (enabled) {
+      createBtn.disabled = false;
+      createBtn.textContent = 'Create Bill';
+    }
+  }
+  if (payBtn) payBtn.style.display = (enabled || isPaid) ? 'none' : '';
+  if (cancelBtn) cancelBtn.style.display = (enabled || isPaid) ? 'none' : '';
+  
+  if (custSelect) {
+      custSelect.disabled = !enabled;
+      custSelect.style.background = enabled ? '#fff' : '#f8fafc';
+  }
+
+  document.querySelectorAll('#retailBillProductArea .bill-grid').forEach(row => {
+    const sel = row.querySelector('select');
+    const inputs = row.querySelectorAll('input');
+    const qty = inputs.length > 1 ? inputs[1] : null;
+    const delBtn = row.querySelector('button');
+
+    if (sel) {
+      sel.disabled = !enabled;
+      sel.style.background = enabled ? '' : '#f8fafc';
+    }
+    if (qty) {
+      qty.readOnly = !enabled;
+      qty.style.pointerEvents = enabled ? '' : 'none';
+      qty.style.background = enabled ? '' : '#f8fafc';
+    }
+    if (delBtn) delBtn.style.display = enabled ? '' : 'none';
+  });
+}
+
+function openRetailBilling() {
+  currentRetailBillId = null;
+  setRetailBillEditingEnabled(true);
+  document.body.classList.add('modal-active');
+  document.getElementById('retailBillingOverlay').classList.add('active');
+  
+  // Populate customer select
+  const custSelect = document.getElementById('retailCustomerSelect');
+  custSelect.innerHTML = '<option value="" disabled selected>-- Select Customer --</option>' + 
+    allCustomers.map(c => `<option value="${c.id}">${c.firstName} ${c.lastName}</option>`).join('');
+
+  document.getElementById('retailBillProductArea').innerHTML = '';
+  addRetailBillRow();
+  calculateRetailBill();
+}
+
+function closeRetailBilling() {
+  document.body.classList.remove('modal-active');
+  document.getElementById('retailBillingOverlay').classList.remove('active');
+  currentRetailBillId = null;
+}
+
+function addRetailBillRow(data = null) {
+  if (retailBillLocked) return;
+
+  if (!data) {
+    const existingSelects = document.querySelectorAll('#retailBillProductArea .bill-grid select');
+    for (const sel of existingSelects) {
+      if (!sel.value || sel.value === '0') {
+        sel.focus();
+        return;
+      }
+    }
+  }
+
+  const container = document.getElementById('retailBillProductArea');
+  const row = document.createElement('div');
+  row.className = 'bill-grid retail-bill-grid';
+
+  const initQty = (data && data._savedQty) ? data._savedQty : 1;
+  const initPrice = data ? data.price : 0;
+
+  row.innerHTML = `
+    <select onchange="updateRetailRowPrice(this)" style="width: 100%; border: 1px solid #fff; border-radius: 10px; padding: 8px; font-size: 13px; background: white; color: #1a1a1a; font-weight: 600;">
+      <option disabled selected hidden value="0" data-price="0">-- Select --</option>
+      ${salonProducts.map(item => `<option value="${item.id}" data-price="${item.price}" ${data && data.id == item.id ? 'selected' : ''}>${item.name || item.productName}</option>`).join('')}
+    </select>
+    <input type="text" value="${Number(initPrice).toLocaleString('vi-VN')}" readonly style="background:#f8fafc; color:#1a1a1a; width: 100%; border: 1px solid #fff; border-radius: 10px; padding: 8px; font-size: 13px; text-align: right;">
+    <input type="number" value="${initQty}" min="1" oninput="calculateRetailBill()" style="width: 100%; border: 1px solid #fff; border-radius: 10px; padding: 8px; font-size: 13px; text-align: right;">
+    <input type="text" value="${Number(initPrice * initQty).toLocaleString('vi-VN')}" readonly style="background:#fdf0d9; color:#c48c47; font-weight: 700; border: 1px solid #fde0c6; width: 100%; border-radius: 10px; padding: 8px; font-size: 13px; text-align: right;">
+    <button onclick="this.parentElement.remove(); calculateRetailBill();" style="border:none; background:none; color:#ef4444; font-size:20px; cursor:pointer; padding: 0;">🗑</button>
+  `;
+  container.appendChild(row);
+  calculateRetailBill();
+}
+
+function updateRetailRowPrice(el) {
+  if (retailBillLocked) return;
+  const price = el.options[el.selectedIndex].dataset.price;
+  el.parentElement.querySelectorAll('input')[0].value = Number(price).toLocaleString('vi-VN');
+  calculateRetailBill();
+}
+
+function calculateRetailBill() {
+  if (retailBillLocked) return;
+  let subtotal = 0;
+  document.querySelectorAll('#retailBillProductArea .bill-grid').forEach(r => {
+    const inputs = r.querySelectorAll('input');
+    if (inputs.length < 3) return;
+
+    const rawPrice = inputs[0].value.replace(/[^\d]/g, '');
+    const p = parseFloat(rawPrice) || 0;
+    const q = parseInt(inputs[1].value) || 0;
+
+    const lineTotal = p * q;
+    subtotal += lineTotal;
+
+    inputs[2].value = lineTotal.toLocaleString('vi-VN');
+  });
+  
+  const vat = Math.round(subtotal * 0.1);
+  document.getElementById('retailBillSubtotal').innerText = subtotal.toLocaleString('vi-VN') + ' đ';
+  document.getElementById('retailBillVat').innerText = vat.toLocaleString('vi-VN') + ' đ';
+  document.getElementById('retailBillTotal').innerText = (subtotal + vat).toLocaleString('vi-VN') + ' đ';
+}
+
+async function createRetailBillAction() {
+  if (retailBillLocked) return;
+  const custId = document.getElementById('retailCustomerSelect').value;
+  if (!custId) {
+    alert("Please select a customer.");
+    return;
+  }
+
+  const retailProducts = [];
+  document.querySelectorAll('#retailBillProductArea .bill-grid').forEach(row => {
+    const sel = row.querySelector('select');
+    const qtyInput = row.querySelector('input[type="number"]');
+    if (sel && sel.value && sel.value !== '0') {
+      retailProducts.push({
+        productId: Number(sel.value),
+        quantity: parseInt(qtyInput?.value, 10) || 1
+      });
+    }
+  });
+
+  if (retailProducts.length === 0) {
+    alert("Please add at least one product.");
+    return;
+  }
+
+  const createBtn = document.getElementById('btnCreateRetailBill');
+  if (createBtn) {
+    createBtn.disabled = true;
+    createBtn.textContent = 'Creating...';
+  }
+
+  const headers = getAuthHeaders();
+  const body = { customerId: Number(custId), retailProducts };
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/bills/retail`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Could not create retail bill: ' + (err.message || 'System error'));
+      if (createBtn) {
+        createBtn.disabled = false;
+        createBtn.textContent = 'Create Bill';
+      }
+      return;
+    }
+
+    const bill = await res.json();
+    currentRetailBillId = bill.id;
+    
+    document.getElementById('retailBillProductArea').innerHTML = '';
+    (bill.details || []).forEach(detail => {
+      if (detail.productId) {
+        const p = salonProducts.find(x => x.id == detail.productId);
+        if (p) addRetailBillRow({ ...p, _savedQty: detail.quantity });
+      }
+    });
+    const subtotal = Number(bill.totalAmount) / 1.1;
+    const vat = Number(bill.totalAmount) - subtotal;
+    document.getElementById('retailBillSubtotal').innerText = Math.round(subtotal).toLocaleString('vi-VN') + ' đ';
+    document.getElementById('retailBillVat').innerText = Math.round(vat).toLocaleString('vi-VN') + ' đ';
+    document.getElementById('retailBillTotal').innerText = Number(bill.totalAmount).toLocaleString('vi-VN') + ' đ';
+    
+    setRetailBillEditingEnabled(false);
+    alert('Retail bill created successfully.');
+    loadBills(); // refresh list behind modal
+  } catch (error) {
+    console.error('Create retail bill error:', error);
+    alert('Network error while creating retail bill.');
+    if (createBtn) {
+      createBtn.disabled = false;
+      createBtn.textContent = 'Create Bill';
+    }
+  }
+}
+
+async function payRetailBillAction() {
+  if (!currentRetailBillId) return;
+  
+  const payBtn = document.getElementById('btnPayRetailBill');
+  if (payBtn) {
+    payBtn.disabled = true;
+    payBtn.textContent = 'Processing...';
+  }
+
+  try {
+    const headers = getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/bills/${currentRetailBillId}/pay`, {
+      method: 'POST',
+      headers
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Could not pay bill: ' + (err.message || 'System error'));
+      if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay';
+      }
+      return;
+    }
+
+    alert('Payment successful!');
+    closeRetailBilling();
+    loadBills();
+  } catch (error) {
+    console.error('Pay retail bill error:', error);
+    alert('Network error while paying bill.');
+    if (payBtn) {
+      payBtn.disabled = false;
+      payBtn.textContent = 'Pay';
+    }
+  }
+}
+
+async function cancelRetailBillAction() {
+  if (!currentRetailBillId) return;
+
+  if (!confirm('Are you sure you want to cancel this retail bill?')) return;
+
+  const btnCancel = document.getElementById('btnCancelRetailBill');
+  btnCancel.disabled = true;
+  btnCancel.textContent = 'Canceling...';
+
+  const headers = getAuthHeaders();
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/bills/${currentRetailBillId}/cancel`, {
+      method: 'POST',
+      headers
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Could not cancel retail bill: ' + (err.message || 'System error'));
+      btnCancel.disabled = false;
+      btnCancel.textContent = 'Cancel';
+      return;
+    }
+
+    alert("Retail bill canceled.");
+    closeRetailBilling();
+    loadBills();
+
+  } catch (error) {
+    console.error('Cancel retail bill error:', error);
+    alert('Network error while canceling retail bill.');
+    btnCancel.disabled = false;
+    btnCancel.textContent = 'Cancel';
+  }
+}
+
+function exportBillsToCSV() {
+  const searchInput = document.getElementById('searchInput');
+  const search = searchInput ? searchInput.value.toLowerCase() : '';
+
+  let filteredBills = billsList;
+  if (search) {
+    filteredBills = filteredBills.filter(b => {
+      const custName = b.customerId && customersMap[b.customerId] ? customersMap[b.customerId].toLowerCase() : 'retail customer';
+      return custName.includes(search) || b.id.toString().includes(search);
+    });
+  }
+
+  if (filteredBills.length === 0) {
+    alert("No data to export!");
+    return;
+  }
+
+  let csvRows = [];
+  csvRows.push(['Bill ID', 'Customer', 'Date', 'Total Amount', 'Status']);
+
+  filteredBills.forEach(b => {
+    const custName = b.customerId && customersMap[b.customerId] ? customersMap[b.customerId] : 'Retail Customer';
+    const dateStr = b.billDate ? b.billDate.replace('T', ' ') : '-';
+    csvRows.push([
+      b.id,
+      `"${custName}"`,
+      `"${dateStr}"`,
+      b.totalAmount || 0,
+      b.paymentStatus
+    ]);
+  });
+
+  const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvRows.map(e => e.join(",")).join("\n");
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "bills.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+init();
+
+</script>
+</body>
+</html>

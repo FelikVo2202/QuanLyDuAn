@@ -251,6 +251,24 @@
       border-color: #c48c47;
     }
 
+    .bill-date{
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .date-main{
+      font-size: 13px;
+      font-weight: 500;
+      color: #362e1b;
+    }
+
+    .date-time{
+      font-size: 11px;
+      color: #9a7b58;
+      font-weight: 500;
+    }
+
     /* TABLE */
     .customers-section {
       background: white;
@@ -590,7 +608,16 @@ function renderBillsTable() {
           <tr>
             <td>#${b.id}</td>
             <td><strong>${b.customerId && customersMap[b.customerId] ? customersMap[b.customerId] : 'Retail Customer'}</strong></td>
-            <td>${b.billDate ? b.billDate.replace('T', ' ') : '-'}</td>
+            <td>
+              <div class="bill-date">
+                <div class="date-main">
+                  ${formatBillDate(b.billDate)}
+                </div>
+                <div class="date-time">
+                  ${formatBillTime(b.billDate)}
+                </div>
+              </div>
+            </td>
             <td>${b.totalAmount ? b.totalAmount.toLocaleString('vi-VN') : 0} đ</td>
             <td><span class="bill-status status-${b.paymentStatus}">${b.paymentStatus}</span></td>
             <td>
@@ -603,7 +630,28 @@ function renderBillsTable() {
   `;
   container.innerHTML = html;
 }
+function formatBillDate(dateStr) {
+  if (!dateStr) return '-';
 
+  const d = new Date(dateStr);
+
+  return d.toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+}
+
+function formatBillTime(dateStr) {
+  if (!dateStr) return '';
+
+  const d = new Date(dateStr);
+
+  return d.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
 function openBillModal(id) {
   const bill = billsList.find(b => b.id === id);
   if (!bill) return;

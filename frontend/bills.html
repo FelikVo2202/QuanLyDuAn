@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bills - GOUTSALON</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #fae3c8;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* LAYOUT CHÍNH */
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* SIDEBAR TRÁI - GUTSALON style */
+    .sidebar {
+      width: 260px;
+      background: #fdf0d9;
+      color: #362e1b;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+     .logo {
+      padding: 28px 24px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #362e1b;
+      border-bottom: 1px solid #2a2a2a;
+      margin-bottom: 24px;
+    }
+    .logo span {
+      color: #eab308;
+    }
+
+    .logo small {
+      font-size: 10px;
+      color: #64748b;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .nav-item {
+      padding: 12px 24px;
+      margin: 4px 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #4e3927;
+      transition: all 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .nav-item:hover {
+      background: #1e293b;
+      color: #f1f5f9;
+    }
+
+    .nav-item.active {
+      background: #f5e3c2;
+      color: #4e3927;
+    }
+
+    .logout {
+      margin-top: auto;
+      padding: 16px 24px;
+      cursor: pointer;
+      color: #8b6b4a;
+      font-weight: 500;
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background: #fdf0d9;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      padding: 16px 28px;
+      background: #fdf0d9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .search-bar {
+      margin-bottom: 20px;
+    }
+
+    .page-title h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #34281d;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #8b7d64;
+    }
+
+    .breadcrumb .separator {
+      font-size: 10px;
+      color: #c48c47;
+    }
+
+    .breadcrumb .active {
+      color: #2e70ff;
+      font-weight: 600;
+    }
+
+    .stylist-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #fff9ee;
+      padding: 8px 20px 8px 12px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .stylist-avatar {
+      width: 48px;
+      height: 48px;
+      background: #eab308;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #1a1a1a;
+      font-size: 18px;
+    }
+    .stylist-name h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #4e3927;
+    }
+    .stylist-name p {
+      font-size: 11px;
+      color: #4e3927;
+      margin: 0;
+    }
+
+    /* ACTION BAR */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .left-filters {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .left-filters input[type="date"], .left-filters select {
+      padding: 10px 16px;
+      border: 1px solid #e2d5c0;
+      border-radius: 16px;
+      background: white;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      color: #4e3927;
+      outline: none;
+    }
+    .filter-btn {
+      background: white;
+      border: 1px solid #e2d5c0;
+      padding: 10px 18px;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 13px;
+      color: #4e3927;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover {
+      background: #f5e8d8;
+      border-color: #c48c47;
+    }
+
+    /* TABLE */
+    .customers-section {
+      background: white;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin: 0 28px 28px 28px;
+    }
+    .customers-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .customers-table th {
+      text-align: left;
+      padding: 12px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b6b4a;
+      border-bottom: 1px solid #f0e0d0;
+    }
+    .customers-table td {
+      padding: 16px 8px;
+      font-size: 13px;
+      border-bottom: 1px solid #f5ede4;
+      vertical-align: middle;
+      color: #362e1b;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px;
+      color: #aaa;
+    }
+
+    .bill-status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .status-PAID { background: #dcfce7; color: #166534; }
+    .status-PENDING { background: #fef9c3; color: #854d0e; }
+    .status-CANCELED { background: #fee2e2; color: #991b1b; }
+
+    .action-btn {
+      background: none;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      color: #2e70ff;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+    }
+    .action-btn:hover {
+      background: #2e70ff15;
+    }
+
+    /* MODAL */
+    .billing-overlay {
+      position: fixed; inset: 0; background: rgba(39, 30, 22, 0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    }
+    .billing-overlay.active { opacity: 1; visibility: visible; }
+    .billing-card {
+      background: #fff9ee; width: 90%; max-width: 650px; max-height: 85vh;
+      border-radius: 30px; padding: 30px; border: 1px solid #fde0c6;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.2); overflow-y: auto;
+      transform: translateY(30px); transition: 0.3s ease;
+    }
+    .billing-overlay.active .billing-card { transform: translateY(0); }
+    .section-title { font-size: 13px; font-weight: 800; color: #c48c47; margin: 15px 0 10px; text-transform: uppercase; }
+    .bill-grid {
+      display: grid;
+      grid-template-columns: 2.5fr 1.2fr 0.8fr 1.3fr;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .bill-grid .name-box {
+      border: 1px solid #fff;
+      border-radius: 10px;
+      padding: 8px;
+      font-size: 13px;
+      background: #f8fafc;
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+    .bill-grid .value-box {
+      border: 1px solid #fff;
+      border-radius: 10px;
+      padding: 8px;
+      font-size: 13px;
+      background: #f8fafc;
+      color: #1a1a1a;
+      font-weight: 600;
+      text-align: right;
+    }
+    .summary-box { background: white; border-radius: 20px; padding: 20px; border: 1px solid #fde0c6; margin-top: 20px; }
+    .total-line { display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; color: #c48c47; border-top: 2px solid #fdf0d9; margin-top: 10px; padding-top: 10px; }
+    .bill-btns { display: flex; gap: 12px; margin-top: 25px; justify-content: flex-end; }
+    .btn-c { background: #f1f5f9; color: #362e1b; border: none; padding: 14px 30px; border-radius: 15px; cursor: pointer; font-weight: 600; }
+    .btn-cancel-bill { background: #fee2e2; color: #b91c1c; border: none; padding: 14px 24px; border-radius: 15px; font-weight: 700; cursor: pointer; }
+    .btn-pay-bill { background: linear-gradient(135deg, #86efac, #4ade80); color: #14532d; border: none; padding: 14px 30px; border-radius: 15px; font-weight: 700; cursor: pointer; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">G<img src="assets/icons/logo_flower.svg" width="20" height="20" alt="">UTSALON<span></span></div>
+    <a href="dashboard_receptionist.html" class="nav-item">
+      <img src="assets/icons/dashboard.svg" width="24" height="24" alt=""> Dashboard
+    </a>
+    <a href="schedule.html" class="nav-item">
+      <img src="assets/icons/schedule.svg" width="24" height="24" alt=""> Schedule
+    </a>
+    <a href="inventory.html" class="nav-item">
+      <img src="assets/icons/inventory.svg" width="24" height="24" alt=""> Inventory
+    </a>
+    <a href="customers.html" class="nav-item">
+      <img src="assets/icons/customers.svg" width="24" height="24" alt=""> Customers
+    </a>
+    <a href="bills.html" class="nav-item active">
+      <img src="assets/icons/bills.svg" width="24" height="24" alt=""> Bills
+    </a>
+    <div class="logout" onclick="logout()">🚪 Logout</div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div class="topbar">
+      <div class="left-section">
+        <h2 class="page-title">Bills</h2>
+        <div class="breadcrumb">
+          <span>Dashboard</span>
+          <span class="separator">▶</span>
+          <span class="active">Bills</span>
+        </div>
+      </div>
+      <div class="stylist-info">
+        <div class="stylist-avatar">👩</div>
+        <div class="stylist-name">
+          <h4 id="userName">admin</h4>
+          <p id="userRole">Manager</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="customers-section">
+      <div class="action-bar">
+        <div class="left-filters">
+          <input type="date" id="filterStartDate" title="Start Date">
+          <input type="date" id="filterEndDate" title="End Date">
+          <select id="filterStatus">
+            <option value="">All Statuses</option>
+            <option value="PAID">PAID</option>
+            <option value="PENDING">PENDING</option>
+            <option value="CANCELED">CANCELED</option>
+          </select>
+          <button class="filter-btn" onclick="loadBills()">
+            Filter <img src="assets/icons/filter.svg" width="20" height="20" alt="">
+          </button>
+        </div>
+      </div>
+
+      <div id="billsTableContainer">
+        <!-- dynamic table -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BILL MODAL -->
+<div id="billingOverlay" class="billing-overlay">
+  <div class="billing-card">
+    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #fde0c6; padding-bottom: 10px; margin-bottom: 20px;">
+      <h2 style="margin:0; color: #271e16;">BILL DETAILS</h2>
+      <div style="text-align: right; color: #c48c47; font-weight: 800;">GOUTSALON</div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-size: 12px; font-weight: 700; color: #8b7d64;">Customer's Name:</p>
+      <p id="billCustName" style="font-size: 18px; font-weight: 800; color: #271e16;">-</p>
+    </div>
+
+    <div class="section-title" id="servicesTitle">SERVICES</div>
+    <div id="billServiceArea"></div>
+
+    <div class="section-title" id="productsTitle">PRODUCTS</div>
+    <div id="billProductArea"></div>
+
+    <div class="summary-box">
+      <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 14px; margin-bottom: 5px;">
+        <span>Subtotal</span><span id="billSubtotal">0 đ</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 14px; margin-bottom: 5px;">
+        <span>VAT (10%)</span><span id="billVat">0 đ</span>
+      </div>
+      <div class="total-line">
+        <span>TOTAL</span><span id="billTotal">0 đ</span>
+      </div>
+    </div>
+
+    <div class="bill-btns">
+      <button class="btn-c" onclick="closeBilling()">Close</button>
+      <button id="btnCancelBill" class="btn-cancel-bill" type="button" onclick="cancelBillAction()" style="display:none">Cancel Bill</button>
+      <button id="btnPayBill" class="btn-pay-bill" type="button" onclick="payBillAction()" style="display:none">Pay</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+if (!userStr) window.location.href = 'login.html';
+const userData = JSON.parse(userStr);
+
+(function populateTopbarUser() {
+  try {
+    document.getElementById('userName').innerText = userData.username || userData.userName || userData.name || 'User';
+    document.getElementById('userRole').innerText = userData.role ? (userData.role.charAt(0).toUpperCase() + userData.role.slice(1).toLowerCase()) : '';
+    document.querySelector('.stylist-avatar').textContent = userData.avatarEmoji || userData.avatar || '👩';
+  } catch (e) {}
+})();
+
+function logout() {
+  localStorage.removeItem('salonUser');
+  sessionStorage.removeItem('salonUser');
+  window.location.href = 'login.html';
+}
+
+const dashboardLink = document.querySelector('.sidebar a[href*="dashboard"]');
+if (dashboardLink) {
+  if (userData.role === 'MANAGER') dashboardLink.href = 'dashboard.html';
+  else if (userData.role === 'STYLIST') dashboardLink.href = 'dashboard_stylist.html';
+  else dashboardLink.href = 'dashboard_receptionist.html';
+}
+
+const API_BASE_URL = 'http://localhost:8080/api';
+
+function getAuthHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${userData.token}`
+  };
+}
+
+let billsList = [];
+let customersMap = {};
+let servicesMap = {};
+let productsMap = {};
+
+let currentBillId = null;
+
+async function loadDependencies() {
+  const headers = getAuthHeaders();
+  try {
+    const [custRes, servRes, prodRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/customers`, { headers }),
+      fetch(`${API_BASE_URL}/services`, { headers }),
+      fetch(`${API_BASE_URL}/products?productType=BOTH&size=200`, { headers })
+    ]);
+
+    if (custRes.ok) {
+      const data = await custRes.json();
+      data.forEach(c => customersMap[c.id] = `${c.firstName} ${c.lastName}`);
+    }
+    if (servRes.ok) {
+      const data = await servRes.json();
+      data.forEach(s => servicesMap[s.id] = s.serviceName);
+    }
+    if (prodRes.ok) {
+      const data = await prodRes.json();
+      if (data.content) {
+        data.content.forEach(p => productsMap[p.id] = p.productName);
+      }
+    }
+  } catch (err) {
+    console.error("Failed to load dependencies", err);
+  }
+}
+
+async function loadBills() {
+  const headers = getAuthHeaders();
+  const startDate = document.getElementById('filterStartDate').value;
+  const endDate = document.getElementById('filterEndDate').value;
+  const status = document.getElementById('filterStatus').value;
+
+  let url = `${API_BASE_URL}/bills?size=100`; // simple pagination
+  if (startDate) url += `&startDate=${startDate}T00:00:00`;
+  if (endDate) url += `&endDate=${endDate}T23:59:59`;
+  if (status) url += `&paymentStatus=${status}`;
+
+  try {
+    const response = await fetch(url, { headers });
+    if (response.ok) {
+      const data = await response.json();
+      billsList = data.content || [];
+      billsList.sort((a,b) => b.id - a.id); // sort by id desc
+      renderBillsTable();
+    }
+  } catch (err) {
+    console.error("Failed to load bills", err);
+  }
+}
+
+function renderBillsTable() {
+  const container = document.getElementById('billsTableContainer');
+  if (billsList.length === 0) {
+    container.innerHTML = '<div class="empty-state">No bills found for the selected filters.</div>';
+    return;
+  }
+
+  const html = `
+    <table class="customers-table">
+      <thead>
+        <tr>
+          <th>Bill ID</th>
+          <th>Customer</th>
+          <th>Date</th>
+          <th>Total Amount</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${billsList.map(b => `
+          <tr>
+            <td>#${b.id}</td>
+            <td><strong>${b.customerId && customersMap[b.customerId] ? customersMap[b.customerId] : 'Retail Customer'}</strong></td>
+            <td>${b.billDate ? b.billDate.replace('T', ' ') : '-'}</td>
+            <td>${b.totalAmount ? b.totalAmount.toLocaleString('vi-VN') : 0} đ</td>
+            <td><span class="bill-status status-${b.paymentStatus}">${b.paymentStatus}</span></td>
+            <td>
+              <button class="action-btn" onclick="openBillModal(${b.id})">View / Pay</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+  container.innerHTML = html;
+}
+
+function openBillModal(id) {
+  const bill = billsList.find(b => b.id === id);
+  if (!bill) return;
+
+  currentBillId = id;
+  document.getElementById('billCustName').textContent = bill.customerId && customersMap[bill.customerId] ? customersMap[bill.customerId] : 'Retail Customer';
+
+  const sArea = document.getElementById('billServiceArea');
+  const pArea = document.getElementById('billProductArea');
+  sArea.innerHTML = ''; pArea.innerHTML = '';
+
+  let hasServices = false;
+  let hasProducts = false;
+
+  (bill.details || []).forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'bill-grid';
+    
+    let name = '';
+    if (d.serviceId) {
+      name = servicesMap[d.serviceId] || `Service #${d.serviceId}`;
+      hasServices = true;
+    } else if (d.productId) {
+      name = productsMap[d.productId] || `Product #${d.productId}`;
+      hasProducts = true;
+    }
+
+    const priceFormatted = d.unitPrice ? d.unitPrice.toLocaleString('vi-VN') : 0;
+    const totalFormatted = d.lineTotal ? d.lineTotal.toLocaleString('vi-VN') : 0;
+
+    row.innerHTML = `
+      <div class="name-box">${name}</div>
+      <div class="value-box">${priceFormatted} đ</div>
+      <div class="value-box">${d.quantity}</div>
+      <div class="value-box">${totalFormatted} đ</div>
+    `;
+
+    if (d.serviceId) sArea.appendChild(row);
+    if (d.productId) pArea.appendChild(row);
+  });
+
+  document.getElementById('servicesTitle').style.display = hasServices ? '' : 'none';
+  document.getElementById('productsTitle').style.display = hasProducts ? '' : 'none';
+
+  const subtotal = bill.totalAmount / 1.1; // Simple reverse VAT
+  const vat = bill.totalAmount - subtotal;
+  
+  document.getElementById('billSubtotal').textContent = Math.round(subtotal).toLocaleString('vi-VN') + ' đ';
+  document.getElementById('billVat').textContent = Math.round(vat).toLocaleString('vi-VN') + ' đ';
+  document.getElementById('billTotal').textContent = (bill.totalAmount || 0).toLocaleString('vi-VN') + ' đ';
+
+  const btnCancel = document.getElementById('btnCancelBill');
+  const btnPay = document.getElementById('btnPayBill');
+
+  if (bill.paymentStatus === 'PENDING') {
+    btnCancel.style.display = '';
+    btnPay.style.display = '';
+  } else {
+    btnCancel.style.display = 'none';
+    btnPay.style.display = 'none';
+  }
+
+  document.getElementById('billingOverlay').classList.add('active');
+}
+
+function closeBilling() {
+  document.getElementById('billingOverlay').classList.remove('active');
+  currentBillId = null;
+}
+
+async function payBillAction() {
+  if (!currentBillId) return;
+
+  const btnPay = document.getElementById('btnPayBill');
+  btnPay.disabled = true;
+  btnPay.textContent = 'Processing...';
+
+  const headers = getAuthHeaders();
+  try {
+    const res = await fetch(`${API_BASE_URL}/bills/${currentBillId}/pay`, {
+      method: 'POST',
+      headers
+    });
+    if (!res.ok) throw new Error('Payment failed');
+    
+    alert('Payment successful!');
+    closeBilling();
+    loadBills(); // refresh list
+  } catch (error) {
+    console.error('Pay error:', error);
+    alert('Error processing payment.');
+  } finally {
+    btnPay.disabled = false;
+    btnPay.textContent = 'Pay';
+  }
+}
+
+async function cancelBillAction() {
+  if (!currentBillId) return;
+  if (!confirm('Are you sure you want to cancel this bill?')) return;
+
+  const btnCancel = document.getElementById('btnCancelBill');
+  btnCancel.disabled = true;
+  btnCancel.textContent = 'Canceling...';
+
+  const headers = getAuthHeaders();
+  try {
+    const res = await fetch(`${API_BASE_URL}/bills/${currentBillId}/cancel`, {
+      method: 'POST',
+      headers
+    });
+    if (!res.ok) throw new Error('Cancel failed');
+    
+    alert('Bill canceled.');
+    closeBilling();
+    loadBills(); // refresh list
+  } catch (error) {
+    console.error('Cancel error:', error);
+    alert('Error canceling bill.');
+  } finally {
+    btnCancel.disabled = false;
+    btnCancel.textContent = 'Cancel Bill';
+  }
+}
+
+async function init() {
+  await loadDependencies();
+  await loadBills();
+}
+
+init();
+
+</script>
+</body>
+</html>

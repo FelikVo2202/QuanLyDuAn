@@ -845,6 +845,9 @@
       <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 14px; margin-bottom: 5px;">
         <span>Subtotal</span><span id="billSubtotal">0 đ</span>
       </div>
+      <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 14px; margin-bottom: 5px;">
+        <span>VAT (10%)</span><span id="billVat">0 đ</span>
+      </div>
       <div class="total-line">
         <span>TOTAL</span><span id="billTotal">0 đ</span>
       </div>
@@ -1590,8 +1593,10 @@
       const q = parseInt(r.querySelector('input[type="number"]').value) || 0;
       subtotal += (p * q);
     });
+    const vat = Math.round(subtotal * 0.1);
     document.getElementById('billSubtotal').innerText = subtotal.toLocaleString() + " đ";
-    document.getElementById('billTotal').innerText = (subtotal * 1.1).toLocaleString() + " đ";
+    document.getElementById('billVat').innerText = vat.toLocaleString() + " đ";
+    document.getElementById('billTotal').innerText = (subtotal + vat).toLocaleString() + " đ";
   }
 
   function printBill() {

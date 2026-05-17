@@ -809,6 +809,25 @@
       <div class="search-bar">
         <input type="text" placeholder="Search" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center;background-size: 20px; padding-left: 35px;">
       </div>
+      <div style="display: flex; align-items: center; margin: 0 20px;">
+        <button onclick="openRetailBilling()" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 10px 20px;
+          border-radius: 99px;
+          border: none;
+          background: linear-gradient(135deg, #e0d3a2, #ffdda1);
+          color: #362e1b;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 4px 10px rgba(250, 204, 21, 0.3);
+          transition: transform 0.2s, box-shadow 0.2s;
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(250, 204, 21, 0.4)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 10px rgba(250, 204, 21, 0.3)';">
+          🛒 Quick Sale
+        </button>
+      </div>
       <!-- Bên phải: Thông tin tài khoản -->
       <div class="stylist-info">
         <div class="stylist-avatar">👩</div>
@@ -942,6 +961,45 @@
   </div>
 </div>
 
+<!-- RETAIL BILLING MODAL -->
+<div id="retailBillingOverlay" class="billing-overlay">
+  <div class="billing-card">
+    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #fde0c6; padding-bottom: 10px; margin-bottom: 20px;">
+      <h2 style="margin:0; color: #271e16;">RETAIL BILL</h2>
+      <div style="text-align: right; color: #c48c47; font-weight: 800;">GOUTSALON</div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <p style="font-size: 12px; font-weight: 700; color: #8b7d64;">Customer:</p>
+      <select id="retailCustomerSelect" style="width: 100%; margin: 6px 0 12px; padding: 10px 12px; border: 1px solid #ffffff; border-radius: 12px; background: #fff; font-size: 13px; color: #1a1a1a;">
+      </select>
+    </div>
+
+    <div class="section-title">PRODUCTS</div>
+    <div id="retailBillProductArea"></div>
+    <button id="btnAddRetailProduct" class="btn-add-item" onclick="addRetailBillRow()">+ Add product</button>
+
+    <div class="summary-box">
+      <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 14px; margin-bottom: 5px;">
+        <span>Subtotal</span><span id="retailBillSubtotal">0 đ</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 14px; margin-bottom: 5px;">
+        <span>VAT (10%)</span><span id="retailBillVat">0 đ</span>
+      </div>
+      <div class="total-line">
+        <span>TOTAL</span><span id="retailBillTotal">0 đ</span>
+      </div>
+    </div>
+
+    <div class="bill-btns">
+      <button class="btn-c" onclick="closeRetailBilling()">Close</button>
+      <button id="btnCancelRetailBill" class="btn-cancel-bill" type="button" onclick="cancelRetailBillAction()" style="display:none">Cancel Bill</button>
+      <button id="btnPayRetailBill" class="btn-pay-bill" type="button" onclick="payRetailBillAction()" style="display:none">Pay</button>
+      <button id="btnCreateRetailBill" class="btn-p" type="button" onclick="createRetailBillAction()">Create Bill</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // ================= GIỮ NGUYÊN TOÀN BỘ CODE GỐC CỦA schedule.html =================
   // -------------------- CONFIG --------------------
@@ -1071,11 +1129,28 @@
         services = await serviceRes.json();
       }
 
-      const retailRes = await fetch(`${API_BASE_URL}/products?productType=RETAIL&size=200`, { headers });
+      const [retailRes, serviceProductRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/products?productType=RETAIL&size=200`, { headers }),
+        fetch(`${API_BASE_URL}/products?productType=BOTH&size=200`,{ headers })
+      ]);
+
+      let retailProducts = [];
+      let serviceProducts = [];
+
       if (retailRes.ok) {
         const retailPage = await retailRes.json();
-        salonProducts = retailPage.content || [];
+        retailProducts = retailPage.content || [];
       }
+
+      if (serviceProductRes.ok) {
+        const servicePage = await serviceProductRes.json();
+        serviceProducts = servicePage.content || [];
+      }
+
+      salonProducts = [
+        ...retailProducts,
+        ...serviceProducts
+      ];
 
       // 4. Build Grid
       generateGrid();
@@ -2004,6 +2079,304 @@
   window.createBill = createBill;
   window.payBill = payBill;
   window.cancelBill = cancelBill;
+
+  // ================= RETAIL BILLING FUNCTIONS =================
+  let currentRetailBillId = null;
+  let retailBillLocked = false;
+
+  function setRetailBillEditingEnabled(enabled, isPaid = false) {
+    retailBillLocked = !enabled;
+    const addBtn = document.getElementById('btnAddRetailProduct');
+    const createBtn = document.getElementById('btnCreateRetailBill');
+    const payBtn = document.getElementById('btnPayRetailBill');
+    const cancelBtn = document.getElementById('btnCancelRetailBill');
+    const custSelect = document.getElementById('retailCustomerSelect');
+    
+    if (addBtn) addBtn.style.display = enabled ? '' : 'none';
+    if (createBtn) {
+      createBtn.style.display = enabled ? '' : 'none';
+      if (enabled) {
+        createBtn.disabled = false;
+        createBtn.textContent = 'Create Bill';
+      }
+    }
+    if (payBtn) payBtn.style.display = (enabled || isPaid) ? 'none' : '';
+    if (cancelBtn) cancelBtn.style.display = (enabled || isPaid) ? 'none' : '';
+    
+    if (custSelect) {
+        custSelect.disabled = !enabled;
+        custSelect.style.background = enabled ? '#fff' : '#f8fafc';
+    }
+
+    document.querySelectorAll('#retailBillProductArea .bill-grid').forEach(row => {
+      const sel = row.querySelector('select');
+      const inputs = row.querySelectorAll('input');
+      const qty = inputs.length > 1 ? inputs[1] : null;
+      const delBtn = row.querySelector('button');
+
+      if (sel) {
+        sel.disabled = !enabled;
+        sel.style.background = enabled ? '' : '#f8fafc';
+      }
+      if (qty) {
+        qty.readOnly = !enabled;
+        qty.style.pointerEvents = enabled ? '' : 'none';
+        qty.style.background = enabled ? '' : '#f8fafc';
+      }
+      if (delBtn) delBtn.style.display = enabled ? '' : 'none';
+    });
+  }
+
+  function openRetailBilling() {
+    currentRetailBillId = null;
+    setRetailBillEditingEnabled(true);
+    document.body.classList.add('modal-active');
+    document.getElementById('retailBillingOverlay').classList.add('active');
+    
+    // Populate customer select
+    const custSelect = document.getElementById('retailCustomerSelect');
+    custSelect.innerHTML = '<option value="" disabled selected>-- Select Customer --</option>' + 
+      customers.map(c => `<option value="${c.id}">${c.firstName} ${c.lastName}</option>`).join('');
+
+    document.getElementById('retailBillProductArea').innerHTML = '';
+    addRetailBillRow();
+    calculateRetailBill();
+  }
+
+  function closeRetailBilling() {
+    document.body.classList.remove('modal-active');
+    document.getElementById('retailBillingOverlay').classList.remove('active');
+    currentRetailBillId = null;
+  }
+
+  function addRetailBillRow(data = null) {
+    if (retailBillLocked) return;
+
+    if (!data) {
+      const existingSelects = document.querySelectorAll('#retailBillProductArea .bill-grid select');
+      for (const sel of existingSelects) {
+        if (!sel.value || sel.value === '0') {
+          sel.focus();
+          return;
+        }
+      }
+    }
+
+    const container = document.getElementById('retailBillProductArea');
+    const row = document.createElement('div');
+    row.className = 'bill-grid';
+
+    const initQty = (data && data._savedQty) ? data._savedQty : 1;
+    const initPrice = data ? data.price : 0;
+
+    row.innerHTML = `
+      <select onchange="updateRetailRowPrice(this)" style="width: 100%; border: 1px solid #fff; border-radius: 10px; padding: 8px; font-size: 13px; background: white; color: #1a1a1a; font-weight: 600;">
+        <option disabled selected hidden value="0" data-price="0">-- Select --</option>
+        ${salonProducts.map(item => `<option value="${item.id}" data-price="${item.price}" ${data && data.id == item.id ? 'selected' : ''}>${item.name}</option>`).join('')}
+      </select>
+      <input type="text" value="${Number(initPrice).toLocaleString('vi-VN')}" readonly style="background:#f8fafc; color:#1a1a1a; width: 100%; border: 1px solid #fff; border-radius: 10px; padding: 8px; font-size: 13px; text-align: right;">
+      <input type="number" value="${initQty}" min="1" oninput="calculateRetailBill()" style="width: 100%; border: 1px solid #fff; border-radius: 10px; padding: 8px; font-size: 13px; text-align: right;">
+      <input type="text" value="${Number(initPrice * initQty).toLocaleString('vi-VN')}" readonly style="background:#fdf0d9; color:#c48c47; font-weight: 700; border-color: #fde0c6; width: 100%; border-radius: 10px; padding: 8px; font-size: 13px; text-align: right;">
+      <button onclick="this.parentElement.remove(); calculateRetailBill();" style="border:none; background:none; color:#ef4444; font-size:20px; cursor:pointer; padding: 0;">🗑</button>
+    `;
+    container.appendChild(row);
+    calculateRetailBill();
+  }
+
+  function updateRetailRowPrice(el) {
+    if (retailBillLocked) return;
+    const price = el.options[el.selectedIndex].dataset.price;
+    el.parentElement.querySelectorAll('input')[0].value = Number(price).toLocaleString('vi-VN');
+    calculateRetailBill();
+  }
+
+  function calculateRetailBill() {
+    if (retailBillLocked) return;
+    let subtotal = 0;
+    document.querySelectorAll('#retailBillProductArea .bill-grid').forEach(r => {
+      const inputs = r.querySelectorAll('input');
+      if (inputs.length < 3) return;
+
+      const rawPrice = inputs[0].value.replace(/[^\d]/g, '');
+      const p = parseFloat(rawPrice) || 0;
+      const q = parseInt(inputs[1].value) || 0;
+
+      const lineTotal = p * q;
+      subtotal += lineTotal;
+
+      inputs[2].value = lineTotal.toLocaleString('vi-VN');
+    });
+    
+    const vat = Math.round(subtotal * 0.1);
+    document.getElementById('retailBillSubtotal').innerText = subtotal.toLocaleString('vi-VN') + ' đ';
+    document.getElementById('retailBillVat').innerText = vat.toLocaleString('vi-VN') + ' đ';
+    document.getElementById('retailBillTotal').innerText = (subtotal + vat).toLocaleString('vi-VN') + ' đ';
+  }
+
+  async function createRetailBillAction() {
+    if (retailBillLocked) return;
+    const custId = document.getElementById('retailCustomerSelect').value;
+    if (!custId) {
+      alert("Please select a customer.");
+      return;
+    }
+
+    const retailProducts = [];
+    document.querySelectorAll('#retailBillProductArea .bill-grid').forEach(row => {
+      const sel = row.querySelector('select');
+      const qtyInput = row.querySelector('input[type="number"]');
+      if (sel && sel.value && sel.value !== '0') {
+        retailProducts.push({
+          productId: Number(sel.value),
+          quantity: parseInt(qtyInput?.value, 10) || 1
+        });
+      }
+    });
+
+    if (retailProducts.length === 0) {
+      alert("Please add at least one product.");
+      return;
+    }
+
+    const createBtn = document.getElementById('btnCreateRetailBill');
+    if (createBtn) {
+      createBtn.disabled = true;
+      createBtn.textContent = 'Creating...';
+    }
+
+    const headers = getAuthHeaders();
+    const body = { customerId: Number(custId), retailProducts };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/bills/retail`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert('Could not create retail bill: ' + (err.message || 'System error'));
+        if (createBtn) {
+          createBtn.disabled = false;
+          createBtn.textContent = 'Create Bill';
+        }
+        return;
+      }
+
+      const bill = await res.json();
+      currentRetailBillId = bill.id;
+      
+      document.getElementById('retailBillProductArea').innerHTML = '';
+      (bill.details || []).forEach(detail => {
+        if (detail.productId) {
+          const p = salonProducts.find(x => x.id == detail.productId);
+          if (p) addRetailBillRow({ ...p, _savedQty: detail.quantity });
+        }
+      });
+      const subtotal = Number(bill.totalAmount) || 0;
+      const vat = Math.round(subtotal * 0.1);
+      document.getElementById('retailBillSubtotal').innerText = subtotal.toLocaleString('vi-VN') + ' đ';
+      document.getElementById('retailBillVat').innerText = vat.toLocaleString('vi-VN') + ' đ';
+      document.getElementById('retailBillTotal').innerText = (subtotal + vat).toLocaleString('vi-VN') + ' đ';
+      
+      setRetailBillEditingEnabled(false);
+      alert('Retail bill created successfully.');
+    } catch (error) {
+      console.error('Create retail bill error:', error);
+      alert('Network error while creating retail bill.');
+      if (createBtn) {
+        createBtn.disabled = false;
+        createBtn.textContent = 'Create Bill';
+      }
+    }
+  }
+
+  async function payRetailBillAction() {
+    if (!currentRetailBillId) return;
+    
+    const payBtn = document.getElementById('btnPayRetailBill');
+    if (payBtn) {
+      payBtn.disabled = true;
+      payBtn.textContent = 'Processing...';
+    }
+
+    try {
+      const headers = getAuthHeaders();
+      const res = await fetch(`${API_BASE_URL}/bills/${currentRetailBillId}/pay`, {
+        method: 'POST',
+        headers
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert('Could not pay bill: ' + (err.message || 'System error'));
+        if (payBtn) {
+          payBtn.disabled = false;
+          payBtn.textContent = 'Pay';
+        }
+        return;
+      }
+
+      alert('Payment successful!');
+      closeRetailBilling();
+    } catch (error) {
+      console.error('Pay retail bill error:', error);
+      alert('Network error while paying bill.');
+      if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay';
+      }
+    }
+  }
+
+  async function cancelRetailBillAction() {
+    if (!currentRetailBillId) return;
+
+    if (!confirm('Are you sure you want to cancel this retail bill?')) return;
+
+    const btnCancel = document.getElementById('btnCancelRetailBill');
+    btnCancel.disabled = true;
+    btnCancel.textContent = 'Canceling...';
+
+    const headers = getAuthHeaders();
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/bills/${currentRetailBillId}/cancel`, {
+        method: 'POST',
+        headers
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert('Could not cancel retail bill: ' + (err.message || 'System error'));
+        btnCancel.disabled = false;
+        btnCancel.textContent = 'Cancel Bill';
+        return;
+      }
+
+      alert("Retail bill canceled.");
+      closeRetailBilling();
+
+      btnCancel.disabled = false;
+      btnCancel.textContent = 'Cancel Bill';
+
+    } catch (error) {
+      console.error('Cancel retail bill error:', error);
+      alert('Network error while canceling retail bill.');
+      btnCancel.disabled = false;
+      btnCancel.textContent = 'Cancel Bill';
+    }
+  }
+
+  window.openRetailBilling = openRetailBilling;
+  window.closeRetailBilling = closeRetailBilling;
+  window.addRetailBillRow = addRetailBillRow;
+  window.updateRetailRowPrice = updateRetailRowPrice;
+  window.calculateRetailBill = calculateRetailBill;
+  window.createRetailBillAction = createRetailBillAction;
+  window.payRetailBillAction = payRetailBillAction;
+  window.cancelRetailBillAction = cancelRetailBillAction;
 </script>
 </body>
 </html>

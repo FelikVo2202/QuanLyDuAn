@@ -648,6 +648,10 @@
       font-weight: 600;
     }
 
+    .checkout.pending-payment {
+      color: #d97706;
+    }
+
     .event.completed {
       opacity: 0.6;
     }
@@ -722,7 +726,9 @@
     .total-line { display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; color: #c48c47; border-top: 2px solid #fdf0d9; margin-top: 10px; padding-top: 10px; }
     .bill-btns { display: flex; gap: 12px; margin-top: 25px; justify-content: flex-end; }
     .btn-p { background: linear-gradient(135deg, #e0d3a2, #ffdda1); color: #362e1b; border: none; padding: 14px 30px; border-radius: 15px; font-weight: 700; cursor: pointer; }
-    .btn-c { background: #f1f5f9; color: #64748b; border: none; padding: 14px 30px; border-radius: 15px; cursor: pointer; }
+    .btn-c { background: #f1f5f9; color: #362e1b; border: none; padding: 14px 30px; border-radius: 15px; cursor: pointer; }
+    .btn-cancel-bill { background: #fee2e2; color: #b91c1c; border: none; padding: 14px 24px; border-radius: 15px; font-weight: 700; cursor: pointer; }
+    .btn-pay-bill { background: linear-gradient(135deg, #86efac, #4ade80); color: #14532d; border: none; padding: 14px 30px; border-radius: 15px; font-weight: 700; cursor: pointer; }
     @media (max-width: 900px) {
       .products-table { font-size: 12px; }
       .products-table th, .customers-table td { padding: 8px 4px; }
@@ -890,7 +896,9 @@
 
     <div class="bill-btns">
       <button class="btn-c" onclick="closeBilling()">Close</button>
-      <button id="btnCreateBill" class="btn-p" onclick="createBill()">Create Bill</button>
+      <button id="btnCancelBill" class="btn-cancel-bill" type="button" onclick="cancelBill()" style="display:none">Cancel Bill</button>
+      <button id="btnPayBill" class="btn-pay-bill" type="button" onclick="payBill()" style="display:none">Pay</button>
+      <button id="btnCreateBill" class="btn-p" type="button" onclick="createBill()">Create Bill</button>
     </div>
   </div>
 </div>
@@ -900,6 +908,22 @@
   // -------------------- CONFIG --------------------
   const gridEl = document.getElementById("calendar-grid");
   const API_BASE_URL = 'http://localhost:8080/api';
+  const BILL_ID_STORAGE_PREFIX = 'goutsalon_bill_id_';
+
+  function hasBillForAppointment(appointmentId) {
+    if (!appointmentId) return false;
+    return !!localStorage.getItem(BILL_ID_STORAGE_PREFIX + appointmentId);
+  }
+
+  function updateEventBillLabel(appointmentId) {
+    const checkoutEl = document.querySelector(
+      `.event[data-appointment-id="${appointmentId}"] .checkout`
+    );
+    if (!checkoutEl) return;
+    checkoutEl.textContent = 'Checkout';
+    checkoutEl.classList.add('pending-payment');
+  }
+
   // Time grid configuration: use 15-minute slots
   const START_HOUR = 8; // first hour shown
   const END_HOUR = 23;  // last hour shown (inclusive)
@@ -1088,6 +1112,11 @@
     const displayService = booking.serviceNames ? booking.serviceNames.join(", ") : "Service";
 
     const canCancel = userData.role === 'MANAGER' || userData.role === 'RECEPTIONIST';
+    const hasBill = hasBillForAppointment(booking.id);
+    const checkoutLabel = hasBill ? 'Checkout' : 'Create Bill';
+    const checkoutClass = hasBill ? 'checkout pending-payment' : 'checkout';
+
+    if (booking.id) eventDiv.dataset.appointmentId = booking.id;
 
     eventDiv.innerHTML = `
       <div class="event-header">
@@ -1103,7 +1132,7 @@
         <strong>${booking.customerName || "No name"}</strong>
         <div class="service">${displayService}</div>
       </div>
-      <div class="checkout">Checkout</div>
+      <div class="${checkoutClass}">${checkoutLabel}</div>
     `;
 
     // Xóa appointment
@@ -1504,7 +1533,6 @@
   let billLocked = false;
 
   const BILL_STORAGE_PREFIX = 'goutsalon_bill_products_';
-  const BILL_ID_STORAGE_PREFIX = 'goutsalon_bill_id_';
 
   function saveBillProducts() {
     if (billLocked || !currentBillingAppointmentId) return;
@@ -1545,6 +1573,8 @@
     billLocked = !enabled;
     const addBtn = document.getElementById('btnAddProduct');
     const createBtn = document.getElementById('btnCreateBill');
+    const payBtn = document.getElementById('btnPayBill');
+    const cancelBillBtn = document.getElementById('btnCancelBill');
     if (addBtn) addBtn.style.display = enabled ? '' : 'none';
     if (createBtn) {
       createBtn.style.display = enabled ? '' : 'none';
@@ -1553,6 +1583,8 @@
         createBtn.textContent = 'Create Bill';
       }
     }
+    if (payBtn) payBtn.style.display = enabled ? 'none' : '';
+    if (cancelBillBtn) cancelBillBtn.style.display = enabled ? 'none' : '';
 
     document.querySelectorAll('#billProductArea .bill-grid').forEach(row => {
       const sel = row.querySelector('select');
@@ -1793,6 +1825,7 @@
       clearSavedBillProducts(currentBillingAppointmentId);
       populateBillFromApi(bill);
       setBillEditingEnabled(false);
+      updateEventBillLabel(currentBillingAppointmentId);
       alert('Bill created successfully.');
     } catch (error) {
       console.error('Create bill error:', error);
@@ -1805,6 +1838,16 @@
     }
   }
 
+  function payBill() {
+    // TODO: gọi API thanh toán
+    console.log('Pay bill — UI only, API not wired yet');
+  }
+
+  function cancelBill() {
+    // TODO: gọi API hủy hóa đơn
+    console.log('Cancel bill — UI only, API not wired yet');
+  }
+
   // Make billing functions global for inline onclick
   window.addBillRow = addBillRow;
   window.updateRowPrice = updateRowPrice;
@@ -1812,6 +1855,8 @@
   window.saveBillProducts = saveBillProducts;
   window.closeBilling = closeBilling;
   window.createBill = createBill;
+  window.payBill = payBill;
+  window.cancelBill = cancelBill;
 </script>
 </body>
 </html>

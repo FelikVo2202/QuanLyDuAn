@@ -105,10 +105,6 @@
       align-items: center;
     }
 
-    .search-bar {
-      margin-bottom: 20px;
-    }
-
     .page-title h2 {
       font-size: 20px;
       font-weight: 600;
@@ -206,6 +202,51 @@
       transition: all 0.2s;
     }
     .filter-btn:hover {
+      background: #f5e8d8;
+      border-color: #c48c47;
+    }
+
+    .search-bar {
+      min-width: 240px;
+      max-width: 360px;
+      flex: 1;
+    }
+    .search-bar input {
+      width: 100%;
+      padding: 10px 16px 10px 36px;
+      border: 1px solid #e2d5c0;
+      border-radius: 16px;
+      background: white;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-bar input:focus {
+      border-color: #c48c47;
+      box-shadow: 0 0 0 2px rgba(196, 140, 71, 0.1);
+    }
+    .right-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .export-btn {
+      background: white;
+      border: 1px solid #e2d5c0;
+      padding: 10px 18px;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 13px;
+      color: #4e3927;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .export-btn:hover {
       background: #f5e8d8;
       border-color: #c48c47;
     }
@@ -362,17 +403,18 @@
 
     <div class="customers-section">
       <div class="action-bar">
-        <div class="left-filters">
-          <input type="date" id="filterStartDate" title="Start Date">
-          <input type="date" id="filterEndDate" title="End Date">
-          <select id="filterStatus">
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="Search by ID, Customer" onkeyup="renderBillsTable()" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 18px; padding-left: 36px;">
+        </div>
+        <div class="right-group">
+          <select id="filterStatus" onchange="loadBills()" style="padding: 10px 16px; border: 1px solid #e2d5c0; border-radius: 16px; background: white; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: #4e3927; outline: none;">
             <option value="">All Statuses</option>
             <option value="PAID">PAID</option>
             <option value="PENDING">PENDING</option>
-            <option value="CANCELED">CANCELED</option>
+            <option value="FAILED">FAILED</option>
           </select>
-          <button class="filter-btn" onclick="loadBills()">
-            Filter <img src="assets/icons/filter.svg" width="20" height="20" alt="">
+          <button class="export-btn" onclick="exportBillsToCSV()">
+            Export <img src="assets/icons/export.svg" width="20" height="20" alt="">
           </button>
         </div>
       </div>
@@ -495,13 +537,9 @@ async function loadDependencies() {
 
 async function loadBills() {
   const headers = getAuthHeaders();
-  const startDate = document.getElementById('filterStartDate').value;
-  const endDate = document.getElementById('filterEndDate').value;
   const status = document.getElementById('filterStatus').value;
 
-  let url = `${API_BASE_URL}/bills?size=100`; // simple pagination
-  if (startDate) url += `&startDate=${startDate}T00:00:00`;
-  if (endDate) url += `&endDate=${endDate}T23:59:59`;
+  let url = `${API_BASE_URL}/bills?size=200`;
   if (status) url += `&paymentStatus=${status}`;
 
   try {
@@ -519,7 +557,18 @@ async function loadBills() {
 
 function renderBillsTable() {
   const container = document.getElementById('billsTableContainer');
-  if (billsList.length === 0) {
+  const searchInput = document.getElementById('searchInput');
+  const search = searchInput ? searchInput.value.toLowerCase() : '';
+
+  let filteredBills = billsList;
+  if (search) {
+    filteredBills = filteredBills.filter(b => {
+      const custName = b.customerId && customersMap[b.customerId] ? customersMap[b.customerId].toLowerCase() : 'retail customer';
+      return custName.includes(search) || b.id.toString().includes(search);
+    });
+  }
+
+  if (filteredBills.length === 0) {
     container.innerHTML = '<div class="empty-state">No bills found for the selected filters.</div>';
     return;
   }
@@ -528,7 +577,7 @@ function renderBillsTable() {
     <table class="customers-table">
       <thead>
         <tr>
-          <th>Bill ID</th>
+          <th>ID</th>
           <th>Customer</th>
           <th>Date</th>
           <th>Total Amount</th>
@@ -537,7 +586,7 @@ function renderBillsTable() {
         </tr>
       </thead>
       <tbody>
-        ${billsList.map(b => `
+        ${filteredBills.map(b => `
           <tr>
             <td>#${b.id}</td>
             <td><strong>${b.customerId && customersMap[b.customerId] ? customersMap[b.customerId] : 'Retail Customer'}</strong></td>
@@ -683,6 +732,48 @@ async function cancelBillAction() {
 async function init() {
   await loadDependencies();
   await loadBills();
+}
+
+function exportBillsToCSV() {
+  const searchInput = document.getElementById('searchInput');
+  const search = searchInput ? searchInput.value.toLowerCase() : '';
+
+  let filteredBills = billsList;
+  if (search) {
+    filteredBills = filteredBills.filter(b => {
+      const custName = b.customerId && customersMap[b.customerId] ? customersMap[b.customerId].toLowerCase() : 'retail customer';
+      return custName.includes(search) || b.id.toString().includes(search);
+    });
+  }
+
+  if (filteredBills.length === 0) {
+    alert("No data to export!");
+    return;
+  }
+
+  let csvRows = [];
+  csvRows.push(['Bill ID', 'Customer', 'Date', 'Total Amount', 'Status']);
+
+  filteredBills.forEach(b => {
+    const custName = b.customerId && customersMap[b.customerId] ? customersMap[b.customerId] : 'Retail Customer';
+    const dateStr = b.billDate ? b.billDate.replace('T', ' ') : '-';
+    csvRows.push([
+      b.id,
+      `"${custName}"`,
+      `"${dateStr}"`,
+      b.totalAmount || 0,
+      b.paymentStatus
+    ]);
+  });
+
+  const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvRows.map(e => e.join(",")).join("\n");
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "bills.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 init();

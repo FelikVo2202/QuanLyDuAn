@@ -957,7 +957,7 @@
 
     <div class="bill-btns">
       <button class="btn-c" onclick="closeBilling()">Close</button>
-      <button id="btnCancelBill" class="btn-cancel-bill" type="button" onclick="cancelBill()" style="display:none">Cancel Bill</button>
+      <button id="btnCancelBill" class="btn-cancel-bill" type="button" onclick="cancelBill()" style="display:none">Cancel</button>
       <button id="btnPayBill" class="btn-pay-bill" type="button" onclick="payBill()" style="display:none">Pay</button>
       <button id="btnCreateBill" class="btn-p" type="button" onclick="createBill()">Create Bill</button>
     </div>
@@ -996,7 +996,7 @@
 
     <div class="bill-btns">
       <button class="btn-c" onclick="closeRetailBilling()">Close</button>
-      <button id="btnCancelRetailBill" class="btn-cancel-bill" type="button" onclick="cancelRetailBillAction()" style="display:none">Cancel Bill</button>
+      <button id="btnCancelRetailBill" class="btn-cancel-bill" type="button" onclick="cancelRetailBillAction()" style="display:none">Cancel</button>
       <button id="btnPayRetailBill" class="btn-pay-bill" type="button" onclick="payRetailBillAction()" style="display:none">Pay</button>
       <button id="btnCreateRetailBill" class="btn-p" type="button" onclick="createRetailBillAction()">Create Bill</button>
     </div>
@@ -2049,7 +2049,7 @@
         const err = await res.json();
         alert('Could not cancel bill: ' + (err.message || 'System error'));
         btnCancel.disabled = false;
-        btnCancel.textContent = 'Cancel Bill';
+        btnCancel.textContent = 'Cancel';
         return;
       }
 
@@ -2063,13 +2063,13 @@
       await loadAllBookings();
 
       btnCancel.disabled = false;
-      btnCancel.textContent = 'Cancel Bill';
+      btnCancel.textContent = 'Cancel';
 
     } catch (error) {
       console.error('Cancel bill error:', error);
       alert('Network error while canceling bill.');
       btnCancel.disabled = false;
-      btnCancel.textContent = 'Cancel Bill';
+      btnCancel.textContent = 'Cancel';
     }
   }
 
@@ -2354,7 +2354,7 @@
         const err = await res.json();
         alert('Could not cancel retail bill: ' + (err.message || 'System error'));
         btnCancel.disabled = false;
-        btnCancel.textContent = 'Cancel Bill';
+        btnCancel.textContent = 'Cancel';
         return;
       }
 
@@ -2362,13 +2362,13 @@
       closeRetailBilling();
 
       btnCancel.disabled = false;
-      btnCancel.textContent = 'Cancel Bill';
+      btnCancel.textContent = 'Cancel';
 
     } catch (error) {
       console.error('Cancel retail bill error:', error);
       alert('Network error while canceling retail bill.');
       btnCancel.disabled = false;
-      btnCancel.textContent = 'Cancel Bill';
+      btnCancel.textContent = 'Cancel';
     }
   }
 

@@ -79,7 +79,7 @@ public class DummyDataSeeder implements CommandLineRunner {
                         + "- " + services.size() + " services\n"
                         + "- " + appointments.size() + " appointments (no overlapping for active slots)\n"
                         + "- " + products.size() + " products (with recipes & inventory)\n"
-                        + "- " + bills.size() + " bills (Past appointments only).");
+                        + "- " + bills.size() + " bills.");
             }
         });
     }
@@ -221,16 +221,7 @@ public class DummyDataSeeder implements CommandLineRunner {
 
             LocalDateTime endDateTime = startDateTime.plusMinutes(totalDurationMinutes);
 
-            if (startDateTime.isAfter(now)) {
-                appointment.setStatus(rnd.nextDouble() < 0.85 ? AppointmentStatus.CONFIRMED : AppointmentStatus.CANCELED);
-            } else {
-                List<AppointmentStatus> pastStatuses = List.of(
-                        AppointmentStatus.DONE,
-                        AppointmentStatus.PAID,
-                        AppointmentStatus.CANCELED
-                );
-                appointment.setStatus(pastStatuses.get(rnd.nextInt(pastStatuses.size())));
-            }
+            appointment.setStatus(rnd.nextDouble() < 0.85 ? AppointmentStatus.CONFIRMED : AppointmentStatus.CANCELED);
 
             if (appointment.getStatus() != AppointmentStatus.CANCELED) {
                 List<TimeSlot> busySlots = staffBusySlots.get(selectedStaff.getId());

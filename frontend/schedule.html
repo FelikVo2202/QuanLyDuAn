@@ -681,6 +681,16 @@
       box-shadow: 0 4px 6px rgba(245, 158, 11, 0.35);
     }
 
+    .checkout.view-bill {
+      background: #3b82f6;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25);
+    }
+
+    .checkout.view-bill:hover {
+      background: #2563eb;
+      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.35);
+    }
+
     .event.completed {
       opacity: 0.6;
     }
@@ -1142,8 +1152,9 @@
 
     const canCancel = userData.role === 'MANAGER' || userData.role === 'RECEPTIONIST';
     const hasBill = hasBillForAppointment(booking.id);
-    const checkoutLabel = hasBill ? 'Checkout' : 'Create Bill';
-    const checkoutClass = hasBill ? 'checkout pending-payment' : 'checkout';
+    const isPaid = localStorage.getItem('goutsalon_bill_paid_' + booking.id) === 'true';
+    const checkoutLabel = hasBill ? (isPaid ? 'View Bill' : 'Checkout') : 'Create Bill';
+    const checkoutClass = hasBill ? (isPaid ? 'checkout view-bill' : 'checkout pending-payment') : 'checkout';
 
     if (booking.id) eventDiv.dataset.appointmentId = booking.id;
 
@@ -1598,7 +1609,7 @@
     } catch(e) {}
   }
 
-  function setBillEditingEnabled(enabled) {
+  function setBillEditingEnabled(enabled, isPaid = false) {
     billLocked = !enabled;
     const addBtn = document.getElementById('btnAddProduct');
     const createBtn = document.getElementById('btnCreateBill');
@@ -1612,8 +1623,8 @@
         createBtn.textContent = 'Create Bill';
       }
     }
-    if (payBtn) payBtn.style.display = enabled ? 'none' : '';
-    if (cancelBillBtn) cancelBillBtn.style.display = enabled ? 'none' : '';
+    if (payBtn) payBtn.style.display = (enabled || isPaid) ? 'none' : '';
+    if (cancelBillBtn) cancelBillBtn.style.display = (enabled || isPaid) ? 'none' : '';
 
     document.querySelectorAll('#billProductArea .bill-grid').forEach(row => {
       const sel = row.querySelector('select');
@@ -1688,8 +1699,12 @@
         return false;
       }
       const bill = await res.json();
+      const isPaid = bill.paymentStatus === 'PAID';
+      if (isPaid) {
+        localStorage.setItem('goutsalon_bill_paid_' + appointmentId, 'true');
+      }
       populateBillFromApi(bill);
-      setBillEditingEnabled(false);
+      setBillEditingEnabled(false, isPaid);
       return true;
     } catch (e) {
       console.warn('Could not load existing bill:', e);
@@ -1867,9 +1882,66 @@
     }
   }
 
-  function payBill() {
-    // TODO: gọi API thanh toán
-    console.log('Pay bill — UI only, API not wired yet');
+  async function payBill() {
+    const payBtn = document.getElementById('btnPayBill');
+    if (payBtn) {
+      payBtn.disabled = true;
+      payBtn.textContent = 'Processing...';
+    }
+
+    const apptId = currentBillingAppointmentId;
+    const billId = localStorage.getItem(BILL_ID_STORAGE_PREFIX + apptId);
+    if (!billId) {
+      alert("Bill information not found.");
+      if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay';
+      }
+      return;
+    }
+
+    try {
+      const headers = getAuthHeaders();
+      const res = await fetch(`${API_BASE_URL}/bills/${billId}/pay`, {
+        method: 'POST',
+        headers
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert('Could not pay bill: ' + (err.message || 'System error'));
+        if (payBtn) {
+          payBtn.disabled = false;
+          payBtn.textContent = 'Pay';
+        }
+        return;
+      }
+
+      alert('Payment successful!');
+      localStorage.setItem('goutsalon_bill_paid_' + apptId, 'true');
+      
+      if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay';
+      }
+      
+      closeBilling();
+      await loadAllBookings();
+
+      const checkoutEl = document.querySelector(`.event[data-appointment-id="${apptId}"] .checkout`);
+      if (checkoutEl) {
+        checkoutEl.className = 'checkout view-bill';
+        checkoutEl.textContent = 'View Bill';
+      }
+
+    } catch (error) {
+      console.error('Pay bill error:', error);
+      alert('Network error while paying bill.');
+      if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay';
+      }
+    }
   }
 
   async function cancelBill() {
@@ -1904,6 +1976,7 @@
       }
 
       localStorage.removeItem(BILL_ID_STORAGE_PREFIX + currentBillingAppointmentId);
+      localStorage.removeItem('goutsalon_bill_paid_' + currentBillingAppointmentId);
       clearSavedBillProducts(currentBillingAppointmentId);
 
       alert("Old bill canceled. You can now create a new bill for this appointment.");

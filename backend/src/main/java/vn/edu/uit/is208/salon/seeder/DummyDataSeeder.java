@@ -69,6 +69,7 @@ public class DummyDataSeeder implements CommandLineRunner {
         seedServiceRecipes(services, products);
         seedInventoryLedger(products);
         List<Bill> bills = seedBills(appointments, products);
+        List<Bill> retailBills = seedRetailBills(customers, products);
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
@@ -79,7 +80,7 @@ public class DummyDataSeeder implements CommandLineRunner {
                         + "- " + services.size() + " services\n"
                         + "- " + appointments.size() + " appointments (no overlapping for active slots)\n"
                         + "- " + products.size() + " products (with recipes & inventory)\n"
-                        + "- " + bills.size() + " bills.");
+                        + "- " + (bills.size() + retailBills.size()) + " bills (" + retailBills.size() + " retail bills).");
             }
         });
     }
@@ -391,6 +392,73 @@ public class DummyDataSeeder implements CommandLineRunner {
         }
 
         return billRepository.saveAll(bills);
+    }
+
+    private List<Bill> seedRetailBills(List<Customer> customers, List<Product> products) {
+        List<Bill> retailBills = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        Random rnd = new Random();
+
+        for (int monthOffset = 6; monthOffset >= 0; monthOffset--) {
+            long targetRevenue = (monthOffset == 0) ? 150_000_000L : faker.number().numberBetween(200_000_000L, 300_000_000L);
+            long currentRevenue = 0;
+
+            LocalDateTime startOfMonth;
+            LocalDateTime endOfMonth;
+
+            if (monthOffset == 0) {
+                startOfMonth = now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+                endOfMonth = now; // up to current time
+            } else {
+                startOfMonth = now.minusMonths(monthOffset).withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+                endOfMonth = startOfMonth.plusMonths(1).minusSeconds(1);
+            }
+
+            long daysBetween = ChronoUnit.DAYS.between(startOfMonth, endOfMonth);
+            if (daysBetween <= 0) daysBetween = 1;
+
+            while (currentRevenue < targetRevenue) {
+                Bill bill = new Bill();
+                bill.setCustomer(customers.get(rnd.nextInt(customers.size())));
+
+                long randomDays = faker.number().numberBetween(0L, daysBetween + 1);
+                LocalDateTime randomDate = startOfMonth.plusDays(randomDays).plusHours(faker.number().numberBetween(8, 20));
+                if (randomDate.isAfter(endOfMonth)) {
+                    randomDate = endOfMonth;
+                }
+                bill.setBillDate(randomDate);
+                bill.setPaymentStatus(PaymentStatus.PAID);
+
+                BigDecimal totalAmount = BigDecimal.ZERO;
+                Set<BillDetail> details = new LinkedHashSet<>();
+
+                int productCount = faker.number().numberBetween(1, 4);
+                for (int i = 0; i < productCount; i++) {
+                    Product randomProduct = products.get(rnd.nextInt(products.size()));
+
+                    BillDetail detail = new BillDetail();
+                    detail.setBill(bill);
+                    detail.setProduct(randomProduct);
+
+                    long qty = faker.number().numberBetween(1, 4);
+                    detail.setQuantity(qty);
+                    detail.setUnitPrice(randomProduct.getPrice());
+
+                    BigDecimal itemTotal = randomProduct.getPrice().multiply(BigDecimal.valueOf(qty));
+                    totalAmount = totalAmount.add(itemTotal);
+
+                    details.add(detail);
+                }
+
+                bill.setDetails(details);
+                bill.setTotalAmount(totalAmount);
+                retailBills.add(bill);
+
+                currentRevenue += totalAmount.longValue();
+            }
+        }
+
+        return billRepository.saveAll(retailBills);
     }
 
     private String generateVietnamesePhone() {

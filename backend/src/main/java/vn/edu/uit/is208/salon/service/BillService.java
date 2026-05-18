@@ -330,8 +330,10 @@ public class BillService {
         ensureBillIsPending(bill);
         bill.setPaymentStatus(PaymentStatus.PAID);
 
-        Appointment appointment = getAppointment(bill.getAppointment().getId());
-        appointment.setStatus(AppointmentStatus.PAID);
+        if (bill.getAppointment().getId() != null) {
+            Appointment appointment = getAppointment(bill.getAppointment().getId());
+            appointment.setStatus(AppointmentStatus.PAID);
+        }
 
         return billMapper.toDto(billRepository.save(bill));
     }

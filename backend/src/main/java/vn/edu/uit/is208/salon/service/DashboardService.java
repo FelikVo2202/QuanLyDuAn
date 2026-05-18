@@ -3,12 +3,15 @@ package vn.edu.uit.is208.salon.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import vn.edu.uit.is208.salon.constant.AppointmentStatus;
+import vn.edu.uit.is208.salon.dto.ManagerDashboardResponse;
 import vn.edu.uit.is208.salon.dto.ReceptionistDashboardResponse;
 import vn.edu.uit.is208.salon.dto.StylistDashboardResponse;
 import vn.edu.uit.is208.salon.entity.Appointment;
 import vn.edu.uit.is208.salon.entity.SalonService;
 import vn.edu.uit.is208.salon.repository.AppointmentRepository;
+import vn.edu.uit.is208.salon.repository.BillRepository;
 import vn.edu.uit.is208.salon.repository.SalonServiceRepository;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,6 +25,7 @@ import java.util.stream.Collectors;
 public class DashboardService {
     private final AppointmentRepository appointmentRepository;
     private final SalonServiceRepository salonServiceRepository;
+    private final BillRepository billRepository;
     private static final long MONTHLY_TARGET = 120;
 
     public StylistDashboardResponse getStylistDashboard(Long staffId) {
@@ -134,6 +138,83 @@ public class DashboardService {
                 .duration(durationHours)
                 .stylist(stylist)
                 .price(price)
+                .build();
+    }
+
+    public ManagerDashboardResponse getManagerDashboard() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
+        LocalDateTime endOfDay = now.toLocalDate().atTime(LocalTime.MAX);
+        
+        LocalDateTime startOfMonth = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime endOfMonth = now.toLocalDate().plusMonths(1).withDayOfMonth(1).atStartOfDay();
+
+        BigDecimal revenueToday = billRepository.sumRevenueByDateRange(startOfDay, endOfDay);
+        if (revenueToday == null) revenueToday = BigDecimal.ZERO;
+        
+        BigDecimal revenueThisMonth = billRepository.sumRevenueByDateRange(startOfMonth, endOfMonth);
+        if (revenueThisMonth == null) revenueThisMonth = BigDecimal.ZERO;
+
+        long newCustomersThisMonth = appointmentRepository.countUniqueCustomersByDayRange(startOfMonth, endOfMonth);
+
+        List<Appointment> todayAppointments = appointmentRepository.findAllByDayRange(startOfDay, endOfDay);
+        long totalAppointments = todayAppointments.size();
+        
+        long confirmedCount = 0;
+        long doneCount = 0;
+        long cancelledCount = 0;
+
+        for (Appointment a : todayAppointments) {
+            if (a.getStatus() == AppointmentStatus.CANCELED) {
+                cancelledCount++;
+            } else if (a.getStatus() == AppointmentStatus.DONE || a.getStatus() == AppointmentStatus.PAID) {
+                doneCount++;
+            } else {
+                confirmedCount++;
+            }
+        }
+
+        ManagerDashboardResponse.TodayScheduleDto todaySchedule = ManagerDashboardResponse.TodayScheduleDto.builder()
+                .total(totalAppointments)
+                .confirmed(confirmedCount)
+                .done(doneCount)
+                .cancelled(cancelledCount)
+                .build();
+
+        List<ManagerDashboardResponse.RevenueHistoryDto> revenueHistory = new java.util.ArrayList<>();
+        for (int i = 5; i >= 0; i--) {
+            LocalDateTime monthStart = startOfMonth.minusMonths(i);
+            LocalDateTime monthEnd = monthStart.plusMonths(1);
+            BigDecimal monthlyRev = billRepository.sumRevenueByDateRange(monthStart, monthEnd);
+            if (monthlyRev == null) monthlyRev = BigDecimal.ZERO;
+            
+            revenueHistory.add(ManagerDashboardResponse.RevenueHistoryDto.builder()
+                    .month(monthStart.format(DateTimeFormatter.ofPattern("MMM")))
+                    .revenue(monthlyRev)
+                    .build());
+        }
+
+        List<Object[]> topStaffData = appointmentRepository.findTopStaffPerformance(startOfMonth, endOfMonth, PageRequest.of(0, 3));
+        List<ManagerDashboardResponse.StaffPerformanceDto> topStaff = topStaffData.stream().map(row -> {
+            String firstName = (String) row[0];
+            String lastName = (String) row[1];
+            long count = ((Number) row[2]).longValue();
+            String name = firstName + " " + lastName;
+            String avatar = firstName.substring(0, 1).toUpperCase();
+            return ManagerDashboardResponse.StaffPerformanceDto.builder()
+                    .name(name)
+                    .avatar(avatar)
+                    .servicesCount(count)
+                    .build();
+        }).collect(Collectors.toList());
+
+        return ManagerDashboardResponse.builder()
+                .revenueToday(revenueToday)
+                .revenueThisMonth(revenueThisMonth)
+                .newCustomersThisMonth(newCustomersThisMonth)
+                .revenueHistory(revenueHistory)
+                .todaySchedule(todaySchedule)
+                .topStaff(topStaff)
                 .build();
     }
 }

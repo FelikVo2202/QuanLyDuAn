@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.edu.uit.is208.salon.constant.AppointmentStatus;
 import vn.edu.uit.is208.salon.constant.PaymentStatus;
 import vn.edu.uit.is208.salon.constant.ProductType;
 import vn.edu.uit.is208.salon.dto.AddRetailProductRequest;
@@ -327,8 +328,10 @@ public class BillService {
     public BillDto payBill(Long billId) {
         Bill bill = getBill(billId);
         ensureBillIsPending(bill);
-
         bill.setPaymentStatus(PaymentStatus.PAID);
+
+        Appointment appointment = getAppointment(bill.getAppointment().getId());
+        appointment.setStatus(AppointmentStatus.PAID);
 
         return billMapper.toDto(billRepository.save(bill));
     }

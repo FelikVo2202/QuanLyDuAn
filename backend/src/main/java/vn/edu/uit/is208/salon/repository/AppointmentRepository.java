@@ -57,11 +57,36 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                 LEFT JOIN FETCH a.services
                 WHERE a.staff.id = :staffId
                 AND a.appointmentDateTime >= :startDateTime AND a.appointmentDateTime < :endDateTime
+                ORDER BY a.appointmentDateTime
             """)
     List<Appointment> findAllByStaffIdAndDayRange(
             @Param("staffId") Long staffId,
             @Param("startDateTime") LocalDateTime startDateTime,
             @Param("endDateTime") LocalDateTime endDateTime);
+
+    @Query("""
+        SELECT COUNT(DISTINCT a.customer.id)
+        FROM Appointment a
+        WHERE a.staff.id = :staffId
+        AND a.appointmentDateTime >= :startOfMonth AND a.appointmentDateTime < :endOfMonth
+        AND (a.status = 'DONE' OR a.status = 'PAID')
+    """)
+    long countUniqueCustomersByStaffAndMonth(
+            @Param("staffId") Long staffId,
+            @Param("startOfMonth") LocalDateTime startOfMonth,
+            @Param("endOfMonth") LocalDateTime endOfMonth);
+
+    @Query("""
+        SELECT COUNT(a)
+        FROM Appointment a
+        WHERE a.staff.id = :staffId
+        AND a.appointmentDateTime >= :startOfMonth AND a.appointmentDateTime < :endOfMonth
+        AND (a.status = 'DONE' OR a.status = 'PAID')
+    """)
+    long countCompletedAppointmentsByStaffAndMonth(
+            @Param("staffId") Long staffId,
+            @Param("startOfMonth") LocalDateTime startOfMonth,
+            @Param("endOfMonth") LocalDateTime endOfMonth);
 
     @EntityGraph(attributePaths = {"services"})
     Optional<Appointment> findById(Long id);

@@ -71,22 +71,27 @@
     }
 
     .nav-item:hover {
-      background: #1e293b;
-      color: #f1f5f9;
-    }
-
-    .nav-item.active {
-      background: #f5e3c2;
+      background: rgba(255, 255, 255, 0.6);
       color: #4e3927;
     }
 
+    .nav-item.active {
+      background: #ffffff;
+      color: #4e3927;
+      box-shadow: 0 4px 12px rgba(78, 57, 39, 0.08);
+      font-weight: 800;
+    }
 
-    .logout {
+
+    .nav-item.logout-btn {
       margin-top: auto;
-      padding: 16px 24px;
-      cursor: pointer;
-      color: #8b6b4a;
-      font-weight: 500;
+      margin-bottom: 24px;
+      color: #dc2626;
+    }
+
+    .nav-item.logout-btn:hover {
+      background: #fee2e2;
+      color: #dc2626;
     }
 
     /* MAIN */
@@ -569,7 +574,14 @@ input, select, button, textarea {
     <a href="bills.html" class="nav-item">
       <img src="assets/icons/bills.svg" width="24" height="24" alt=""> Bills
     </a>
-    <div class="logout" onclick="logout()">🚪 Logout</div>
+    <a href="#" class="nav-item logout-btn" onclick="logout(event)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+      </svg>
+      Logout
+    </a>
   </div>
 
   <!-- MAIN CONTENT -->
@@ -675,7 +687,12 @@ const userData = JSON.parse(userStr);
   }
 })();
 
-function logout() {
+async function logout(event) {
+  if (event) event.preventDefault();
+
+  if (!confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
+    return;
+  }
   localStorage.removeItem('salonUser');
   sessionStorage.removeItem('salonUser');
   window.location.href = 'login.html';

@@ -457,12 +457,6 @@
     <!-- STATS CARDS -->
     <div class="stats-row">
       <div class="stat-card">
-        <div class="stat-icon">👥</div>
-        <div class="stat-title">Total Customers</div>
-        <div class="stat-value" id="totalCustomers">0</div>
-        <div class="stat-trend">↑ +23% vs last month</div>
-      </div>
-      <div class="stat-card">
         <div class="stat-icon">⏳</div>
         <div class="stat-title">Remaining Appointments</div>
         <div class="stat-value" id="remainingAppointments">0</div>
@@ -470,9 +464,15 @@
       </div>
       <div class="stat-card">
         <div class="stat-icon">📊</div>
-        <div class="stat-title">Completed (This Month)</div>
+        <div class="stat-title">Completed Appointments</div>
         <div class="stat-value" id="completedCount">0</div>
-        <div class="stat-trend">+12% vs last month</div>
+        <div class="stat-trend">This Month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-title">Total Customers</div>
+        <div class="stat-value" id="totalCustomers">0</div>
+        <div class="stat-trend">This Month</div>
       </div>
     </div>
 
@@ -507,7 +507,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="remaining-bar">
           <div class="bar-label">
             <span>📅 Remaining today</span>
@@ -524,67 +524,75 @@
 </div>
 
 <script>
+  const API_BASE_URL = 'http://localhost:8080/api';
 
+  // State
+  let dashboardData = {
+    totalCustomersMonth: 0,
+    remainingAppointmentsToday: 0,
+    completedAppointmentsMonth: 0,
+    todayAppointments: [],
+    monthlyTarget: 120
+  };
 
-  // MOCK DATA FOR STYLIST (Livia Bator)
-  const stylistId = "stylist_1";
-  
-  // Appointments data
-  let appointments = [
-    { id: 1, customer: "Minh Anh", service: "Haircut", time: "09:00", status: "upcoming", duration: 1 },
-    { id: 2, customer: "Thanh Tú", service: "Hairdye", time: "11:00", status: "upcoming", duration: 2 },
-    { id: 3, customer: "Hoàng Nam", service: "Hairwash", time: "14:00", status: "upcoming", duration: 0.5 },
-    { id: 4, customer: "Linh Chi", service: "Hairdye", time: "15:30", status: "upcoming", duration: 1.5 },
-    { id: 5, customer: "Đức Anh", service: "Haircut", time: "17:00", status: "upcoming", duration: 1 }
-  ];
-  
-  // Completed appointments this month (mock)
-  let completedThisMonth = 78;
-  // Total customers this month (unique)
-  let totalCustomersMonth = 5;
-  // Monthly target
-  const MONTH_TARGET = 120;
-  
-  // Current time to determine remaining appointments
-  function getCurrentHour() {
-    const now = new Date();
-    return now.getHours() + now.getMinutes() / 60;
+  // ========== KIỂM TRA ĐĂNG NHẬP ==========
+  const user = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+  if (!user) {
+    window.location.href = 'login.html';
   }
-  
-  // Get upcoming appointments (not passed yet)
-  function getUpcomingAppointments() {
-    const currentHour = getCurrentHour();
-    const timeMap = {
-      "09:00": 9, "11:00": 11, "14:00": 14, "15:30": 15.5, "17:00": 17
-    };
-    return appointments.filter(app => {
-      const appHour = timeMap[app.time];
-      return appHour > currentHour;
-    });
+  const userData = JSON.parse(user);
+
+  // Cập nhật tên stylist
+  const nameEl = document.querySelector('.stylist-name h4');
+  if (nameEl) nameEl.innerText = userData.username || 'Olivia';
+
+  function logout() {
+    localStorage.removeItem('salonUser');
+    sessionStorage.removeItem('salonUser');
+    window.location.href = 'login.html';
   }
-  
-  // Get remaining appointments count for today
-  function getRemainingCount() {
-    return getUpcomingAppointments().length;
+  // ========================================
+
+  async function fetchDashboardData() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/dashboard/stylist`, {
+        headers: {
+          'Authorization': `Bearer ${userData.token}`
+        }
+      });
+      if (response.ok) {
+        dashboardData = await response.json();
+        updateDashboard();
+      } else if (response.status === 401 || response.status === 403) {
+        logout();
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
   }
-  
+
   // Calculate performance rate (% of monthly target achieved)
   function getPerformanceRate() {
-    return Math.min(100, Math.round((completedThisMonth / MONTH_TARGET) * 100));
+    if (!dashboardData.monthlyTarget) return 0;
+    return Math.min(100, Math.round((dashboardData.completedAppointmentsMonth / dashboardData.monthlyTarget) * 100));
   }
-  
+
   // Update UI
   function updateDashboard() {
     // Update stat cards
-    document.getElementById("totalCustomers").innerText = totalCustomersMonth;
-    const remaining = getRemainingCount();
-    document.getElementById("remainingAppointments").innerText = remaining;
-    document.getElementById("completedCount").innerText = completedThisMonth;
-    
+    document.getElementById("totalCustomers").innerText = dashboardData.totalCustomersMonth;
+    document.getElementById("remainingAppointments").innerText = dashboardData.remainingAppointmentsToday;
+    document.getElementById("completedCount").innerText = dashboardData.completedAppointmentsMonth;
+
     // Update appointment list
-    const upcomingApps = getUpcomingAppointments();
     const appListDiv = document.getElementById("appointmentList");
-    
+
+    // Filter only upcoming appointments for the list (time > now)
+    const now = new Date();
+    const currentHourMin = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+
+    const upcomingApps = dashboardData.todayAppointments.filter(app => app.time > currentHourMin);
+
     if (upcomingApps.length === 0) {
       appListDiv.innerHTML = `<div class="empty-state">✨ No more appointments today!<br>Take a break 🎉</div>`;
     } else {
@@ -595,39 +603,39 @@
             <div class="appointment-name">${app.customer}</div>
             <div class="appointment-service">✂️ ${app.service}</div>
           </div>
-          <div class="appointment-status status-upcoming">Upcoming</div>
+          <div class="appointment-status status-upcoming">${app.status.charAt(0).toUpperCase() + app.status.slice(1)}</div>
         </div>
       `).join('');
     }
-    
+
     // Performance circle
     const perfRate = getPerformanceRate();
     document.getElementById("perfPercent").innerText = perfRate;
-    document.getElementById("targetAchieved").innerText = completedThisMonth;
-    document.getElementById("monthTarget").innerText = MONTH_TARGET;
-    
+    document.getElementById("targetAchieved").innerText = dashboardData.completedAppointmentsMonth;
+    document.getElementById("monthTarget").innerText = dashboardData.monthlyTarget;
+
     // Update conic gradient
     const circle = document.getElementById("performanceCircle");
     const angle = (perfRate / 100) * 360;
     circle.style.background = `conic-gradient(#eab308 ${angle}deg, #f0f0f0 ${angle}deg)`;
-    
+
     // Update remaining bar
-    const totalToday = appointments.length;
-    const remainingCount = remaining;
+    const totalToday = dashboardData.todayAppointments.length;
+    const remainingCount = upcomingApps.length;
     const completedToday = totalToday - remainingCount;
     const fillPercent = totalToday > 0 ? (completedToday / totalToday) * 100 : 0;
     document.getElementById("remainingFill").style.width = `${fillPercent}%`;
     document.getElementById("remainingText").innerHTML = `${completedToday}/${totalToday} completed`;
   }
-  
-  // Simulate real-time update (optional: every minute)
+
+  // Simulate real-time update
   function startRealTimeUpdate() {
-    updateDashboard();
+    fetchDashboardData();
     setInterval(() => {
-      updateDashboard();
+      fetchDashboardData();
     }, 60000); // update every minute
   }
-  
+
   // Initialize
   startRealTimeUpdate();
   
@@ -644,13 +652,6 @@
   
   // Expose for debugging (optional)
   window.markAsCompleted = markAsCompleted;
-
-// ========== KIỂM TRA ĐĂNG NHẬP ==========
-const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
-if (!userStr) {
-  window.location.href = 'login.html';
-}
-const userData = JSON.parse(userStr);
 
 // Populate topbar user info (avatar, name, role)
 (function populateTopbarUser() {

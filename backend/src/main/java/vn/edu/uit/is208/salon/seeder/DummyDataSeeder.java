@@ -64,7 +64,7 @@ public class DummyDataSeeder implements CommandLineRunner {
         List<Customer> customers = seedCustomers(50);
         List<Staff> staffList = seedStaff(12);
         List<SalonService> services = seedServices();
-        List<Appointment> appointments = seedAppointments(150, customers, staffList, services);
+        List<Appointment> appointments = seedAppointments(200, customers, staffList, services);
         List<Product> products = seedProducts(30);
         seedServiceRecipes(services, products);
         seedInventoryLedger(products);

@@ -6,6 +6,8 @@
   <title>GOUTSALON | Appointments</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -19,6 +21,95 @@
       background: #fdf0d9;
       height: 100vh;
       overflow: hidden;
+    }
+
+    .ts-wrapper {
+      margin: 6px 0 12px;
+    }
+    .ts-wrapper .ts-control {
+      border: 1px solid #ffffff;
+      min-height: 42px !important;
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      box-shadow: none;
+      transition: all 0.2s ease;
+      caret-color: transparent;
+      font-weight: 600;
+      color: #362e1b;
+
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c48c47' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 12px center !important;
+      cursor: pointer !important;
+    }
+    .ts-wrapper .ts-control::after {
+      content: '';
+    }
+    .ts-wrapper:not(.has-items) .ts-control::before {
+      content: attr(data-placeholder);
+      color: #b0a090;
+      font-weight: 400;
+      font-size: 13px;
+      position: absolute;
+      pointer-events: none;
+    }
+    .ts-wrapper.focus .ts-control {
+      border-color: #c48c47;
+      box-shadow: 0 0 0 2px rgba(196, 140, 71, 0.15);
+    }
+    .ts-dropdown {
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      border: 1px solid #fde0c6;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden;
+      z-index: 100000;
+    }
+    .ts-dropdown .option {
+      padding: 10px 12px;
+    }
+    .ts-dropdown .option:hover, .ts-dropdown .option.active {
+      background-color: #fff9ee;
+      color: #362e1b;
+    }
+    .ts-wrapper .ts-control .item {
+      display: flex !important;
+      width: 100%;
+      align-items: center;
+    }
+    
+    .ts-wrapper.multi .ts-control > div {
+      cursor: pointer;
+      margin: 0;
+      padding: 2px 0;
+    }
+    .ts-wrapper .ts-control input {
+      caret-color: auto !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      opacity: 1 !important;
+      width: auto !important;
+      position: relative !important;
+    }
+
+    .ts-wrapper.has-items:not(.focus) .ts-control input {
+      width: 0 !important;
+      opacity: 0 !important;
+      position: absolute !important;
+    }
+
+    .ts-wrapper.has-items.focus .ts-control .item {
+      display: none !important;
+    }
+
+    .ts-wrapper.has-items.focus .ts-control input {
+      width: auto !important; 
+      opacity: 1 !important;   
+      position: relative !important;
+      color: #362e1b !important;
     }
 
     /* LAYOUT CHÍNH */
@@ -983,8 +1074,7 @@
     <h3>Edit Appointment</h3>
 
     <label>Customer Name</label>
-    <input id="inputName" type="text" list="customerList" />
-    <datalist id="customerList"></datalist>
+    <select id="inputName" data-placeholder="Search or select customer..."></select>
 
     <label>Stylist</label>
     <select id="inputStylist">
@@ -1285,11 +1375,37 @@
 
   function updateStylistSelect() {
     inputStylist.innerHTML = stylists.map(s => `<option value="${s.id}">${s.firstName} ${s.lastName}</option>`).join('');
+    
+    new TomSelect('#inputStylist', {
+      dropdownParent: 'body',
+      placeholder: 'Search or select customer...',
+      onItemAdd: function() {
+        this.blur();
+      },
+    });
   }
 
   function updateCustomerDatalist() {
-    const dl = document.getElementById('customerList');
-    dl.innerHTML = customers.map(c => `<option value="${c.firstName} ${c.lastName}" data-id="${c.id}">`).join('');
+    const select = document.getElementById('inputName');
+    select.innerHTML = customers.map(c => 
+      `<option value="${c.id}">${c.firstName} ${c.lastName}</option>`
+    ).join('');
+
+    new TomSelect('#inputName', {
+      dropdownParent: 'body',
+      placeholder: 'Search customer...',
+      render: {
+        option: function(data, escape) {
+          return `<div style="font-weight: 600; color: #362e1b;">${escape(data.text)}</div>`;
+        },
+        item: function(data, escape) {
+          return `<div style="font-weight: 700; color: #362e1b;">${escape(data.text)}</div>`;
+        }
+      },
+      onItemAdd: function() {
+        this.blur();
+      },
+    });
   }
 
   // -------------------- RENDER EVENT --------------------
@@ -1504,8 +1620,19 @@
   // -------------------- MODAL LOGIC (giữ nguyên) --------------------
   function openModal(eventDiv, booking) {
     currentEditingEvent = { eventDiv, booking };
-    inputName.value = booking.customerName || "";
-    inputStylist.value = booking.staffId || (stylists[booking.col-1] ? stylists[booking.col-1].id : "");
+    if (inputName.tomselect) {
+      const customer = customers.find(c => 
+        `${c.firstName} ${c.lastName}` === booking.customerName
+      );
+      inputName.tomselect.setValue(customer ? customer.id : "");
+    }
+    
+    const staffId = booking.staffId || (stylists[booking.col-1] ? stylists[booking.col-1].id : "");
+    if (inputStylist.tomselect) {
+      inputStylist.tomselect.setValue(staffId);
+    } else {
+      inputStylist.value = staffId;
+    }
 
     servicesContainer.innerHTML = "";
     const sIds = booking.serviceIds || [];
@@ -1516,17 +1643,59 @@
   }
 
   function addServiceSelect(selectedId = "") {
-    const select = document.createElement("select");
-    select.innerHTML = '<option value="">-- Select Service --</option>' +
-            services.map(s => `<option value="${s.id}" ${s.id == selectedId ? 'selected' : ''}>${s.name}</option>`).join('');
-    servicesContainer.appendChild(select);
-  }
+  const selectId = 'service-select-' + Math.random().toString(36).substr(2, 9);
+  
+  const select = document.createElement("select");
+  select.id = selectId;
+  select.placeholder = "-- Select Service --";
+  
+  servicesContainer.appendChild(select);
+  
+  const optionsData = services.map(s => ({
+    value: s.id,
+    text: s.name,
+    price: s.price ? `${Number(s.price).toLocaleString('vi-VN')} đ` : '0 đ',
+    duration: s.durationMinutes ? `${s.durationMinutes} phút` : ''
+  }));
+
+  new TomSelect(`#${selectId}`, {
+    options: optionsData,
+    items: selectedId ? [selectedId] : [],
+    valueField: 'value',
+    labelField: 'text',
+    searchField: 'text',
+    dropdownParent: 'body',
+    render: {
+      option: function(data, escape) {
+        const extraInfo = data.duration ? `${data.price}  |  ${data.duration}` : data.price;
+        return `
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <span style="font-weight: 600; color: #362e1b;">${escape(data.text)}</span>
+            <span style="color: #8b7d64; font-size: 12px; font-variant-numeric: tabular-nums;">${escape(extraInfo)}</span>
+          </div>`;
+      },
+      item: function(data, escape) {
+        const extraInfo = data.duration ? `${data.price} | ${data.duration}` : data.price;
+        return `
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding-right: 15px; gap: 10px;">
+            <span style="font-weight: 700; color: #362e1b;">${escape(data.text)}</span>
+            <span style="color: #c48c47; font-size: 11px; font-weight: 800; background: #fff9ee; padding: 2px 8px; border-radius: 6px; border: 1px solid #fde0c6;">
+              ${escape(extraInfo)}
+            </span>
+          </div>`;
+      }
+    },
+    onItemAdd: function() {
+      this.blur();
+    },
+  });
+}
 
   document.getElementById("addServiceBtn").onclick = () => addServiceSelect();
 
   document.getElementById("saveBtn").onclick = async () => {
-    const custName = inputName.value;
-    const customer = customers.find(c => `${c.firstName} ${c.lastName}` === custName);
+    const custId = inputName.tomselect ? inputName.tomselect.getValue() : inputName.value;
+    const customer = customers.find(c => String(c.id) === String(custId));
     if (!customer) {
       showToast('Please select a valid customer from the list.');
       return;

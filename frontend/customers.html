@@ -113,10 +113,6 @@
       align-items: center;
     }
 
-    .search-bar {
-      margin-bottom: 20px;
-    }
-
     .search-bar input {
       width: 100%;
       padding: 10px 16px;
@@ -343,6 +339,7 @@
       border-radius: 24px;
       padding: 24px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin: 0 28px;
     }
     .section-title {
       font-size: 18px;
@@ -392,7 +389,7 @@
       border: none;
       font-size: 18px;
       cursor: pointer;
-      padding: 4px 8px;
+      padding-right: 8px;
       border-radius: 8px;
     }
     .edit-btn:hover {
@@ -487,7 +484,7 @@
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #eab308;
+  accent-color: #c48c47;
 }
 
 .checkbox-cell {
@@ -514,6 +511,7 @@
 }
 
 .delete-selected-btn {
+  margin-top: 4px;
   background: #ff9999;
   border: none;
   padding: 6px 16px;
@@ -531,10 +529,11 @@
   background: #dc2626;
 }
 
-.delete-selected-btn.disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
+    .delete-selected-btn.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
 
     @media (max-width: 900px) {
       .main { padding: 20px; }
@@ -595,9 +594,6 @@ input, select, button, textarea {
           <span class="active">Customer</span>
         </div>
       </div>
-      <div class="search-bar-center">
-        <input type="text" placeholder="Search" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
-      </div>
       <div class="stylist-info">
         <div class="stylist-avatar">👩</div>
         <div class="stylist-name">
@@ -612,7 +608,7 @@ input, select, button, textarea {
     <div class="customers-section">
       <div class="action-bar">
         <div class="search-bar">
-          <input type="text" id="searchInput" placeholder="Search by ID, name, phone..." onkeyup="filterCustomers()" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 18px; padding-left: 36px;">
+          <input type="text" id="searchInput" placeholder="Search by ID, Name, Phone..." onkeyup="filterCustomers()" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 18px; padding-left: 36px;">
         </div>
         <div class="right-group">
           <button class="filter-btn" onclick="openFilterModal()">
@@ -852,28 +848,51 @@ async function deleteCustomer(id) {
 
 async function deleteSelectedCustomers() {
   const selectedIds = getSelectedCustomerIds();
-  
+
   if (selectedIds.length === 0) {
     alert('Please select at least one customer to delete.');
     return;
   }
-  
-  if (confirm(`Are you sure you want to delete ${selectedIds.length} selected customers?`)) {
-    const headers = getAuthHeaders();
-    if (!headers) return;
 
-    try {
-      for (const id of selectedIds) {
-        await fetch(`${API_BASE_URL}/customers/${id}`, {
-          method: 'DELETE',
-          headers
-        });
-      }
-      await loadCustomers();
-    } catch (error) {
-      console.error('Error deleting customers:', error);
-      alert('Error during customer deletion');
+  if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected customer(s)? This cannot be undone.`)) {
+    return;
+  }
+
+  const headers = getAuthHeaders();
+  if (!headers) return;
+
+  try {
+    const deletePromises = selectedIds.map(id =>
+            fetch(`${API_BASE_URL}/customers/${id}`, {
+              method: 'DELETE',
+              headers: headers
+            })
+    );
+
+    const results = await Promise.all(deletePromises);
+
+    if (results.some(r => r.status === 401)) {
+      window.location.href = 'login.html';
+      return;
     }
+
+    if (results.some(r => r.status === 403)) {
+      alert('Tài khoản của bạn không có quyền thực hiện thao tác này ⛔');
+      await loadCustomers();
+      return;
+    }
+
+    const allSuccessful = results.every(r => r.ok);
+
+    if (allSuccessful) {
+      await loadCustomers();
+    } else {
+      alert('Some customers could not be deleted.');
+      await loadCustomers();
+    }
+  } catch (error) {
+    console.error('Bulk delete error:', error);
+    alert('Network error. Please try again.');
   }
 }
 
@@ -948,7 +967,7 @@ function renderCustomersTable(filtered) {
           <th>Phone</th>
           <th>Email</th>
           <th>Gender</th>
-          <th>Actions</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -959,7 +978,7 @@ function renderCustomersTable(filtered) {
             </td>
             <td>${c.id}</td>
             <td><strong>${c.firstName} ${c.lastName}</strong></td>
-            <td>${c.phone}</td>
+            <td style="font-variant-numeric: tabular-nums">${c.phone}</td>
             <td>${c.email || '—'}</td>
             <td><span class="gender-badge ${c.gender === 'Male' ? 'gender-male' : c.gender === 'Female' ? 'gender-female' : 'gender-other'}">${c.gender}</span></td>
             <td>
@@ -975,10 +994,11 @@ function renderCustomersTable(filtered) {
       <label>
         
       </label>
-      <button id="deleteSelectedBtn" class="delete-selected-btn" onclick="deleteSelectedCustomers()" disabled><img src="assets/icons/bin.svg" width="24" height="24" alt=""> Delete Selected</button>
+      <button id="deleteSelectedBtn" class="delete-selected-btn disabled" onclick="deleteSelectedCustomers()" disabled><img src="assets/icons/bin.svg" width="24" height="24" alt=""> Delete Selected</button>
     </div>
   `;
   container.innerHTML = html;
+  updateDeleteButtonState();
 }
 
 // Ghi đè hàm filterCustomers cũ
@@ -1102,30 +1122,7 @@ function getSelectedCustomerIds() {
   return Array.from(checkedBoxes).map(cb => parseInt(cb.getAttribute('data-id')));
 }
 
-function deleteSelectedCustomers() {
-  const selectedIds = getSelectedCustomerIds();
-  
-  if (selectedIds.length === 0) {
-    alert('Please select at least one customer to delete.');
-    return;
-  }
-  
-  if (confirm(`Are you sure you want to delete ${selectedIds.length} selected customers?`)) {
-    customers = customers.filter(c => !selectedIds.includes(c.id));
-    // Cập nhật lại ID cho tất cả khách hàng còn lại
-    reindexCustomerIds();
-    saveToLocal();
-    renderCustomersWithFilters();
-  }
-}
-// Cập nhật lại ID cho tất cả khách hàng (đánh số lại từ 1)
-function reindexCustomerIds() {
-  customers.forEach((customer, index) => {
-    customer.id = index + 1;
-  });
-  // Cập nhật lại nextId
-  nextId = customers.length + 1;
-}
+
 </script>
 </body>
 </html>

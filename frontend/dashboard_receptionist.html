@@ -119,8 +119,8 @@
     }
 
     .page-title {
-      font-size: 20px;
-      font-weight: 600;
+      font-size: 24px;
+      font-weight: 700;
       color: #34281d;
     }
 
@@ -174,7 +174,8 @@
       overflow-y: auto;
       padding: 28px 36px;
     }
-    .user-info {
+
+    .stylist-info {
       display: flex;
       align-items: center;
       gap: 16px;
@@ -184,7 +185,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       white-space: nowrap;
     }
-    .user-avatar {
+    .stylist-avatar {
       width: 48px;
       height: 48px;
       background: #eab308;
@@ -197,35 +198,16 @@
       font-size: 18px;
       flex-shrink: 0;
     }
-    .user-name h4 {
+    .stylist-name h4 {
       font-size: 14px;
       font-weight: 700;
       color: #4e3927;
       margin: 0;
     }
-    .user-name p {
+    .stylist-name p {
       font-size: 11px;
       color: #4e3927;
       margin: 0;
-    }
-
-    /* SEARCH BAR */
-    .search-bar {
-      margin-bottom: 28px;
-    }
-    .search-bar input {
-      width: 300px;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 40px;
-      font-size: 14px;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: white;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      outline: none;
-    }
-    .search-bar input:focus {
-      outline: 2px solid #eab308;
     }
 
     /* STATS CARDS */
@@ -372,7 +354,7 @@
         </div>
       </div>
       <div class="search-bar-center">
-        <input type="text" id="searchInput" onkeyup="filterAppointments()" placeholder="Search by customer or stylist..." style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
+        <input type="text" id="searchInput" onkeyup="filterAppointments()" placeholder="Search by Customer or Stylist" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
       </div>
       <div class="stylist-info">
         <div class="stylist-avatar">👩</div>
@@ -480,21 +462,21 @@ async function loadDashboardData() {
         'Authorization': `Bearer ${token}`
       }
     });
-    
+
     if (res.status === 401 || res.status === 403) {
       logout();
       return;
     }
-    
+
     if (!res.ok) throw new Error('Failed to fetch dashboard data');
-    
+
     const data = await res.json();
-    
+
     // Cập nhật thống kê
     document.getElementById('totalCustomers').innerText = data.totalCustomersDay || 0;
     document.getElementById('totalServices').innerText = data.totalServices || 0;
     document.getElementById('remainingAppointments').innerText = data.totalRemainingAppointments || 0;
-    
+
     // Cập nhật danh sách lịch hẹn
     allAppointments = data.remainingAppointments || [];
     filterAppointments(); // Render với filter hiện tại
@@ -514,19 +496,19 @@ function formatVND(price) {
 function renderAppointments(filterText = '') {
   const container = document.getElementById('appointmentsTable');
   let filtered = [...allAppointments];
-  
+
   if (filterText) {
-    filtered = filtered.filter(app => 
+    filtered = filtered.filter(app =>
       (app.customer && app.customer.toLowerCase().includes(filterText.toLowerCase())) ||
       (app.stylist && app.stylist.toLowerCase().includes(filterText.toLowerCase()))
     );
   }
-  
+
   if (filtered.length === 0) {
     container.innerHTML = '<div class="empty-state">✨ No appointments found</div>';
     return;
   }
-  
+
   const html = `
     <table class="appointment-table">
       <thead>
@@ -560,7 +542,7 @@ function filterAppointments() {
 // Khởi tạo dashboard
 function init() {
   loadDashboardData();
-  
+
   // Cập nhật real-time mỗi phút
   setInterval(() => {
     loadDashboardData();

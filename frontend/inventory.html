@@ -89,7 +89,8 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       min-height: 0;
       background: #fdf0d9;
     }
@@ -109,8 +110,8 @@
     }
 
     .page-title h2, h2.page-title {
-      font-size: 20px;
-      font-weight: 600;
+      font-size: 24px;
+      font-weight: 700;
       color: #34281d;
     }
 
@@ -190,9 +191,7 @@
       border-radius: 24px;
       padding: 24px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      flex: 1;
-      overflow: auto;
-      min-height: 0;
+      margin: 0 28px;
     }
 
     .action-bar {
@@ -211,6 +210,9 @@
     }
 
     .search-bar input {
+      font-size: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      outline: none;
       width: 100%;
       padding: 10px 16px 10px 36px;
       border: 1px solid #e2d5c0;
@@ -270,9 +272,6 @@
     .products-table {
       width: 100%;
       background: white;
-      border-radius: 24px;
-      padding: 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .products-table th {
       text-align: left;
@@ -329,11 +328,9 @@
     .stock-pack-strong { font-weight: 700; color: #34281d; }
 
     .actions-cell {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-      flex-wrap: nowrap;
-      min-width: 150px;
+      white-space: nowrap !important;
+      width: 1%;
+      vertical-align: middle;
     }
 
     .action-btn {
@@ -419,13 +416,21 @@
       gap: 6px;
     }
 
+    .select-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #c48c47;
+    }
+
     .delete-selected-btn:hover {
       background: #dc2626;
     }
 
     .delete-selected-btn.disabled {
-      background: #ccc;
+      opacity: 0.4;
       cursor: not-allowed;
+      pointer-events: none;
     }
 
     /* Custom dialogs (filter, confirm, ledger) */
@@ -687,9 +692,6 @@
           <span class="separator">▶</span>
           <span class="active">Inventory</span>
         </div>
-      </div>
-      <div class="search-bar-center">
-        <input type="text" id="topSearchInput" placeholder="Search" oninput="onSearchInput('top')" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
       </div>
       <div class="stylist-info">
         <div class="stylist-avatar">👩</div>
@@ -1312,7 +1314,7 @@
     <table class="products-table">
       <thead>
         <tr>
-          <th class="checkbox-cell"><input type="checkbox" id="selectAllCheckboxHeader" onclick="toggleSelectAll()"></th>
+          <th class="checkbox-cell"><input type="checkbox" id="selectAllCheckboxHeader" class="select-checkbox" onclick="toggleSelectAll()"></th>
           <th>ID</th>
           <th>Product Name</th>
           <th>Type</th>
@@ -1320,13 +1322,13 @@
           <th>Price</th>
           <th>On hand</th>
           <th>Unit Conversion</th>
-          <th>Actions</th>
+          <th>Action</th>
          </tr>
       </thead>
       <tbody>
         ${filtered.map(p => `
           <tr>
-            <td class="checkbox-cell"><input type="checkbox" class="product-checkbox" data-id="${p.ProductID}" onchange="updateDeleteButtonState()"></td>
+            <td class="checkbox-cell"><input type="checkbox" class="product-checkbox select-checkbox" data-id="${p.ProductID}" onchange="updateDeleteButtonState()"></td>
             <td>${p.ProductID}</td>
             <td><strong>${escapeHtml(p.Name)}</strong></td>
             <td><span class="badge-type ${p.ProductType === 'PROFESSIONAL' ? 'type-professional' : (p.ProductType === 'RETAIL' ? 'type-retail' : 'type-both')}">${p.ProductType}</span></td>
@@ -1334,17 +1336,17 @@
             <td>${Number(p.Price).toLocaleString('en-US')}₫</td>
             ${renderStockOnHandCell(p)}
             <td class="actions-cell">
-              <button class="action-btn edit-btn" onclick="openEditProductModal(${p.ProductID})" title="Edit">✏️</button>
-              <button class="action-btn adjust-btn" onclick="openAdjustModalForProduct(${p.ProductID})" title="Adjust Stock">📦</button>
-              <button class="action-btn" onclick="viewProductHistory(${p.ProductID})" title="History">📜</button>
-              <button class="action-btn delete-btn" onclick="deleteProduct(${p.ProductID})" title="Delete">🗑️</button>
+              <button class="action-btn edit-btn" onclick="openEditProductModal(${p.ProductID})" title="Edit"><img src="assets/icons/edit.svg" width="24" height="24" alt="Edit"></button>
+              <button class="action-btn adjust-btn" onclick="openAdjustModalForProduct(${p.ProductID})" title="Adjust Stock"><img src="assets/icons/inventory.svg" width="24" height="24" alt="Adjust"></button>
+              <button class="action-btn" onclick="viewProductHistory(${p.ProductID})" title="History"><img src="assets/icons/bills.svg" width="24" height="24" alt="History"></button>
+              <button class="action-btn delete-btn" onclick="deleteProduct(${p.ProductID})" title="Delete"><img src="assets/icons/bin.svg" width="24" height="24" alt="Delete"></button>
             </td>
           </tr>
         `).join('')}
       </tbody>
     </table>
     <div class="select-all-row">
-      <button id="deleteSelectedBtn" class="delete-selected-btn disabled" onclick="deleteSelectedProducts()" disabled>🗑️ Delete Selected</button>
+      <button id="deleteSelectedBtn" class="delete-selected-btn disabled" onclick="deleteSelectedProducts()" disabled><img src="assets/icons/bin.svg" width="24" height="24" alt=""> Delete Selected</button>
     </div>
   `;
     container.innerHTML = html;

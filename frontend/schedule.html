@@ -107,7 +107,6 @@
       display: flex;
       flex-direction: column;
       overflow-y: auto;
-      background: #fde0c6;
     }
 
     /* TOPBAR */
@@ -316,18 +315,9 @@
       box-shadow: none;
     }
 
-    /* CALENDAR CARD */
-    .calendar-container {
-      flex: 1;
-      overflow-x: auto;
-      overflow-y: auto;
-      padding: 20px 24px;
-      background: #f8fafc;
-    }
-
     .sticky-header-wrapper {
       position: sticky;
-      top: -20px;
+      top: 0;
       z-index: 50;
       background: white;
       border-radius: 24px 24px 0 0;
@@ -340,6 +330,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       /*overflow-x: auto;*/
       min-width: 720px;
+      margin: 0 28px;
     }
 
     /* HEADER: staff avatars */
@@ -483,6 +474,7 @@
       display: flex;
       justify-content: flex-end;
       background: #f8fafc;
+      margin: 0 28px;
     }
     .modal {
       position: fixed;
@@ -821,10 +813,8 @@
           <span class="active">Schedule</span>
         </div>
       </div>
-      <div class="search-bar">
-        <input type="text" placeholder="Search" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center;background-size: 20px; padding-left: 35px;">
-      </div>
-      <div style="display: flex; align-items: center; margin: 0 20px;">
+
+      <div style="display: flex; align-items: center; gap: 16px;">
         <button onclick="openRetailBilling()" style="
           display: inline-flex;
           align-items: center;
@@ -839,16 +829,17 @@
           cursor: pointer;
           box-shadow: 0 4px 10px rgba(250, 204, 21, 0.3);
           transition: transform 0.2s, box-shadow 0.2s;
+          white-space: nowrap;
         " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(250, 204, 21, 0.4)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 10px rgba(250, 204, 21, 0.3)';">
           🛒 Quick Sale
         </button>
-      </div>
-      <!-- Bên phải: Thông tin tài khoản -->
-      <div class="stylist-info">
-        <div class="stylist-avatar">👩</div>
-        <div class="stylist-name">
-          <h4 id="userName">Alissa</h4>
-          <p id="userRole">Manager</p>
+
+        <div class="stylist-info">
+          <div class="stylist-avatar">👩</div>
+          <div class="stylist-name">
+            <h4 id="userName">Alissa</h4>
+            <p id="userRole">Manager</p>
+          </div>
         </div>
       </div>
     </div>

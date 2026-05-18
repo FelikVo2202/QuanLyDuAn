@@ -32,7 +32,6 @@
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     }
 
-    /* LEFT SIDE - BRANDING */
     .login-brand {
       flex: 1;
       background: #fae3c8;
@@ -85,7 +84,6 @@
       font-size: 16px;
     }
 
-    /* RIGHT SIDE - LOGIN FORM */
     .login-form {
       flex: 1;
       padding: 48px;
@@ -203,14 +201,55 @@
       background: #eab30820;
     }
 
-    .error-message {
-      background: #fef2f2;
-      color: #ef4444;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 12px;
-      margin-bottom: 20px;
-      display: none;
+    /* TOAST */
+    #toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      pointer-events: auto;
+      animation: toastIn 0.3s cubic-bezier(.34,1.56,.64,1) forwards;
+      max-width: 320px;
+    }
+    .toast.removing {
+      animation: toastOut 0.25s ease forwards;
+    }
+    .toast-success {
+      background: #fff;
+      color: #1a1a1a;
+      border-left: 4px solid #eab308;
+    }
+    .toast-error {
+      background: #fff;
+      color: #1a1a1a;
+      border-left: 4px solid #ef4444;
+    }
+    .toast-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(40px) scale(0.95); }
+      to   { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateX(0) scale(1); }
+      to   { opacity: 0; transform: translateX(40px) scale(0.95); }
     }
 
     @media (max-width: 768px) {
@@ -227,25 +266,22 @@
   </style>
 </head>
 <body>
+<div id="toast-container"></div>
+
 <div class="login-container">
-  <!-- LEFT BRANDING -->
   <div class="login-brand">
     <div class="logo">GOUTSALON<span>✦</span></div>
     <div class="brand-text">
       <h2>Welcome back!</h2>
       <p>Manage your salon, track appointments, and grow your business with ease.</p>
     </div>
-    
   </div>
 
-  <!-- RIGHT LOGIN FORM -->
   <div class="login-form">
     <div class="form-header">
       <h3>Login</h3>
       <p>Enter username and password</p>
     </div>
-
-    <div id="errorMsg" class="error-message"></div>
 
     <div class="input-group">
       <label>Username</label>
@@ -266,116 +302,93 @@
 
     <button class="login-btn" onclick="handleLogin()">Login →</button>
   </div>
+</div>
+
 <script>
-  // API URL
   const API_BASE_URL = 'http://localhost:8080/api';
 
-  // Hàm xử lý đăng nhập
+  function showToast(message, type = 'error') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span class="toast-icon">${type === 'success' ? '✦' : '✕'}</span><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('removing');
+      toast.addEventListener('animationend', () => toast.remove());
+    }, 3000);
+  }
+
   async function handleLogin() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
-    const errorDiv = document.getElementById('errorMsg');
     const remember = document.getElementById('remember').checked;
 
-    // Kiểm tra nhập liệu
     if (!username || !password) {
-      showError('Please enter both username and password');
+      showToast('Please enter both username and password');
       return;
     }
 
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Đăng nhập thành công
-        errorDiv.style.display = 'none';
-        
-        // Mapping role to redirect page
         let redirect = 'dashboard.html';
-        const role = data.staff.role; // MANAGER, RECEPTIONIST, STYLIST
+        const role = data.staff.role;
         if (role === 'STYLIST') redirect = 'dashboard_stylist.html';
         else if (role === 'RECEPTIONIST') redirect = 'dashboard_receptionist.html';
         else if (role === 'MANAGER') redirect = 'dashboard.html';
 
-        // Lưu thông tin user và token
         const userData = {
           username: data.staff.username,
           role: role,
           token: data.accessToken,
           loginTime: new Date().toISOString()
         };
-        
-        console.log('Login successful. Token:', data.accessToken);
-        console.log('Storing userData:', userData);
-        
+
         if (remember) {
           localStorage.setItem('salonUser', JSON.stringify(userData));
           sessionStorage.removeItem('salonUser');
-          console.log('Stored in localStorage');
         } else {
           sessionStorage.setItem('salonUser', JSON.stringify(userData));
           localStorage.removeItem('salonUser');
-          console.log('Stored in sessionStorage');
         }
-        
-        // Chuyển hướng
-        alert(`Welcome back ${userData.username}`);
-        window.location.href = redirect;
+
+        showToast(`Welcome back, ${userData.username}!`, 'success');
+        setTimeout(() => { window.location.href = redirect; }, 1000);
       } else {
-        showError(data.message || '❌ Invalid username or password');
+        showToast(data.message || 'Invalid username or password');
       }
     } catch (error) {
       console.error('Login error:', error);
-      showError('❌ Could not connect to server');
+      showToast('Could not connect to server');
     }
   }
 
-  // Hiển thị lỗi
-  function showError(message) {
-    const errorDiv = document.getElementById('errorMsg');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-    
-    // Tự ẩn sau 3 giây
-    setTimeout(() => {
-      errorDiv.style.display = 'none';
-    }, 3000);
-  }
-
-  // Điền demo
   function fillDemo(username, password) {
     document.getElementById('username').value = username;
     document.getElementById('password').value = password;
   }
 
-  // Kiểm tra nếu đã đăng nhập trước đó
   function checkAutoLogin() {
     const savedUser = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
     if (savedUser) {
       const user = JSON.parse(savedUser);
-      // Có thể tự động chuyển hướng, nhưng để an toàn thì không auto
       console.log('Previous login session found:', user.username);
     }
   }
 
-  // Enter để đăng nhập
   document.getElementById('password').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      handleLogin();
-    }
+    if (e.key === 'Enter') handleLogin();
   });
   document.getElementById('username').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      handleLogin();
-    }
+    if (e.key === 'Enter') handleLogin();
   });
 
   checkAutoLogin();

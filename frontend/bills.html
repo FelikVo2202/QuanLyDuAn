@@ -548,7 +548,7 @@
           <input type="text" id="searchInput" placeholder="Search by ID, Customer" onkeyup="renderBillsTable()" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 18px; padding-left: 36px;">
         </div>
         <div class="right-group">
-          <select id="filterStatus" class="status-filter">
+          <select id="filterStatus" class="status-filter" onchange="loadBills()">
             <option value="">All Statuses</option>
             <option value="PAID">PAID</option>
             <option value="PENDING">PENDING</option>

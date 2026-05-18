@@ -273,6 +273,10 @@
       color: #8b6b4a;
       border-bottom: 1px solid #f0e0d0;
     }
+    .appointment-table th:last-child {
+      text-align: right;
+      padding-right: 16px;
+    }
     .appointment-table td {
       padding: 16px 8px;
       font-size: 13px;
@@ -297,6 +301,9 @@
     .price {
       font-weight: 700;
       color: #362e1b;
+      text-align: right;
+      padding-right: 16px;
+      font-variant-numeric: tabular-nums;
     }
     .stylist-name {
       font-weight: 600;
@@ -353,7 +360,7 @@
         </div>
       </div>
       <div class="search-bar-center">
-        <input type="text" placeholder="Search by customer or stylist..." style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
+        <input type="text" id="searchInput" onkeyup="filterAppointments()" placeholder="Search by customer or stylist..." style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
       </div>
       <div class="stylist-info">
         <div class="stylist-avatar">👩</div>
@@ -369,16 +376,16 @@
     <!-- STATS CARDS -->
     <div class="stats-row">
       <div class="stat-card">
+        <div class="stat-value" id="remainingAppointments">0</div>
+        <div class="stat-title">Remaining Appointments (Today)</div>
+      </div>
+      <div class="stat-card">
         <div class="stat-value" id="totalCustomers">0</div>
         <div class="stat-title">Total Customers (Today)</div>
       </div>
       <div class="stat-card">
         <div class="stat-value" id="totalServices">0</div>
         <div class="stat-title">Total Services</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="remainingAppointments">0</div>
-        <div class="stat-title">Remaining Appointments</div>
       </div>
     </div>
 
@@ -436,123 +443,53 @@ if (dashboardLink) {
 }
 // =======================================================
 
-// ========== DỮ LIỆU LỊCH HẸN (TẤT CẢ STYLIST) ==========
-let allAppointments = [
-  { 
-    id: 1, 
-    customer: "Nguyen Thi Thanh Thuy", 
-    time: "08:00", 
-    status: "WALK-IN", 
-    price: 2100000, 
-    service: "Hairwash & Dye", 
-    duration: "2h30",
-    stylist: "Thanh Lam"
-  },
-  { 
-    id: 2, 
-    customer: "Tran Thi Xuan", 
-    time: "09:30", 
-    status: "BOOKED", 
-    price: 100000, 
-    service: "Haircut", 
-    duration: "30m",
-    stylist: "Adam"
-  },
-  { 
-    id: 3, 
-    customer: "Nguyen Hai Minh", 
-    time: "11:30", 
-    status: "BOOKED", 
-    price: 2500000, 
-    service: "Hair repair", 
-    duration: "3h",
-    stylist: "Eva"
-  },
-  { 
-    id: 4, 
-    customer: "Le Thi Mai", 
-    time: "14:00", 
-    status: "BOOKED", 
-    price: 550000, 
-    service: "Haircut & Blow-dry", 
-    duration: "1h",
-    stylist: "Liam"
-  },
-  { 
-    id: 5, 
-    customer: "Pham Van Hoang", 
-    time: "15:30", 
-    status: "WALK-IN", 
-    price: 350000, 
-    service: "Beard Trim", 
-    duration: "30m",
-    stylist: "Mason"
-  },
-  { 
-    id: 6, 
-    customer: "Vu Thi Lan", 
-    time: "17:00", 
-    status: "BOOKED", 
-    price: 1200000, 
-    service: "Keratin Treatment", 
-    duration: "2h",
-    stylist: "Sophia"
-  },
-  { 
-    id: 7, 
-    customer: "Hoang Duc Anh", 
-    time: "10:00", 
-    status: "BOOKED", 
-    price: 450000, 
-    service: "Haircut & Wash", 
-    duration: "45m",
-    stylist: "Emma"
-  },
-  { 
-    id: 8, 
-    customer: "Phuong Linh", 
-    time: "13:00", 
-    status: "WALK-IN", 
-    price: 880000, 
-    service: "Nail Art", 
-    duration: "1h30",
-    stylist: "Olivia"
+// ========== DỮ LIỆU LỊCH HẸN TỪ API ==========
+let allAppointments = [];
+
+function formatDuration(hours) {
+  if (!hours) return "0m";
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  if (h > 0 && m > 0) return `${h}h${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
+}
+
+async function loadDashboardData() {
+  try {
+    const token = userData.token || userData.accessToken;
+    const res = await fetch('http://localhost:8080/api/dashboard/receptionist', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (res.status === 401 || res.status === 403) {
+      logout();
+      return;
+    }
+    
+    if (!res.ok) throw new Error('Failed to fetch dashboard data');
+    
+    const data = await res.json();
+    
+    // Cập nhật thống kê
+    document.getElementById('totalCustomers').innerText = data.totalCustomersDay || 0;
+    document.getElementById('totalServices').innerText = data.totalServices || 0;
+    document.getElementById('remainingAppointments').innerText = data.totalRemainingAppointments || 0;
+    
+    // Cập nhật danh sách lịch hẹn
+    allAppointments = data.remainingAppointments || [];
+    filterAppointments(); // Render với filter hiện tại
+  } catch (error) {
+    console.error('Error loading dashboard data:', error);
+    document.getElementById('appointmentsTable').innerHTML = '<div class="empty-state">⚠️ Failed to load appointments.</div>';
   }
-];
-
-// Hàm lấy giờ hiện tại
-function getCurrentHour() {
-  const now = new Date();
-  return now.getHours() + now.getMinutes() / 60;
-}
-
-// Lấy danh sách lịch hẹn còn lại (chưa qua)
-function getUpcomingAppointments() {
-  const currentHour = getCurrentHour();
-  const timeMap = {
-    "08:00": 8, "09:30": 9.5, "10:00": 10, "11:30": 11.5, 
-    "13:00": 13, "14:00": 14, "15:30": 15.5, "17:00": 17
-  };
-  return allAppointments.filter(app => {
-    const appHour = timeMap[app.time];
-    return appHour > currentHour;
-  });
-}
-
-// Cập nhật số liệu thống kê
-function updateStats() {
-  const upcoming = getUpcomingAppointments();
-  const totalCust = allAppointments.length;
-  const totalServ = allAppointments.length;
-  const remaining = upcoming.length;
-  
-  document.getElementById('totalCustomers').innerText = totalCust;
-  document.getElementById('totalServices').innerText = totalServ;
-  document.getElementById('remainingAppointments').innerText = remaining;
 }
 
 // Format tiền VND
 function formatVND(price) {
+  if (!price) return '0đ';
   return price.toLocaleString('vi-VN') + 'đ';
 }
 
@@ -563,8 +500,8 @@ function renderAppointments(filterText = '') {
   
   if (filterText) {
     filtered = filtered.filter(app => 
-      app.customer.toLowerCase().includes(filterText.toLowerCase()) ||
-      app.stylist.toLowerCase().includes(filterText.toLowerCase())
+      (app.customer && app.customer.toLowerCase().includes(filterText.toLowerCase())) ||
+      (app.stylist && app.stylist.toLowerCase().includes(filterText.toLowerCase()))
     );
   }
   
@@ -581,12 +518,12 @@ function renderAppointments(filterText = '') {
       <tbody>
         ${filtered.map(app => `
           <tr>
-            <td style="font-weight: 600;">${app.time}</td>
-            <td><span class="status-badge ${app.status === 'WALK-IN' ? 'status-walkin' : 'status-booked'}">${app.status}</span></td>
-            <td><strong>${app.customer}</strong></td>
-            <td>✂️ ${app.service}</td>
-            <td>⏱ ${app.duration}</td>
-            <td><span class="stylist-name">${app.stylist}</span></td>
+            <td style="font-weight: 600;">${app.time || '-'}</td>
+            <td><span class="status-badge ${app.status && app.status.includes('WALK') ? 'status-walkin' : 'status-booked'}">${app.status ? app.status.replace('_', '-') : '-'}</span></td>
+            <td><strong>${app.customer || '-'}</strong></td>
+            <td>✂️ ${app.service || '-'}</td>
+            <td>⏱ ${formatDuration(app.duration)}</td>
+            <td><span class="stylist-name">${app.stylist || '-'}</span></td>
             <td class="price">${formatVND(app.price)}</td>
           </tr>
         `).join('')}
@@ -598,19 +535,18 @@ function renderAppointments(filterText = '') {
 
 // Lọc theo tìm kiếm
 function filterAppointments() {
-  const searchValue = document.getElementById('searchInput').value;
+  const searchInput = document.getElementById('searchInput');
+  const searchValue = searchInput ? searchInput.value : '';
   renderAppointments(searchValue);
 }
 
 // Khởi tạo dashboard
 function init() {
-  updateStats();
-  renderAppointments();
+  loadDashboardData();
   
   // Cập nhật real-time mỗi phút
   setInterval(() => {
-    updateStats();
-    filterAppointments();
+    loadDashboardData();
   }, 60000);
 }
 

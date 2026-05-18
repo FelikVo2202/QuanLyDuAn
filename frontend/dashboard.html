@@ -123,7 +123,7 @@
             <span class="stat-title">Revenue</span>
             <span class="badge today">Today</span>
           </div>
-          <div class="stat-value">948,311 ₫</div>
+          <div class="stat-value" id="revenueToday">0 ₫</div>
         </div>
 
         <div class="stat-card">
@@ -131,7 +131,7 @@
             <span class="stat-title">Revenue</span>
             <span class="badge month">This Month</span>
           </div>
-          <div class="stat-value">24,510,000 ₫</div>
+          <div class="stat-value" id="revenueThisMonth">0 ₫</div>
         </div>
 
         <div class="stat-card">
@@ -139,7 +139,7 @@
             <span class="stat-title">New Customers</span>
             <span class="badge month">This Month</span>
           </div>
-          <div class="stat-value">128</div>
+          <div class="stat-value" id="newCustomersThisMonth">0</div>
         </div>
       </div>
 
@@ -148,20 +148,15 @@
           <div class="column-header">
             <h3>Revenue History (Last 6 Months)</h3>
           </div>
-          <div class="chart-container">
-            <div class="chart-bar"><span class="chart-label">Nov</span><div class="chart-line"><div class="chart-fill" style="width: 80%"></div></div><span class="chart-value">80M ₫</span></div>
-            <div class="chart-bar"><span class="chart-label">Dec</span><div class="chart-line"><div class="chart-fill" style="width: 45%"></div></div><span class="chart-value">45M ₫</span></div>
-            <div class="chart-bar"><span class="chart-label">Jan</span><div class="chart-line"><div class="chart-fill" style="width: 60%"></div></div><span class="chart-value">60M ₫</span></div>
-            <div class="chart-bar"><span class="chart-label">Feb</span><div class="chart-line"><div class="chart-fill" style="width: 55%"></div></div><span class="chart-value">55M ₫</span></div>
-            <div class="chart-bar"><span class="chart-label">Mar</span><div class="chart-line"><div class="chart-fill" style="width: 70%"></div></div><span class="chart-value">70M ₫</span></div>
-            <div class="chart-bar"><span class="chart-label">Apr</span><div class="chart-line"><div class="chart-fill" style="width: 65%"></div></div><span class="chart-value">65M ₫</span></div>
+          <div class="chart-container" id="revenueChartContainer">
+            <!-- Chart bars injected here -->
           </div>
         </div>
 
         <div class="column">
           <div class="column-header">
             <h3>Today's Schedule</h3>
-            <span class="badge today" style="background:#f1f5f9; color:#475569">Total: 30</span>
+            <span class="badge today" style="background:#f1f5f9; color:#475569" id="scheduleTotal">Total: 0</span>
           </div>
 
           <div class="booking-stat">
@@ -169,19 +164,19 @@
               <div class="booking-label-group">
                 <span class="booking-label">Confirmed</span>
               </div>
-              <span class="booking-number">19</span>
+              <span class="booking-number" id="confirmedCount">0</span>
             </div>
-            <div class="booking-bar"><div class="booking-fill fill-confirmed"></div></div>
+            <div class="booking-bar"><div class="booking-fill fill-confirmed" id="confirmedBar" style="width: 0%"></div></div>
           </div>
 
           <div class="booking-stat">
             <div class="booking-info">
               <div class="booking-label-group">
-                <span class="booking-label">Completed</span>
+                <span class="booking-label">Done</span>
               </div>
-              <span class="booking-number">7</span>
+              <span class="booking-number" id="doneCount">0</span>
             </div>
-            <div class="booking-bar"><div class="booking-fill fill-completed"></div></div>
+            <div class="booking-bar"><div class="booking-fill fill-completed" id="doneBar" style="width: 0%"></div></div>
           </div>
 
           <div class="booking-stat">
@@ -189,9 +184,9 @@
               <div class="booking-label-group">
                 <span class="booking-label" style="color: #ef4444;">Cancelled</span>
               </div>
-              <span class="booking-number">4</span>
+              <span class="booking-number" id="cancelledCount">0</span>
             </div>
-            <div class="booking-bar"><div class="booking-fill fill-cancelled"></div></div>
+            <div class="booking-bar"><div class="booking-fill fill-cancelled" id="cancelledBar" style="width: 0%"></div></div>
           </div>
         </div>
       </div>
@@ -200,42 +195,135 @@
         <div class="column-header">
           <h3>🏆 Top Staff Performance (This Month)</h3>
         </div>
-        <div class="perf-list">
-          <div class="perf-item">
-            <div class="perf-avatar">M</div>
-            <div class="perf-info">
-              <h4>Mason</h4>
-              <div class="perf-metric">142 Services</div>
-            </div>
-          </div>
-          <div class="perf-item">
-            <div class="perf-avatar" style="background: #cbd5e1;">O</div>
-            <div class="perf-info">
-              <h4>Olivia</h4>
-              <div class="perf-metric">98 Services</div>
-            </div>
-          </div>
-          <div class="perf-item">
-            <div class="perf-avatar" style="background: #cbd5e1;">L</div>
-            <div class="perf-info">
-              <h4>Liam</h4>
-              <div class="perf-metric">65 Services</div>
-            </div>
-          </div>
+        <div class="perf-list" id="topStaffList">
+          <!-- Top staff injected here -->
         </div>
       </div>
     </div>
   </div>
 </div>
 <script>
-  const userData = { FIRSTNAME: "Admin", ROLE: "MANAGER" };
-  document.getElementById('userName').innerText = userData.FIRSTNAME;
-  document.getElementById('userRole').innerText = userData.ROLE.toLowerCase();
-  document.getElementById('avatarText').innerText = userData.FIRSTNAME.charAt(0);
+  const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
+  if (!userStr) {
+    window.location.href = 'login.html';
+  }
+
+  let userData;
+  try {
+    userData = JSON.parse(userStr);
+
+    const userRole = (userData.role || userData.ROLE || '').toUpperCase();
+
+    if (userRole !== 'MANAGER' && userRole !== 'ADMIN') {
+      window.location.href = 'login.html';
+    }
+  } catch(e) {
+    window.location.href = 'login.html';
+  }
+
+  const displayName = userData.username || userData.name || userData.FIRSTNAME || 'Manager';
+  document.getElementById('userName').innerText = displayName;
+  document.getElementById('userRole').innerText = (userData.role || userData.ROLE || 'MANAGER').toLowerCase();
+  document.getElementById('avatarText').innerText = displayName.charAt(0).toUpperCase();
 
   function logout() {
-    console.log("Logged out");
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('salonUser');
+    sessionStorage.removeItem('salonUser');
+    window.location.href = 'login.html';
   }
+
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat('vi-VN').format(amount) + ' ₫';
+  }
+
+  async function loadDashboardData() {
+    try {
+      const response = await fetch('http://localhost:8080/api/dashboard/manager', {
+        headers: { 'Authorization': `Bearer ${userData.token || userData.accessToken || localStorage.getItem('token')}` }
+      });
+      if (!response.ok) throw new Error('Failed to fetch dashboard data');
+      const data = await response.json();
+      
+      // Update stats
+      document.getElementById('revenueToday').innerText = formatCurrency(data.revenueToday);
+      document.getElementById('revenueThisMonth').innerText = formatCurrency(data.revenueThisMonth);
+      document.getElementById('newCustomersThisMonth').innerText = data.newCustomersThisMonth;
+
+      // Update Revenue Chart
+      const chartContainer = document.getElementById('revenueChartContainer');
+      chartContainer.innerHTML = '';
+      if (data.revenueHistory) {
+        // Find max revenue for scaling bars
+        const maxRev = Math.max(...data.revenueHistory.map(r => r.revenue)) || 1;
+        
+        data.revenueHistory.forEach(r => {
+          const percentage = (r.revenue / maxRev) * 100;
+          let formattedValue = r.revenue;
+          if (r.revenue >= 1000000) {
+            formattedValue = (r.revenue / 1000000).toFixed(1) + 'M ₫';
+          } else {
+            formattedValue = formatCurrency(r.revenue);
+          }
+          
+          chartContainer.innerHTML += `
+            <div class="chart-bar">
+              <span class="chart-label">${r.month}</span>
+              <div class="chart-line">
+                <div class="chart-fill" style="width: ${percentage}%"></div>
+              </div>
+              <span class="chart-value">${formattedValue}</span>
+            </div>
+          `;
+        });
+      }
+
+      // Update Today's Schedule
+      if (data.todaySchedule) {
+        const total = data.todaySchedule.total;
+        document.getElementById('scheduleTotal').innerText = `Total: ${total}`;
+        
+        const c = data.todaySchedule.confirmed;
+        const d = data.todaySchedule.done;
+        const ca = data.todaySchedule.cancelled;
+
+        document.getElementById('confirmedCount').innerText = c;
+        document.getElementById('doneCount').innerText = d;
+        document.getElementById('cancelledCount').innerText = ca;
+
+        document.getElementById('confirmedBar').style.width = total ? `${(c/total)*100}%` : '0%';
+        document.getElementById('doneBar').style.width = total ? `${(d/total)*100}%` : '0%';
+        document.getElementById('cancelledBar').style.width = total ? `${(ca/total)*100}%` : '0%';
+      }
+
+      // Update Top Staff
+      const staffList = document.getElementById('topStaffList');
+      staffList.innerHTML = '';
+      if (data.topStaff && data.topStaff.length > 0) {
+        const colors = ['#eab308', '#cbd5e1', '#cbd5e1'];
+        data.topStaff.forEach((staff, index) => {
+          const bg = colors[index] || '#cbd5e1';
+          staffList.innerHTML += `
+            <div class="perf-item">
+              <div class="perf-avatar" style="background: ${bg};">${staff.avatar}</div>
+              <div class="perf-info">
+                <h4>${staff.name}</h4>
+                <div class="perf-metric">${staff.servicesCount} Services</div>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+         staffList.innerHTML = '<p style="font-size:13px; color:#64748b;">No data this month.</p>';
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadDashboardData);
 </script>
 </body>
 </html>

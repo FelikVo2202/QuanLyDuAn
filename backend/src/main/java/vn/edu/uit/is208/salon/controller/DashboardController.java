@@ -7,6 +7,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import vn.edu.uit.is208.salon.dto.ManagerDashboardResponse;
 import vn.edu.uit.is208.salon.dto.ReceptionistDashboardResponse;
 import vn.edu.uit.is208.salon.dto.StylistDashboardResponse;
 import vn.edu.uit.is208.salon.security.StaffPrincipal;
@@ -28,5 +29,11 @@ public class DashboardController {
     @PreAuthorize("hasRole('RECEPTIONIST')")
     public ResponseEntity<ReceptionistDashboardResponse> getReceptionistDashboard(@AuthenticationPrincipal StaffPrincipal principal) {
         return ResponseEntity.ok(dashboardService.getReceptionistDashboard(principal.staff().getId()));
+    }
+
+    @GetMapping("/manager")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<ManagerDashboardResponse> getManagerDashboard() {
+        return ResponseEntity.ok(dashboardService.getManagerDashboard());
     }
 }

@@ -101,4 +101,18 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     @EntityGraph(attributePaths = {"services"})
     Optional<Appointment> findById(Long id);
+
+    @Query("""
+        SELECT a.staff.firstName, a.staff.lastName, COUNT(s) 
+        FROM Appointment a 
+        JOIN a.services s 
+        WHERE a.appointmentDateTime >= :startOfMonth AND a.appointmentDateTime < :endOfMonth
+        AND a.status != 'CANCELED'
+        GROUP BY a.staff.firstName, a.staff.lastName 
+        ORDER BY COUNT(s) DESC
+    """)
+    List<Object[]> findTopStaffPerformance(
+            @Param("startOfMonth") LocalDateTime startOfMonth,
+            @Param("endOfMonth") LocalDateTime endOfMonth,
+            org.springframework.data.domain.Pageable pageable);
 }

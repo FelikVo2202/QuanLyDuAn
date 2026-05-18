@@ -615,54 +615,87 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    #toast {
+    /* TOAST */
+    #toast-container {
       position: fixed;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: #34281d;
-      color: #fff9ee;
-      padding: 14px 22px;
-      border-radius: 16px;
-      font-size: 14px;
-      font-weight: 600;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
-      z-index: 2000;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.25s, transform 0.25s, visibility 0.25s;
-      max-width: min(90vw, 420px);
-      text-align: center;
+      top: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 99999;
+      pointer-events: none;
     }
-    #toast.show {
-      opacity: 1;
-      visibility: visible;
-      transform: translateX(-50%) translateY(0);
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      pointer-events: auto;
+      animation: toastIn 0.3s cubic-bezier(.34,1.56,.64,1) forwards;
+      max-width: 340px;
     }
-    @media (max-width: 900px) {
-      .main { padding: 20px; }
-      .products-table { font-size: 12px; }
-      .products-table th, .customers-table td { padding: 8px 4px; }
+    .toast.removing {
+      animation: toastOut 0.25s ease forwards;
     }
+    .toast-success {
+      background: #fff;
+      color: #1a1a1a;
+      border-left: 4px solid #eab308;
+    }
+    .toast-error {
+      background: #fff;
+      color: #1a1a1a;
+      border-left: 4px solid #ef4444;
+    }
+    .toast-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(40px) scale(0.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
+    @keyframes toastOut { from { opacity: 1; transform: translateX(0) scale(1); } to { opacity: 0; transform: translateX(40px) scale(0.95); } }
 
+    /* MODAL */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; animation: overlayIn 0.2s ease forwards; }
     .modal-overlay.removing { animation: overlayOut 0.2s ease forwards; }
     .modal-box { background: #fff; border-radius: 20px; padding: 32px 28px 24px; width: 360px; box-shadow: 0 24px 60px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 8px; transform: scale(0.95); opacity: 0; animation: modalIn 0.25s cubic-bezier(.34,1.56,.64,1) 0.05s forwards; }
     .modal-overlay.removing .modal-box { animation: modalOut 0.2s ease forwards; }
-    .modal-icon { width: 44px; height: 44px; background: #fee2e2; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
-    .modal-icon svg { width: 22px; height: 22px; stroke: #dc2626; }
+    .modal-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+    .modal-icon svg { width: 22px; height: 22px; stroke: currentColor; }
     .modal-title { font-size: 16px; font-weight: 700; color: #1a1a1a; }
     .modal-desc { font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 8px; }
     .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
     .modal-btn { flex: 1; padding: 11px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.15s; }
     .modal-btn-cancel { background: #f1f5f9; color: #475569; }
     .modal-btn-cancel:hover { background: #e2e8f0; }
-    .modal-btn-confirm { background: #dc2626; color: #fff; }
-    .modal-btn-confirm:hover { background: #b91c1c; }
+    /* Modal variants */
+    .modal-box.danger .modal-icon { background: #fee2e2; color: #dc2626; }
+    .modal-box.danger .modal-btn-confirm { background: #dc2626; color: #fff; }
+    .modal-box.danger .modal-btn-confirm:hover { background: #b91c1c; }
+    .modal-box.warning .modal-icon { background: #fef3c7; color: #d97706; }
+    .modal-box.warning .modal-btn-confirm { background: #f59e0b; color: #fff; }
+    .modal-box.warning .modal-btn-confirm:hover { background: #d97706; }
+    .modal-box.info .modal-icon { background: #dbeafe; color: #2563eb; }
+    .modal-box.info .modal-btn-confirm { background: #3b82f6; color: #fff; }
+    .modal-box.info .modal-btn-confirm:hover { background: #2563eb; }
+    .modal-box.logout .modal-icon { background: #fee2e2; color: #dc2626; }
+    .modal-box.logout .modal-btn-confirm { background: #dc2626; color: #fff; }
+    .modal-box.logout .modal-btn-confirm:hover { background: #b91c1c; }
     @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes overlayOut { from { opacity: 1; } to { opacity: 0; } }
     @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes modalOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0.95); opacity: 0; } }
+
+    @media (max-width: 900px) {
+      .main { padding: 20px; }
+      .products-table { font-size: 12px; }
+      .products-table th, .customers-table td { padding: 8px 4px; }
+    }
     *,
     *::before,
     *::after {
@@ -671,6 +704,7 @@
   </style>
 </head>
 <body>
+<div id="toast-container"></div>
 <div class="app">
   <!-- SIDEBAR -->
   <div class="sidebar">
@@ -901,50 +935,55 @@
   }
 
   // ==================== TOAST & CUSTOM DIALOGS ====================
-  let toastTimer = null;
-  function showToast(message, durationMs = 3200) {
-    const el = document.getElementById('toast');
-    if (!el) return;
-    el.textContent = message;
-    el.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), durationMs);
+  function showToast(message, type = 'error') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span class="toast-icon">${type === 'success' ? '✦' : '✕'}</span><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('removing');
+      toast.addEventListener('animationend', () => toast.remove());
+    }, 3000);
   }
 
-  let confirmResolve = null;
-  function openConfirmDialog({ title, message, okText = 'Confirm', danger = false }) {
-    return new Promise((resolve) => {
-      confirmResolve = resolve;
-      const overlay = document.getElementById('confirmDialog');
-      document.getElementById('confirmDialogTitle').textContent = title;
-      document.getElementById('confirmDialogMessage').textContent = message;
-      const okBtn = document.getElementById('confirmDialogOk');
-      okBtn.textContent = okText;
-      okBtn.className = 'btn-pill ' + (danger ? 'btn-pill--danger' : 'btn-pill--primary');
-      overlay.classList.add('open');
-    });
-  }
-  function closeConfirmDialog(value) {
-    const overlay = document.getElementById('confirmDialog');
-    if (overlay) overlay.classList.remove('open');
-    if (confirmResolve) {
-      confirmResolve(value);
-      confirmResolve = null;
-    }
-  }
+  function showModal(title, desc, confirmLabel, onConfirm, type = 'danger') {
+    const variants = {
+      danger: {
+        svg: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>`
+      },
+      warning: {
+        svg: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 9v4"></path>
+                <path d="M12 17h.01"></path>
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              </svg>`
+      },
+      info: {
+        svg: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>`
+      },
+      logout: {
+        svg: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>`
+      }
+    };
 
-  function showModal(title, desc, confirmLabel, onConfirm) {
+    const variant = variants[type] || variants.danger;
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
-      <div class="modal-box">
-        <div class="modal-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-        </div>
+      <div class="modal-box ${type}">
+        <div class="modal-icon">${variant.svg}</div>
         <div class="modal-title">${title}</div>
         <div class="modal-desc">${desc}</div>
         <div class="modal-actions">
@@ -972,7 +1011,7 @@
       localStorage.removeItem('accessToken');
       sessionStorage.removeItem('accessToken');
       window.location.href = 'login.html';
-    });
+    }, 'logout');
   }
 
   // ==================== INVENTORY DATA ====================
@@ -1062,6 +1101,7 @@
         return false;
       }
       if (response.ok) {
+        showToast('Product created successfully.', 'success');
         await loadInventory();
         return true;
       } else {
@@ -1093,6 +1133,7 @@
         return false;
       }
       if (response.ok) {
+        showToast('Product updated successfully.', 'success');
         await loadInventory();
         return true;
       } else {
@@ -1111,38 +1152,33 @@
   async function deleteProduct(id) {
     const product = products.find(p => p.ProductID === id);
     const label = product ? product.Name : ('#' + id);
-    const ok = await openConfirmDialog({
-      title: 'Delete product',
-      message: 'Permanently delete "' + label + '"? This cannot be undone.',
-      okText: 'Delete',
-      danger: true
-    });
-    if (!ok) return;
+    
+    showModal('Delete product', 'Permanently delete "' + label + '"? This cannot be undone.', 'Delete', async () => {
+      const headers = getAuthHeaders();
+      if (!headers) return;
 
-    const headers = getAuthHeaders();
-    if (!headers) return;
+      try {
+        const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+          method: "DELETE",
+          headers: headers
+        });
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/products/${id}`, {
-        method: "DELETE",
-        headers: headers
-      });
-
-      if (response.status === 401) {
-        window.location.href = 'login.html';
-        return;
+        if (response.status === 401) {
+          window.location.href = 'login.html';
+          return;
+        }
+        if (response.ok) {
+          showToast('Product deleted.', 'success');
+          await loadInventory();
+        } else {
+          const error = await response.text();
+          showToast('Could not delete: ' + formatApiError(error));
+        }
+      } catch (err) {
+        console.error("Delete error:", err);
+        showToast('Network error. Please try again.');
       }
-      if (response.ok) {
-        showToast('Product deleted.');
-        await loadInventory();
-      } else {
-        const error = await response.text();
-        showToast('Could not delete: ' + formatApiError(error));
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
-      showToast('Network error. Please try again.');
-    }
+    }, 'danger');
   }
 
   // ==================== API INVENTORY ADJUSTMENT ====================
@@ -1443,43 +1479,37 @@
       return;
     }
 
-    const ok = await openConfirmDialog({
-      title: 'Bulk delete',
-      message: `Delete ${selectedIds.length} selected product(s)? This cannot be undone.`,
-      okText: 'Delete',
-      danger: true
-    });
-    if (!ok) return;
+    showModal('Bulk delete', `Delete ${selectedIds.length} selected product(s)? This cannot be undone.`, 'Delete', async () => {
+      const headers = getAuthHeaders();
+      if (!headers) return;
 
-    const headers = getAuthHeaders();
-    if (!headers) return;
+      try {
+        const deletePromises = selectedIds.map(id =>
+                fetch(`${API_BASE_URL}/products/${id}`, {
+                  method: "DELETE",
+                  headers: headers
+                })
+        );
 
-    try {
-      const deletePromises = selectedIds.map(id =>
-              fetch(`${API_BASE_URL}/products/${id}`, {
-                method: "DELETE",
-                headers: headers
-              })
-      );
+        const results = await Promise.all(deletePromises);
+        if (results.some(r => r.status === 401)) {
+          window.location.href = 'login.html';
+          return;
+        }
+        const allSuccessful = results.every(r => r.ok);
 
-      const results = await Promise.all(deletePromises);
-      if (results.some(r => r.status === 401)) {
-        window.location.href = 'login.html';
-        return;
+        if (allSuccessful) {
+          showToast('Selected products deleted.', 'success');
+          await loadInventory();
+        } else {
+          showToast('Some products could not be deleted.');
+          await loadInventory();
+        }
+      } catch (err) {
+        console.error("Bulk delete error:", err);
+        showToast('Network error. Please try again.');
       }
-      const allSuccessful = results.every(r => r.ok);
-
-      if (allSuccessful) {
-        showToast('Selected products deleted.');
-        await loadInventory();
-      } else {
-        showToast('Some products could not be deleted.');
-        await loadInventory();
-      }
-    } catch (err) {
-      console.error("Bulk delete error:", err);
-      showToast('Network error. Please try again.');
-    }
+    }, 'danger');
   }
 
   // ==================== FILTER ====================
@@ -1565,7 +1595,7 @@
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    showToast('Exported inventory_export.csv');
+    showToast('Exported inventory_export.csv', 'success');
   }
 
   // ==================== PRODUCT MODAL ====================
@@ -1700,20 +1730,16 @@
       ? `Add ${fmtQty(abs)} ${pu}? On-hand (${bu}) increases by ${fmtQty(baseEff)}.`
       : `Remove ${fmtQty(abs)} ${pu} from stock (adjustment)? On-hand (${bu}) decreases by ${fmtQty(baseEff)}.`;
 
-    const ok = await openConfirmDialog({
-      title: 'Confirm stock adjustment',
-      message: msg,
-      okText: 'Apply'
-    });
-    if (!ok) return;
+    showModal('Confirm stock adjustment', msg, 'Apply', async () => {
+      const success = await adjustInventory(productId, finalQuantity, referenceId);
 
-    const success = await adjustInventory(productId, finalQuantity, referenceId);
-
-    if (success) {
-      showToast('Stock updated.');
-      closeAdjustModal();
-      await loadInventory();
-    }
+      if (success) {
+        showToast('Stock updated.', 'success');
+        closeAdjustModal();
+        await loadInventory();
+      }
+    }, 'info');
+    return;
   }
 
   // ==================== VIEW LEDGERS ====================
@@ -1816,11 +1842,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     loadInventory();
 
-    document.getElementById('confirmDialogOk').addEventListener('click', () => closeConfirmDialog(true));
-    document.getElementById('confirmDialogCancel').addEventListener('click', () => closeConfirmDialog(false));
-    document.getElementById('confirmDialog').addEventListener('click', (e) => {
-      if (e.target.id === 'confirmDialog') closeConfirmDialog(false);
-    });
     document.getElementById('filterDialog').addEventListener('click', (e) => {
       if (e.target.id === 'filterDialog') closeFilterDialog();
     });
@@ -1868,20 +1889,6 @@
   </div>
 </div>
 
-<!-- CONFIRM DIALOG -->
-<div id="confirmDialog" class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle">
-  <div class="dialog-panel" onclick="event.stopPropagation()">
-    <div class="dialog-head">
-      <h3 id="confirmDialogTitle">Confirm</h3>
-      <p id="confirmDialogMessage"></p>
-    </div>
-    <div class="dialog-foot">
-      <button type="button" class="btn-pill btn-pill--ghost" id="confirmDialogCancel">Cancel</button>
-      <button type="button" class="btn-pill btn-pill--primary" id="confirmDialogOk">OK</button>
-    </div>
-  </div>
-</div>
-
 <!-- LEDGER DIALOG -->
 <div id="ledgerDialog" class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="ledgerDialogTitle">
   <div class="dialog-panel dialog-panel--wide" onclick="event.stopPropagation()">
@@ -1898,7 +1905,5 @@
     </div>
   </div>
 </div>
-
-<div id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

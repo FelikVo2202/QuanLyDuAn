@@ -1280,10 +1280,10 @@
     // Mở billing khi click vào "Checkout"
     eventDiv.querySelector(".checkout").onclick = (e) => {
       e.stopPropagation();
-      if (booking.status === 'DONE' || booking.status === 'PAID') {
-        alert('This appointment has already been completed.');
-        return;
-      }
+      // if (booking.status === 'DONE' || booking.status === 'PAID') {
+      //   alert('This appointment has already been completed.');
+      //   return;
+      // }
       openBilling(booking);
     };
 

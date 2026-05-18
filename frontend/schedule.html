@@ -1378,10 +1378,11 @@
     
     new TomSelect('#inputStylist', {
       dropdownParent: 'body',
-      placeholder: 'Search or select customer...',
+      placeholder: 'Search or select stylist...',
       onItemAdd: function() {
         this.blur();
       },
+      hideSelected: true
     });
   }
 
@@ -1405,6 +1406,7 @@
       onItemAdd: function() {
         this.blur();
       },
+      hideSelected: true
     });
   }
 
@@ -1688,10 +1690,20 @@
     onItemAdd: function() {
       this.blur();
     },
+    hideSelected: true
   });
 }
 
-  document.getElementById("addServiceBtn").onclick = () => addServiceSelect();
+  document.getElementById("addServiceBtn").onclick = () => {
+  const existingSelects = servicesContainer.querySelectorAll('select');
+  for (const sel of existingSelects) {
+    if (!sel.value) {
+      showToast('Please select a service first.');
+      return;
+    }
+  }
+  addServiceSelect();
+};
 
   document.getElementById("saveBtn").onclick = async () => {
     const custId = inputName.tomselect ? inputName.tomselect.getValue() : inputName.value;

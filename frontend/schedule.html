@@ -788,9 +788,55 @@
     @keyframes overlayOut { from { opacity: 1; } to { opacity: 0; } }
     @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes modalOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0.95); opacity: 0; } }
+
+    /* TOAST */
+    #toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 99999;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      pointer-events: auto;
+      animation: toastIn 0.3s cubic-bezier(.34,1.56,.64,1) forwards;
+      max-width: 340px;
+    }
+    .toast.removing {
+      animation: toastOut 0.25s ease forwards;
+    }
+    .toast-success {
+      background: #fff;
+      color: #1a1a1a;
+      border-left: 4px solid #eab308;
+    }
+    .toast-error {
+      background: #fff;
+      color: #1a1a1a;
+      border-left: 4px solid #ef4444;
+    }
+    .toast-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(40px) scale(0.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
+    @keyframes toastOut { from { opacity: 1; transform: translateX(0) scale(1); } to { opacity: 0; transform: translateX(40px) scale(0.95); } }
   </style>
 </head>
 <body>
+<div id="toast-container"></div>
 <div class="app">
   <!-- SIDEBAR -->
   <div class="sidebar">
@@ -1089,6 +1135,18 @@
     }
   })();
 
+  function showToast(message, type = 'error') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span class="toast-icon">${type === 'success' ? '✦' : '✕'}</span><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('removing');
+      toast.addEventListener('animationend', () => toast.remove());
+    }, 3000);
+  }
+
   // Data storage
   let stylists = [];
   let customers = [];
@@ -1279,7 +1337,7 @@
     if (canCancel && booking.status !== 'CANCELED') {
       eventDiv.querySelector(".btn-delete").onclick = async (e) => {
         e.stopPropagation();
-        if (confirm('Cancel this appointment?')) {
+        showModal('Cancel Appointment', 'Are you sure you want to cancel this appointment?', 'Cancel', async () => {
           const headers = getAuthHeaders();
           try {
             const res = await fetch(`${API_BASE_URL}/appointments/${booking.id}/cancel`, { method: 'PATCH', headers });
@@ -1289,13 +1347,13 @@
               await loadAllBookings();
             } else {
               const err = await res.json();
-              alert('Could not cancel appointment: ' + (err.message || JSON.stringify(err)));
+              showToast('Could not cancel appointment: ' + (err.message || JSON.stringify(err)));
             }
           } catch (error) {
             console.error('Cancel error:', error);
-            alert('Network error');
+            showToast('Network error');
           }
-        }
+        });
       };
     }
 
@@ -1459,7 +1517,7 @@
     const custName = inputName.value;
     const customer = customers.find(c => `${c.firstName} ${c.lastName}` === custName);
     if (!customer) {
-      alert('Please select a valid customer from the list.');
+      showToast('Please select a valid customer from the list.');
       return;
     }
 
@@ -1469,7 +1527,7 @@
             .filter(v => v);
 
     if (sIds.length === 0) {
-      alert('Please select at least one service.');
+      showToast('Please select at least one service.');
       return;
     }
 
@@ -1515,11 +1573,11 @@
         closeModal();
       } else {
         const err = responseData;
-        alert('Error: ' + (err.message || JSON.stringify(err)));
+        showToast('Error: ' + (err.message || JSON.stringify(err)));
       }
     } catch (error) {
       console.error('Save error:', error);
-      alert('Network error');
+      showToast('Network error');
     }
   };
 
@@ -1647,7 +1705,7 @@
     gridEl.addEventListener("mousedown", onMouseDown);
     loadInitialData();
     document.getElementById("resetBtn").onclick = () => {
-      if (confirm("Reset local view?")) loadAllBookings();
+      showModal('Reset View', 'Are you sure you want to reset the local view?', 'Reset', () => loadAllBookings());
     };
   }
 
@@ -1958,7 +2016,7 @@
   async function createBill() {
     if (billLocked) return;
     if (!currentBillingAppointmentId) {
-      alert('Appointment is required to create a bill.');
+      showToast('Appointment is required to create a bill.');
       return;
     }
 
@@ -1993,7 +2051,7 @@
           if (typeof msg === 'string') message = msg;
           else if (msg && typeof msg === 'object') message = Object.values(msg).join(', ');
         } catch (_) {}
-        alert(message);
+        showToast(message);
         return;
       }
 
@@ -2003,10 +2061,10 @@
       populateBillFromApi(bill);
       setBillEditingEnabled(false);
       updateEventBillLabel(currentBillingAppointmentId);
-      alert('Bill created successfully.');
+      showToast('Bill created successfully.', 'success');
     } catch (error) {
       console.error('Create bill error:', error);
-      alert('Network error while creating bill.');
+      showToast('Network error while creating bill.');
     } finally {
       if (createBtn && !billLocked) {
         createBtn.disabled = false;
@@ -2025,7 +2083,7 @@
     const apptId = currentBillingAppointmentId;
     const billId = localStorage.getItem(BILL_ID_STORAGE_PREFIX + apptId);
     if (!billId) {
-      alert("Bill information not found.");
+      showToast("Bill information not found.");
       if (payBtn) {
         payBtn.disabled = false;
         payBtn.textContent = 'Pay';
@@ -2042,7 +2100,7 @@
 
       if (!res.ok) {
         const err = await res.json();
-        alert('Could not pay bill: ' + (err.message || 'System error'));
+        showToast('Could not pay bill: ' + (err.message || 'System error'));
         if (payBtn) {
           payBtn.disabled = false;
           payBtn.textContent = 'Pay';
@@ -2050,7 +2108,7 @@
         return;
       }
 
-      alert('Payment successful!');
+      showToast('Payment successful!', 'success');
       localStorage.setItem('goutsalon_bill_paid_' + apptId, 'true');
       
       if (payBtn) {
@@ -2069,7 +2127,7 @@
 
     } catch (error) {
       console.error('Pay bill error:', error);
-      alert('Network error while paying bill.');
+      showToast('Network error while paying bill.');
       if (payBtn) {
         payBtn.disabled = false;
         payBtn.textContent = 'Pay';
@@ -2082,50 +2140,50 @@
 
     const billId = localStorage.getItem(BILL_ID_STORAGE_PREFIX + currentBillingAppointmentId);
     if (!billId) {
-      alert("Bill information not found.");
+      showToast("Bill information not found.");
       return;
     }
 
-    if (!confirm('Are you sure you want to cancel this bill to recreate it?')) return;
+    showModal('Cancel Bill', 'Are you sure you want to cancel this bill to recreate it?', 'Cancel', async () => {
+      const btnCancel = document.getElementById('btnCancelBill');
+      btnCancel.disabled = true;
+      btnCancel.textContent = 'Canceling...';
 
-    const btnCancel = document.getElementById('btnCancelBill');
-    btnCancel.disabled = true;
-    btnCancel.textContent = 'Canceling...';
+      const headers = getAuthHeaders();
 
-    const headers = getAuthHeaders();
+      try {
+        const res = await fetch(`${API_BASE_URL}/bills/${billId}/cancel`, {
+          method: 'POST',
+          headers
+        });
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/bills/${billId}/cancel`, {
-        method: 'POST',
-        headers
-      });
+        if (!res.ok) {
+          const err = await res.json();
+          showToast('Could not cancel bill: ' + (err.message || 'System error'));
+          btnCancel.disabled = false;
+          btnCancel.textContent = 'Cancel';
+          return;
+        }
 
-      if (!res.ok) {
-        const err = await res.json();
-        alert('Could not cancel bill: ' + (err.message || 'System error'));
+        localStorage.removeItem(BILL_ID_STORAGE_PREFIX + currentBillingAppointmentId);
+        localStorage.removeItem('goutsalon_bill_paid_' + currentBillingAppointmentId);
+        clearSavedBillProducts(currentBillingAppointmentId);
+
+        showToast("Old bill canceled. You can now create a new bill for this appointment.", 'success');
+        closeBilling();
+
+        await loadAllBookings();
+
         btnCancel.disabled = false;
         btnCancel.textContent = 'Cancel';
-        return;
+
+      } catch (error) {
+        console.error('Cancel bill error:', error);
+        showToast('Network error while canceling bill.');
+        btnCancel.disabled = false;
+        btnCancel.textContent = 'Cancel';
       }
-
-      localStorage.removeItem(BILL_ID_STORAGE_PREFIX + currentBillingAppointmentId);
-      localStorage.removeItem('goutsalon_bill_paid_' + currentBillingAppointmentId);
-      clearSavedBillProducts(currentBillingAppointmentId);
-
-      alert("Old bill canceled. You can now create a new bill for this appointment.");
-      closeBilling();
-
-      await loadAllBookings();
-
-      btnCancel.disabled = false;
-      btnCancel.textContent = 'Cancel';
-
-    } catch (error) {
-      console.error('Cancel bill error:', error);
-      alert('Network error while canceling bill.');
-      btnCancel.disabled = false;
-      btnCancel.textContent = 'Cancel';
-    }
+    });
   }
 
   // Make billing functions global for inline onclick
@@ -2275,7 +2333,7 @@
     if (retailBillLocked) return;
     const custId = document.getElementById('retailCustomerSelect').value;
     if (!custId) {
-      alert("Please select a customer.");
+      showToast("Please select a customer.");
       return;
     }
 
@@ -2292,7 +2350,7 @@
     });
 
     if (retailProducts.length === 0) {
-      alert("Please add at least one product.");
+      showToast("Please add at least one product.");
       return;
     }
 
@@ -2314,7 +2372,7 @@
 
       if (!res.ok) {
         const err = await res.json();
-        alert('Could not create retail bill: ' + (err.message || 'System error'));
+        showToast('Could not create retail bill: ' + (err.message || 'System error'));
         if (createBtn) {
           createBtn.disabled = false;
           createBtn.textContent = 'Create Bill';
@@ -2339,10 +2397,10 @@
       document.getElementById('retailBillTotal').innerText = (subtotal + vat).toLocaleString('vi-VN') + ' đ';
       
       setRetailBillEditingEnabled(false);
-      alert('Retail bill created successfully.');
+      showToast('Retail bill created successfully.', 'success');
     } catch (error) {
       console.error('Create retail bill error:', error);
-      alert('Network error while creating retail bill.');
+      showToast('Network error while creating retail bill.');
       if (createBtn) {
         createBtn.disabled = false;
         createBtn.textContent = 'Create Bill';
@@ -2368,7 +2426,7 @@
 
       if (!res.ok) {
         const err = await res.json();
-        alert('Could not pay bill: ' + (err.message || 'System error'));
+        showToast('Could not pay bill: ' + (err.message || 'System error'));
         if (payBtn) {
           payBtn.disabled = false;
           payBtn.textContent = 'Pay';
@@ -2376,11 +2434,11 @@
         return;
       }
 
-      alert('Payment successful!');
+      showToast('Payment successful!', 'success');
       closeRetailBilling();
     } catch (error) {
       console.error('Pay retail bill error:', error);
-      alert('Network error while paying bill.');
+      showToast('Network error while paying bill.');
       if (payBtn) {
         payBtn.disabled = false;
         payBtn.textContent = 'Pay';
@@ -2391,40 +2449,40 @@
   async function cancelRetailBillAction() {
     if (!currentRetailBillId) return;
 
-    if (!confirm('Are you sure you want to cancel this retail bill?')) return;
+    showModal('Cancel Retail Bill', 'Are you sure you want to cancel this retail bill?', 'Cancel', async () => {
+      const btnCancel = document.getElementById('btnCancelRetailBill');
+      btnCancel.disabled = true;
+      btnCancel.textContent = 'Canceling...';
 
-    const btnCancel = document.getElementById('btnCancelRetailBill');
-    btnCancel.disabled = true;
-    btnCancel.textContent = 'Canceling...';
+      const headers = getAuthHeaders();
 
-    const headers = getAuthHeaders();
+      try {
+        const res = await fetch(`${API_BASE_URL}/bills/${currentRetailBillId}/cancel`, {
+          method: 'POST',
+          headers
+        });
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/bills/${currentRetailBillId}/cancel`, {
-        method: 'POST',
-        headers
-      });
+        if (!res.ok) {
+          const err = await res.json();
+          showToast('Could not cancel retail bill: ' + (err.message || 'System error'));
+          btnCancel.disabled = false;
+          btnCancel.textContent = 'Cancel';
+          return;
+        }
 
-      if (!res.ok) {
-        const err = await res.json();
-        alert('Could not cancel retail bill: ' + (err.message || 'System error'));
+        showToast("Retail bill canceled.", 'success');
+        closeRetailBilling();
+
         btnCancel.disabled = false;
         btnCancel.textContent = 'Cancel';
-        return;
+
+      } catch (error) {
+        console.error('Cancel retail bill error:', error);
+        showToast('Network error while canceling retail bill.');
+        btnCancel.disabled = false;
+        btnCancel.textContent = 'Cancel';
       }
-
-      alert("Retail bill canceled.");
-      closeRetailBilling();
-
-      btnCancel.disabled = false;
-      btnCancel.textContent = 'Cancel';
-
-    } catch (error) {
-      console.error('Cancel retail bill error:', error);
-      alert('Network error while canceling retail bill.');
-      btnCancel.disabled = false;
-      btnCancel.textContent = 'Cancel';
-    }
+    });
   }
 
   window.openRetailBilling = openRetailBilling;

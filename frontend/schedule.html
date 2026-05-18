@@ -774,16 +774,27 @@
     .modal-overlay.removing { animation: overlayOut 0.2s ease forwards; }
     .modal-box { background: #fff; border-radius: 20px; padding: 32px 28px 24px; width: 360px; box-shadow: 0 24px 60px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 8px; transform: scale(0.95); opacity: 0; animation: modalIn 0.25s cubic-bezier(.34,1.56,.64,1) 0.05s forwards; }
     .modal-overlay.removing .modal-box { animation: modalOut 0.2s ease forwards; }
-    .modal-icon { width: 44px; height: 44px; background: #fee2e2; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
-    .modal-icon svg { width: 22px; height: 22px; stroke: #dc2626; }
+    .modal-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+    .modal-icon svg { width: 22px; height: 22px; stroke: currentColor; }
     .modal-title { font-size: 16px; font-weight: 700; color: #1a1a1a; }
     .modal-desc { font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 8px; }
     .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
     .modal-btn { flex: 1; padding: 11px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.15s; }
     .modal-btn-cancel { background: #f1f5f9; color: #475569; }
     .modal-btn-cancel:hover { background: #e2e8f0; }
-    .modal-btn-confirm { background: #dc2626; color: #fff; }
-    .modal-btn-confirm:hover { background: #b91c1c; }
+    /* Modal variants */
+    .modal-box.danger .modal-icon { background: #fee2e2; color: #dc2626; }
+    .modal-box.danger .modal-btn-confirm { background: #dc2626; color: #fff; }
+    .modal-box.danger .modal-btn-confirm:hover { background: #b91c1c; }
+    .modal-box.warning .modal-icon { background: #fef3c7; color: #d97706; }
+    .modal-box.warning .modal-btn-confirm { background: #f59e0b; color: #fff; }
+    .modal-box.warning .modal-btn-confirm:hover { background: #d97706; }
+    .modal-box.info .modal-icon { background: #dbeafe; color: #2563eb; }
+    .modal-box.info .modal-btn-confirm { background: #3b82f6; color: #fff; }
+    .modal-box.info .modal-btn-confirm:hover { background: #2563eb; }
+    .modal-box.logout .modal-icon { background: #fee2e2; color: #dc2626; }
+    .modal-box.logout .modal-btn-confirm { background: #dc2626; color: #fff; }
+    .modal-box.logout .modal-btn-confirm:hover { background: #b91c1c; }
     @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes overlayOut { from { opacity: 1; } to { opacity: 0; } }
     @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -1353,7 +1364,7 @@
             console.error('Cancel error:', error);
             showToast('Network error');
           }
-        });
+        }, 'danger');
       };
     }
 
@@ -1705,7 +1716,7 @@
     gridEl.addEventListener("mousedown", onMouseDown);
     loadInitialData();
     document.getElementById("resetBtn").onclick = () => {
-      showModal('Reset View', 'Are you sure you want to reset the local view?', 'Reset', () => loadAllBookings());
+      showModal('Reset View', 'Are you sure you want to reset the local view?', 'Reset', () => loadAllBookings(), 'warning');
     };
   }
 
@@ -1719,18 +1730,43 @@
     else dashboardLink.href = 'dashboard_receptionist.html';
   }
 
-  function showModal(title, desc, confirmLabel, onConfirm) {
+  function showModal(title, desc, confirmLabel, onConfirm, type = 'danger') {
+    const variants = {
+      danger: {
+        svg: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>`
+      },
+      warning: {
+        svg: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 9v4"></path>
+                <path d="M12 17h.01"></path>
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              </svg>`
+      },
+      info: {
+        svg: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>`
+      },
+      logout: {
+        svg: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>`
+      }
+    };
+
+    const variant = variants[type] || variants.danger;
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
-      <div class="modal-box">
-        <div class="modal-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-        </div>
+      <div class="modal-box ${type}">
+        <div class="modal-icon">${variant.svg}</div>
         <div class="modal-title">${title}</div>
         <div class="modal-desc">${desc}</div>
         <div class="modal-actions">
@@ -1755,7 +1791,7 @@
       localStorage.removeItem('salonUser');
       sessionStorage.removeItem('salonUser');
       window.location.href = 'login.html';
-    });
+    }, 'logout');
   }
 
   // ================= BILLING FUNCTIONS =================
@@ -2169,7 +2205,7 @@
         localStorage.removeItem('goutsalon_bill_paid_' + currentBillingAppointmentId);
         clearSavedBillProducts(currentBillingAppointmentId);
 
-        showToast("Old bill canceled. You can now create a new bill for this appointment.", 'success');
+        showToast("Bill canceled successfully.", 'success');
         closeBilling();
 
         await loadAllBookings();
@@ -2183,7 +2219,7 @@
         btnCancel.disabled = false;
         btnCancel.textContent = 'Cancel';
       }
-    });
+    }, 'danger');
   }
 
   // Make billing functions global for inline onclick
@@ -2482,7 +2518,7 @@
         btnCancel.disabled = false;
         btnCancel.textContent = 'Cancel';
       }
-    });
+    }, 'danger');
   }
 
   window.openRetailBilling = openRetailBilling;

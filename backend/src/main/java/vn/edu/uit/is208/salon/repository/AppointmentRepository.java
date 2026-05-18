@@ -18,6 +18,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                 JOIN FETCH a.staff
                 LEFT JOIN FETCH a.services
                 WHERE a.appointmentDateTime >= :startDateTime AND a.appointmentDateTime < :endDateTime
+                ORDER BY a.appointmentDateTime
             """)
     List<Appointment> findAllByDayRange(
             @Param("startDateTime") LocalDateTime startDateTime,
@@ -75,6 +76,16 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("staffId") Long staffId,
             @Param("startOfMonth") LocalDateTime startOfMonth,
             @Param("endOfMonth") LocalDateTime endOfMonth);
+
+    @Query("""
+        SELECT COUNT(DISTINCT a.customer.id)
+        FROM Appointment a
+        WHERE a.appointmentDateTime >= :startDateTime AND a.appointmentDateTime < :endDateTime
+        AND a.status != 'CANCELED'
+    """)
+    long countUniqueCustomersByDayRange(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime);
 
     @Query("""
         SELECT COUNT(a)

@@ -644,6 +644,25 @@
       .products-table { font-size: 12px; }
       .products-table th, .customers-table td { padding: 8px 4px; }
     }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; animation: overlayIn 0.2s ease forwards; }
+    .modal-overlay.removing { animation: overlayOut 0.2s ease forwards; }
+    .modal-box { background: #fff; border-radius: 20px; padding: 32px 28px 24px; width: 360px; box-shadow: 0 24px 60px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 8px; transform: scale(0.95); opacity: 0; animation: modalIn 0.25s cubic-bezier(.34,1.56,.64,1) 0.05s forwards; }
+    .modal-overlay.removing .modal-box { animation: modalOut 0.2s ease forwards; }
+    .modal-icon { width: 44px; height: 44px; background: #fee2e2; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+    .modal-icon svg { width: 22px; height: 22px; stroke: #dc2626; }
+    .modal-title { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+    .modal-desc { font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 8px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .modal-btn { flex: 1; padding: 11px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.15s; }
+    .modal-btn-cancel { background: #f1f5f9; color: #475569; }
+    .modal-btn-cancel:hover { background: #e2e8f0; }
+    .modal-btn-confirm { background: #dc2626; color: #fff; }
+    .modal-btn-confirm:hover { background: #b91c1c; }
+    @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes overlayOut { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes modalOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0.95); opacity: 0; } }
     *,
     *::before,
     *::after {
@@ -678,7 +697,7 @@
         <polyline points="16 17 21 12 16 7"></polyline>
         <line x1="21" y1="12" x2="9" y2="12"></line>
       </svg>
-      Logout
+      Log out
     </a>
   </div>
 
@@ -914,18 +933,46 @@
     }
   }
 
+  function showModal(title, desc, confirmLabel, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <div class="modal-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </div>
+        <div class="modal-title">${title}</div>
+        <div class="modal-desc">${desc}</div>
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn-cancel">Cancel</button>
+          <button class="modal-btn modal-btn-confirm">${confirmLabel}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    const close = () => {
+      overlay.classList.add('removing');
+      overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+    };
+    overlay.querySelector('.modal-btn-cancel').onclick = close;
+    overlay.querySelector('.modal-btn-confirm').onclick = () => { close(); onConfirm(); };
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  }
+
   // Logout function
   async function logout(event) {
     if (event) event.preventDefault();
-
-    if (!confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
-      return;
-    }
-    localStorage.removeItem('salonUser');
-    sessionStorage.removeItem('salonUser');
-    localStorage.removeItem('accessToken');
-    sessionStorage.removeItem('accessToken');
-    window.location.href = 'login.html';
+    showModal('Log out', 'Are you sure you want to log out?', 'Log out', () => {
+      localStorage.removeItem('salonUser');
+      sessionStorage.removeItem('salonUser');
+      localStorage.removeItem('accessToken');
+      sessionStorage.removeItem('accessToken');
+      window.location.href = 'login.html';
+    });
   }
 
   // ==================== INVENTORY DATA ====================

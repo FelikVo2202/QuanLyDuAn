@@ -330,7 +330,7 @@ public class BillService {
         ensureBillIsPending(bill);
         bill.setPaymentStatus(PaymentStatus.PAID);
 
-        if (bill.getAppointment().getId() != null) {
+        if (bill.getAppointment() != null) {
             Appointment appointment = getAppointment(bill.getAppointment().getId());
             appointment.setStatus(AppointmentStatus.PAID);
         }

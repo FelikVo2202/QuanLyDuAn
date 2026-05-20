@@ -68,8 +68,13 @@ public class DummyDataSeeder implements CommandLineRunner {
         List<Product> products = seedProducts(30);
         seedServiceRecipes(services, products);
         seedInventoryLedger(products);
-        List<Bill> bills = seedBills(appointments, products);
-        List<Bill> retailBills = seedRetailBills(customers, products);
+
+        List<Product> sellableProducts = products.stream()
+                .filter(p -> p.getProductType() == ProductType.RETAIL || p.getProductType() == ProductType.BOTH)
+                .toList();
+
+        List<Bill> bills = seedBills(appointments, sellableProducts);
+        List<Bill> retailBills = seedRetailBills(customers, sellableProducts);
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
@@ -152,8 +157,7 @@ public class DummyDataSeeder implements CommandLineRunner {
         for (String serviceName : SERVICES) {
             SalonService service = new SalonService();
             service.setName(serviceName);
-            service.setPrice(BigDecimal.valueOf(
-                    faker.number().numberBetween(50_000L, 500_000L)));
+            service.setPrice(BigDecimal.valueOf(faker.number().numberBetween(50, 500) * 1000L));
             long durationBlocks = faker.number().numberBetween(3, 5);
             service.setDurationMinutes(durationBlocks * 15);
             services.add(service);
@@ -222,9 +226,9 @@ public class DummyDataSeeder implements CommandLineRunner {
 
             LocalDateTime endDateTime = startDateTime.plusMinutes(totalDurationMinutes);
 
-            appointment.setStatus(rnd.nextDouble() < 0.85 ? AppointmentStatus.CONFIRMED : AppointmentStatus.CANCELED);
+            boolean isCanceled = rnd.nextDouble() >= 0.85;
 
-            if (appointment.getStatus() != AppointmentStatus.CANCELED) {
+            if (!isCanceled) {
                 List<TimeSlot> busySlots = staffBusySlots.get(selectedStaff.getId());
 
                 while (isOverlapping(startDateTime, endDateTime, busySlots)) {
@@ -240,6 +244,14 @@ public class DummyDataSeeder implements CommandLineRunner {
                 }
 
                 busySlots.add(new TimeSlot(startDateTime, endDateTime));
+
+                if (endDateTime.isBefore(now)) {
+                    appointment.setStatus(AppointmentStatus.DONE);
+                } else {
+                    appointment.setStatus(AppointmentStatus.CONFIRMED);
+                }
+            } else {
+                appointment.setStatus(AppointmentStatus.CANCELED);
             }
 
             appointment.setAppointmentDateTime(startDateTime);
@@ -248,6 +260,7 @@ public class DummyDataSeeder implements CommandLineRunner {
             appointments.add(appointment);
         }
 
+        appointments.sort(Comparator.comparing(Appointment::getAppointmentDateTime));
         return appointmentRepository.saveAll(appointments);
     }
 
@@ -333,7 +346,6 @@ public class DummyDataSeeder implements CommandLineRunner {
     private List<Bill> seedBills(List<Appointment> appointments, List<Product> products) {
         List<Bill> bills = new ArrayList<>();
         Random rnd = new Random();
-        PaymentStatus[] paymentStatuses = PaymentStatus.values();
 
         for (Appointment appointment : appointments) {
             if (appointment.getStatus() == AppointmentStatus.CANCELED ||
@@ -346,11 +358,7 @@ public class DummyDataSeeder implements CommandLineRunner {
             bill.setCustomer(appointment.getCustomer());
             bill.setBillDate(appointment.getEndDateTime() != null ? appointment.getEndDateTime() : LocalDateTime.now());
 
-            if (appointment.getStatus() == AppointmentStatus.PAID || appointment.getStatus() == AppointmentStatus.DONE) {
-                bill.setPaymentStatus(paymentStatuses.length > 1 ? paymentStatuses[paymentStatuses.length - 1] : paymentStatuses[0]);
-            } else {
-                bill.setPaymentStatus(paymentStatuses[rnd.nextInt(paymentStatuses.length)]);
-            }
+            bill.setPaymentStatus(PaymentStatus.PAID);
 
             BigDecimal totalAmount = BigDecimal.ZERO;
             Set<BillDetail> details = new LinkedHashSet<>();
@@ -391,6 +399,7 @@ public class DummyDataSeeder implements CommandLineRunner {
             bills.add(bill);
         }
 
+        bills.sort(Comparator.comparing(Bill::getBillDate));
         return billRepository.saveAll(bills);
     }
 
@@ -458,6 +467,7 @@ public class DummyDataSeeder implements CommandLineRunner {
             }
         }
 
+        retailBills.sort(Comparator.comparing(Bill::getBillDate));
         return billRepository.saveAll(retailBills);
     }
 

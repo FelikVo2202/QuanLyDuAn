@@ -168,6 +168,7 @@ public class BillService {
         Bill bill = new Bill();
 
         Appointment appointment = getAppointment(appointmentId);
+        appointment.setStatus(AppointmentStatus.DONE);
         bill.setAppointment(appointment);
         bill.setCustomer(appointment.getCustomer());
 

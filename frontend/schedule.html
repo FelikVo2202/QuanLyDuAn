@@ -1056,7 +1056,6 @@
             <div class="time-slot">20</div>
             <div class="time-slot">21</div>
             <div class="time-slot">22</div>
-            <div class="time-slot">23</div>
           </div>
           <div id="calendar-grid" class="grid"></div>
         </div>
@@ -1177,25 +1176,41 @@
   // -------------------- CONFIG --------------------
   const gridEl = document.getElementById("calendar-grid");
   const API_BASE_URL = 'http://localhost:8080/api';
-  const BILL_ID_STORAGE_PREFIX = 'goutsalon_bill_id_';
 
-  function hasBillForAppointment(appointmentId) {
-    if (!appointmentId) return false;
-    return !!localStorage.getItem(BILL_ID_STORAGE_PREFIX + appointmentId);
+  function getAppointmentById(appointmentId) {
+    return appointments.find(app => String(app.id) === String(appointmentId)) || null;
+  }
+
+  function getBookingBillingState(booking) {
+    const hasBill = booking?.billId != null;
+    const isPaid = booking?.billPaymentStatus === 'PAID';
+    return {
+      hasBill,
+      isPaid,
+      checkoutLabel: hasBill ? (isPaid ? 'View Bill' : 'Checkout') : 'Create Bill',
+      checkoutClass: hasBill ? (isPaid ? 'checkout view-bill' : 'checkout pending-payment') : 'checkout'
+    };
+  }
+
+  function syncAppointmentBillingState(appointmentId, billId, billPaymentStatus) {
+    const booking = getAppointmentById(appointmentId);
+    if (!booking) return;
+    booking.billId = billId ?? null;
+    booking.billPaymentStatus = billPaymentStatus ?? null;
   }
 
   function updateEventBillLabel(appointmentId) {
-    const checkoutEl = document.querySelector(
-      `.event[data-appointment-id="${appointmentId}"] .checkout`
-    );
-    if (!checkoutEl) return;
-    checkoutEl.className = 'checkout pending-payment';
-    checkoutEl.textContent = 'Checkout';
+    const booking = getAppointmentById(appointmentId);
+    const checkoutEl = document.querySelector(`.event[data-appointment-id="${appointmentId}"] .checkout`);
+    if (!checkoutEl || !booking) return;
+    const { checkoutClass, checkoutLabel } = getBookingBillingState(booking);
+    checkoutEl.className = checkoutClass;
+    checkoutEl.textContent = checkoutLabel;
   }
 
   // Time grid configuration: use 15-minute slots
   const START_HOUR = 8; // first hour shown
-  const END_HOUR = 23;  // last hour shown (inclusive)
+  const END_HOUR = 22;  // last hour shown (inclusive)
   const SLOT_MINUTES = 15; // minutes per grid row
   const SLOTS_PER_HOUR = 60 / SLOT_MINUTES; // 4 for 15-min slots
   const ROWS = (END_HOUR - START_HOUR + 1) * SLOTS_PER_HOUR; // total grid rows
@@ -1438,10 +1453,7 @@
     const displayService = booking.serviceNames ? booking.serviceNames.join(", ") : "Service";
 
     const canCancel = userData.role === 'MANAGER' || userData.role === 'RECEPTIONIST';
-    const hasBill = hasBillForAppointment(booking.id);
-    const isPaid = localStorage.getItem('goutsalon_bill_paid_' + booking.id) === 'true';
-    const checkoutLabel = hasBill ? (isPaid ? 'View Bill' : 'Checkout') : 'Create Bill';
-    const checkoutClass = hasBill ? (isPaid ? 'checkout view-bill' : 'checkout pending-payment') : 'checkout';
+    const { hasBill, isPaid, checkoutLabel, checkoutClass } = getBookingBillingState(booking);
 
     if (booking.id) eventDiv.dataset.appointmentId = booking.id;
 
@@ -1552,7 +1564,9 @@
           staffId: app.staffId,
           serviceNames: app.services ? app.services.map(s => s.name) : [],
           serviceIds: app.services ? app.services.map(s => s.id) : [],
-          status: app.status
+          status: app.status,
+          billId: app.billId,
+          billPaymentStatus: app.billPaymentStatus
         };
         console.log('Mapped appointment:', appointment);
         if (col < 0) console.warn(`⚠️  Stylist ID ${app.staffId} not found in stylists list`);
@@ -1636,6 +1650,9 @@
       inputStylist.value = staffId;
     }
 
+    servicesContainer.querySelectorAll('select').forEach(sel => {
+      if (sel.tomselect) sel.tomselect.destroy();
+    });
     servicesContainer.innerHTML = "";
     const sIds = booking.serviceIds || [];
     if (sIds.length === 0) addServiceSelect();
@@ -1978,6 +1995,7 @@
   // ================= BILLING FUNCTIONS =================
   let salonProducts = [];
   let currentBillingAppointmentId = null;
+  let currentBillingId = null;
   let billLocked = false;
 
   const BILL_STORAGE_PREFIX = 'goutsalon_bill_products_';
@@ -2093,26 +2111,22 @@
     applyBillTotals(Number(bill.totalAmount) || 0);
   }
 
-  async function loadExistingBillIfAny(appointmentId) {
-    const billId = localStorage.getItem(BILL_ID_STORAGE_PREFIX + appointmentId);
-    if (!billId) return false;
+  async function loadExistingBillIfAny() {
+    if (!currentBillingId) return false;
 
     const headers = getAuthHeaders();
     if (!headers) return false;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/bills/${billId}`, { headers });
-      if (!res.ok) {
-        localStorage.removeItem(BILL_ID_STORAGE_PREFIX + appointmentId);
-        return false;
-      }
+      const res = await fetch(`${API_BASE_URL}/bills/${currentBillingId}`, { headers });
+      if (!res.ok) return false;
       const bill = await res.json();
       const isPaid = bill.paymentStatus === 'PAID';
-      if (isPaid) {
-        localStorage.setItem('goutsalon_bill_paid_' + appointmentId, 'true');
-      }
+      currentBillingId = bill.id ?? currentBillingId;
+      syncAppointmentBillingState(currentBillingAppointmentId, currentBillingId, bill.paymentStatus);
       populateBillFromApi(bill);
       setBillEditingEnabled(false, isPaid);
+      updateEventBillLabel(currentBillingAppointmentId);
       return true;
     } catch (e) {
       console.warn('Could not load existing bill:', e);
@@ -2122,6 +2136,7 @@
 
   async function openBilling(booking) {
     currentBillingAppointmentId = booking.id || null;
+    currentBillingId = booking.billId ?? null;
     setBillEditingEnabled(true);
     document.body.classList.add('modal-active');
     document.getElementById('billingOverlay').classList.add('active');
@@ -2130,7 +2145,7 @@
     document.getElementById('billServiceArea').innerHTML = '';
     document.getElementById('billProductArea').innerHTML = '';
 
-    if (currentBillingAppointmentId && await loadExistingBillIfAny(currentBillingAppointmentId)) {
+    if (currentBillingId && await loadExistingBillIfAny()) {
       return;
     }
 
@@ -2160,6 +2175,7 @@
     document.getElementById('billingOverlay').classList.remove('active');
     saveBillProducts();
     currentBillingAppointmentId = null;
+    currentBillingId = null;
   }
 
   function addBillRow(type, data = null) {
@@ -2214,7 +2230,7 @@
   function calculateBill() {
     if (billLocked) return;
     let subtotal = 0;
-    document.querySelectorAll('.bill-grid').forEach(r => {
+    document.querySelectorAll('#billServiceArea .bill-grid, #billProductArea .bill-grid').forEach(r => {
       const inputs = r.querySelectorAll('input');
       if (inputs.length < 3) return;
 
@@ -2273,10 +2289,11 @@
       }
 
       const bill = await res.json();
-      localStorage.setItem(BILL_ID_STORAGE_PREFIX + currentBillingAppointmentId, String(bill.id));
-      clearSavedBillProducts(currentBillingAppointmentId);
+      currentBillingId = bill.id ?? null;
+      syncAppointmentBillingState(currentBillingAppointmentId, currentBillingId, bill.paymentStatus || 'PENDING');
       populateBillFromApi(bill);
-      setBillEditingEnabled(false);
+      setBillEditingEnabled(false, bill.paymentStatus === 'PAID');
+      clearSavedBillProducts(currentBillingAppointmentId);
       updateEventBillLabel(currentBillingAppointmentId);
       showToast('Bill created successfully.', 'success');
     } catch (error) {
@@ -2298,7 +2315,7 @@
     }
 
     const apptId = currentBillingAppointmentId;
-    const billId = localStorage.getItem(BILL_ID_STORAGE_PREFIX + apptId);
+    const billId = currentBillingId;
     if (!billId) {
       showToast("Bill information not found.");
       if (payBtn) {
@@ -2326,21 +2343,16 @@
       }
 
       showToast('Payment successful!', 'success');
-      localStorage.setItem('goutsalon_bill_paid_' + apptId, 'true');
-      
+      currentBillingId = billId;
+      syncAppointmentBillingState(apptId, currentBillingId, 'PAID');
+
       if (payBtn) {
         payBtn.disabled = false;
         payBtn.textContent = 'Pay';
       }
-      
+
       closeBilling();
       await loadAllBookings();
-
-      const checkoutEl = document.querySelector(`.event[data-appointment-id="${apptId}"] .checkout`);
-      if (checkoutEl) {
-        checkoutEl.className = 'checkout view-bill';
-        checkoutEl.textContent = 'View Bill';
-      }
 
     } catch (error) {
       console.error('Pay bill error:', error);
@@ -2355,7 +2367,7 @@
   async function cancelBill() {
     if (!currentBillingAppointmentId) return;
 
-    const billId = localStorage.getItem(BILL_ID_STORAGE_PREFIX + currentBillingAppointmentId);
+    const billId = currentBillingId;
     if (!billId) {
       showToast("Bill information not found.");
       return;
@@ -2382,8 +2394,8 @@
           return;
         }
 
-        localStorage.removeItem(BILL_ID_STORAGE_PREFIX + currentBillingAppointmentId);
-        localStorage.removeItem('goutsalon_bill_paid_' + currentBillingAppointmentId);
+        currentBillingId = null;
+        syncAppointmentBillingState(currentBillingAppointmentId, null, null);
         clearSavedBillProducts(currentBillingAppointmentId);
 
         showToast("Bill canceled successfully.", 'success');

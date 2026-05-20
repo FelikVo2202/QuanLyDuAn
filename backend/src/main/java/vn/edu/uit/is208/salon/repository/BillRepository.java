@@ -10,6 +10,7 @@ import vn.edu.uit.is208.salon.entity.Bill;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificationExecutor<Bill> {
@@ -22,4 +23,10 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 
     @Query("SELECT SUM(b.totalAmount) FROM Bill b WHERE b.paymentStatus = 'PAID' AND b.billDate >= :startDateTime AND b.billDate < :endDateTime")
     BigDecimal sumRevenueByDateRange(@Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
+
+    @Query("SELECT b FROM Bill b WHERE b.appointment.id IN :appointmentIds AND b.paymentStatus != 'FAILED'")
+    List<Bill> findActiveBillsByAppointmentIds(@Param("appointmentIds") List<Long> appointmentIds);
+
+    @Query("SELECT b FROM Bill b WHERE b.appointment.id = :appointmentId AND b.paymentStatus != 'FAILED'")
+    Optional<Bill> findActiveBillByAppointmentId(@Param("appointmentId") Long appointmentId);
 }

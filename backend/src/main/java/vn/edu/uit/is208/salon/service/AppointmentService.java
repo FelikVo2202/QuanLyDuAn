@@ -12,23 +12,18 @@ import vn.edu.uit.is208.salon.constant.StaffRole;
 import vn.edu.uit.is208.salon.dto.AppointmentDto;
 import vn.edu.uit.is208.salon.dto.CreateAppointmentRequest;
 import vn.edu.uit.is208.salon.dto.UpdateAppointmentRequest;
-import vn.edu.uit.is208.salon.entity.Appointment;
-import vn.edu.uit.is208.salon.entity.Customer;
-import vn.edu.uit.is208.salon.entity.SalonService;
-import vn.edu.uit.is208.salon.entity.Staff;
+import vn.edu.uit.is208.salon.entity.*;
 import vn.edu.uit.is208.salon.exception.BusinessRuleException;
 import vn.edu.uit.is208.salon.exception.ResourceNotFoundException;
 import vn.edu.uit.is208.salon.mapper.AppointmentMapper;
-import vn.edu.uit.is208.salon.repository.AppointmentRepository;
-import vn.edu.uit.is208.salon.repository.CustomerRepository;
-import vn.edu.uit.is208.salon.repository.SalonServiceRepository;
-import vn.edu.uit.is208.salon.repository.StaffRepository;
+import vn.edu.uit.is208.salon.repository.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -39,6 +34,7 @@ public class AppointmentService {
     private final CustomerRepository customerRepository;
     private final StaffRepository staffRepository;
     private final SalonServiceRepository salonServiceRepository;
+    private final BillRepository billRepository;
     private final InventoryService inventoryService;
     @Value("${salon.business-hours.open}")
     private LocalTime openingTime;
@@ -68,15 +64,38 @@ public class AppointmentService {
             appointments = appointmentRepository.findAllByDayRange(startDateTime, endDateTime);
         }
 
+        List<Long> appointmentIds = appointments.stream().map(Appointment::getId).toList();
+        Map<Long, Bill> billMap = new java.util.HashMap<>();
+
+        if (!appointmentIds.isEmpty()) {
+            List<Bill> activeBills = billRepository.findActiveBillsByAppointmentIds(appointmentIds);
+            activeBills.forEach(b -> billMap.put(b.getAppointment().getId(), b));
+        }
+
         return appointments
                 .stream()
-                .map(appointmentMapper::toDto)
+                .map(appointment -> {
+                    AppointmentDto dto = appointmentMapper.toDto(appointment);
+                    Bill associatedBill = billMap.get(appointment.getId());
+                    if (associatedBill != null) {
+                        dto.setBillId(associatedBill.getId());
+                        dto.setBillPaymentStatus(associatedBill.getPaymentStatus().name());
+                    }
+                    return dto;
+                })
                 .toList();
     }
 
     public AppointmentDto getAppointmentById(Long id) {
         Appointment appointment = getAppointment(id);
-        return appointmentMapper.toDto(appointment);
+        AppointmentDto dto = appointmentMapper.toDto(appointment);
+
+        billRepository.findActiveBillByAppointmentId(id).ifPresent(bill -> {
+            dto.setBillId(bill.getId());
+            dto.setBillPaymentStatus(bill.getPaymentStatus().name());
+        });
+
+        return dto;
     }
 
     @Transactional
@@ -131,6 +150,7 @@ public class AppointmentService {
     @Transactional
     public AppointmentDto cancelAppointment(Long id) {
         Appointment appointment = getAppointment(id);
+        ensureAppointmentIsModifiable(appointment);
         appointment.setStatus(AppointmentStatus.CANCELED);
         return appointmentMapper.toDto(appointment);
     }

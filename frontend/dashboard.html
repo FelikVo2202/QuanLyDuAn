@@ -159,84 +159,50 @@
     </div>
 
     <div class="main-content">
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-header">
-            <span class="stat-title">Revenue</span>
-            <span class="badge today">Today</span>
-          </div>
-          <div class="stat-value" id="revenueToday">0 ₫</div>
-        </div>
+    <!-- STATS CARDS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-title">Appointments Today</div>
+        <div class="stat-value" id="totalAppointments">0</div>
+        <div class="stat-sub" id="appointmentsSub">Loading...</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Today's Revenue</div>
+        <div class="stat-value" id="totalRevenue">$0</div>
+        <div class="stat-sub" id="revenueSub">Loading...</div>
+      </div>
+    </div>
 
-        <div class="stat-card">
-          <div class="stat-header">
-            <span class="stat-title">Revenue</span>
-            <span class="badge month">This Month</span>
-          </div>
-          <div class="stat-value" id="revenueThisMonth">0 ₫</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-header">
-            <span class="stat-title">New Customers</span>
-            <span class="badge month">This Month</span>
-          </div>
-          <div class="stat-value" id="newCustomersThisMonth">0</div>
-        </div>
+    <!-- 2 CỘT: Monthly Statistics + All Bookings -->
+    <div class="two-columns">
+      <!-- Monthly Statistics -->
+      <div class="column" id="monthlyStatsContainer">
+        <h3>Monthly Statistics</h3>
+        <!-- Bars will be injected here -->
       </div>
 
-      <div class="two-columns">
-        <div class="column">
-          <div class="column-header">
-            <h3>Revenue History (Last 6 Months)</h3>
-          </div>
-          <div class="chart-container" id="revenueChartContainer"></div>
-        </div>
-
-        <div class="column">
-          <div class="column-header">
-            <h3>Today's Schedule</h3>
-            <span class="badge today" style="background:#f1f5f9; color:#475569" id="scheduleTotal">Total: 0</span>
-          </div>
-
-          <div class="booking-stat">
-            <div class="booking-info">
-              <div class="booking-label-group">
-                <span class="booking-label">Confirmed</span>
-              </div>
-              <span class="booking-number" id="confirmedCount">0</span>
-            </div>
-            <div class="booking-bar"><div class="booking-fill fill-confirmed" id="confirmedBar" style="width: 0%"></div></div>
-          </div>
-
-          <div class="booking-stat">
-            <div class="booking-info">
-              <div class="booking-label-group">
-                <span class="booking-label">Done</span>
-              </div>
-              <span class="booking-number" id="doneCount">0</span>
-            </div>
-            <div class="booking-bar"><div class="booking-fill fill-completed" id="doneBar" style="width: 0%"></div></div>
-          </div>
-
-          <div class="booking-stat">
-            <div class="booking-info">
-              <div class="booking-label-group">
-                <span class="booking-label" style="color: #ef4444;">Cancelled</span>
-              </div>
-              <span class="booking-number" id="cancelledCount">0</span>
-            </div>
-            <div class="booking-bar"><div class="booking-fill fill-cancelled" id="cancelledBar" style="width: 0%"></div></div>
-          </div>
-        </div>
+      <!-- All Bookings -->
+      <div class="column">
+        <h3>All Bookings</h3>
+        <div class="booking-stat"><span class="booking-label">Upcoming</span><span class="booking-percent" id="upcomingPercent">0%</span></div>
+        <div class="booking-bar"><div class="booking-fill fill-upcoming" id="upcomingBar"></div></div>
+        
+        <div class="booking-stat"><span class="booking-label">Done</span><span class="booking-percent" id="inProgressPercent">0%</span></div>
+        <div class="booking-bar"><div class="booking-fill fill-progress" id="inProgressBar"></div></div>
+        
+        <div class="booking-stat"><span class="booking-label">Cancelled</span><span class="booking-percent" id="cancelledPercent">0%</span></div>
+        <div class="booking-bar"><div class="booking-fill fill-cancelled" id="cancelledBar"></div></div>
+        
+        <div class="booking-stat"><span class="booking-label">Paid</span><span class="booking-percent" id="paidPercent">0%</span></div>
+        <div class="booking-bar"><div class="booking-fill fill-paid" id="paidBar"></div></div>
       </div>
+    </div>
 
-      <div class="column" style="margin-top: 0;">
-        <div class="column-header">
-          <h3>🏆 Top Staff Performance (This Month)</h3>
-        </div>
-        <div class="perf-list" id="topStaffList"></div>
-      </div>
+    <!-- Remarkable Performance -->
+    <div class="column" style="margin-top: 0;" id="performanceContainer">
+      <h3>✨ Remarkable Performance</h3>
+      <!-- Performance items will be injected here -->
+    </div>
     </div>
   </div>
 </div>
@@ -245,7 +211,12 @@
   const userStr = localStorage.getItem('salonUser') || sessionStorage.getItem('salonUser');
   if (!userStr) window.location.href = 'login.html';
 
+const API_BASE_URL = 'http://localhost:8080/api';
+
   let userData;
+
+// Populate topbar user info (avatar, name, role)
+(function populateTopbarUser() {
   try {
     userData = JSON.parse(userStr);
     const userRole = (userData.role || userData.ROLE || '').toUpperCase();
@@ -292,8 +263,6 @@
       </div>
     `;
     document.body.appendChild(overlay);
-    const close = () => {
-      overlay.classList.add('removing');
       overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
     };
     overlay.querySelector('.modal-btn-cancel').onclick = close;
@@ -385,6 +354,113 @@
   }
 
   document.addEventListener('DOMContentLoaded', loadDashboardData);
+// ========== FETCH DASHBOARD SUMMARY ==========
+async function fetchDashboardSummary() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/dashboard/summary`, {
+      headers: {
+        'Authorization': `Bearer ${userData.token}`
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      
+      // Update DOM for Summary Cards
+      document.getElementById('totalAppointments').innerText = data.totalAppointmentsToday;
+      document.getElementById('appointmentsSub').innerText = `${data.pendingAppointments} pending`;
+      
+      const formattedRevenue = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(data.totalRevenueToday);
+      document.getElementById('totalRevenue').innerText = formattedRevenue;
+      document.getElementById('revenueSub').innerText = 'Paid today';
+
+      // Update Monthly Statistics
+      renderMonthlyStats(data.monthlyStats);
+
+      // Update Booking Distribution
+      renderBookingStats(data.bookingStats);
+
+      // Update Performance
+      renderPerformance(data.topPerformers);
+    } else {
+      console.error('Failed to fetch dashboard summary');
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard summary:', error);
+  }
+}
+
+function renderMonthlyStats(stats) {
+  const container = document.getElementById('monthlyStatsContainer');
+  // Keep the title
+  container.innerHTML = '<h3>Monthly Statistics</h3>';
+  
+  if (!stats || stats.length === 0) return;
+
+  const maxCount = Math.max(...stats.map(s => s.count), 1); // Avoid division by zero
+
+  stats.forEach(item => {
+    const percentage = (item.count / maxCount) * 100;
+    const barHtml = `
+      <div class="chart-bar">
+        <span class="chart-label">${item.month}</span>
+        <div class="chart-line">
+          <div class="chart-fill" style="width: ${percentage}%"></div>
+        </div>
+      </div>
+    `;
+    container.innerHTML += barHtml;
+  });
+}
+
+function renderBookingStats(stats) {
+  const total = stats.upcoming + stats.inProgress + stats.cancelled + stats.paid || 1;
+
+  const updateBar = (idPrefix, count) => {
+    const percent = Math.round((count / total) * 100);
+    document.getElementById(`${idPrefix}Percent`).innerText = `${percent}%`;
+    document.getElementById(`${idPrefix}Bar`).style.width = `${percent}%`;
+  };
+
+  updateBar('upcoming', stats.upcoming);
+  updateBar('inProgress', stats.inProgress);
+  updateBar('cancelled', stats.cancelled);
+  updateBar('paid', stats.paid);
+}
+
+function renderPerformance(performers) {
+  const container = document.getElementById('performanceContainer');
+  container.innerHTML = '<h3>✨ Remarkable Performance</h3>';
+
+  if (!performers || performers.length === 0) {
+    container.innerHTML += '<p style="font-size: 14px; color: #888;">No performance data available yet.</p>';
+    return;
+  }
+
+  performers.forEach(p => {
+    const initial = p.name ? p.name.charAt(0).toUpperCase() : '?';
+    const html = `
+      <div class="perf-item">
+        <div class="perf-avatar">${initial}</div>
+        <div class="perf-info">
+          <h4>${p.name}</h4>
+          <p>${p.role.charAt(0).toUpperCase() + p.role.slice(1).toLowerCase()} · ${p.totalServices} services</p>
+        </div>
+      </div>
+    `;
+    container.innerHTML += html;
+  });
+}
+
+// Initial fetch
+fetchDashboardSummary();
+
+function logout() {
+  localStorage.removeItem('salonUser');
+  sessionStorage.removeItem('salonUser');
+  window.location.href = 'login.html';
+}
+// ========================================
 </script>
 </body>
 </html>

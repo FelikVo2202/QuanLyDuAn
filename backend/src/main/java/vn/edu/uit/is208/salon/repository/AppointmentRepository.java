@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import vn.edu.uit.is208.salon.constant.AppointmentStatus;
 import vn.edu.uit.is208.salon.entity.Appointment;
 
 import java.time.LocalDateTime;
@@ -115,4 +116,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("startOfMonth") LocalDateTime startOfMonth,
             @Param("endOfMonth") LocalDateTime endOfMonth,
             org.springframework.data.domain.Pageable pageable);
+
+    long countByAppointmentDateTimeBetween(LocalDateTime start, LocalDateTime end);
+
+    long countByStatus(AppointmentStatus status);
 }

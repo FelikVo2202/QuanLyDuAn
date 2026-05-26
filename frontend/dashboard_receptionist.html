@@ -276,6 +276,7 @@
       border-radius: 30px;
       font-size: 11px;
       font-weight: 600;
+      text-transform: uppercase;
     }
     .status-walkin {
       background: #eab30820;
@@ -284,6 +285,18 @@
     .status-booked {
       background: #22c55e20;
       color: #16a34a;
+    }
+    .status-paid {
+      background: #0284c720;
+      color: #0284c7;
+    }
+    .status-done {
+      background: #64748b20;
+      color: #64748b;
+    }
+    .status-cancelled {
+      background: #ef444420;
+      color: #ef4444;
     }
     .price {
       font-weight: 700;
@@ -373,7 +386,7 @@
         </div>
       </div>
       <div class="search-bar-center">
-        <input type="text" id="searchInput" onkeyup="filterAppointments()" placeholder="Search by Customer or Stylist" style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
+        <input type="text" id="searchInput" oninput="filterAppointments()" placeholder="Search by customer or stylist..." style="background-image: url('assets/icons/search.svg'); background-repeat: no-repeat; background-position: 10px center; background-size: 20px; padding-left: 36px;">
       </div>
       <div class="stylist-info">
         <div class="stylist-avatar">👩</div>
@@ -489,48 +502,47 @@ if (dashboardLink) {
 }
 // =======================================================
 
-// ========== DỮ LIỆU LỊCH HẸN TỪ API ==========
-let allAppointments = [];
+// ========== DYNAMIC DATA FETCHING & MAPPING ==========
+const API_BASE_URL = 'http://localhost:8080/api';
 
-function formatDuration(hours) {
-  if (!hours) return "0m";
-  const h = Math.floor(hours);
-  const m = Math.round((hours - h) * 60);
-  if (h > 0 && m > 0) return `${h}h${m}m`;
-  if (h > 0) return `${h}h`;
-  return `${m}m`;
+function getAuthHeaders() {
+  return {
+    'Authorization': `Bearer ${userData.token}`,
+    'Content-Type': 'application/json'
+  };
 }
 
-async function loadDashboardData() {
-  try {
-    const token = userData.token || userData.accessToken;
-    const res = await fetch('http://localhost:8080/api/dashboard/receptionist', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+let customersList = [];
+let stylistsList = [];
+let allAppointments = [];
 
-    if (res.status === 401 || res.status === 403) {
-      logout();
-      return;
-    }
+// Get remaining appointments today
+function getUpcomingAppointments() {
+  const now = new Date();
+  return allAppointments.filter(app => {
+    if (app.status === 'CANCELED') return false;
+    if (!app.appointmentDateTime) return false;
+    const dtStr = app.appointmentDateTime.replace(' ', 'T');
+    const dt = new Date(dtStr);
+    return dt > now;
+  });
+}
 
-    if (!res.ok) throw new Error('Failed to fetch dashboard data');
-
-    const data = await res.json();
-
-    // Cập nhật thống kê
-    document.getElementById('totalCustomers').innerText = data.totalCustomersDay || 0;
-    document.getElementById('totalServices').innerText = data.totalServices || 0;
-    document.getElementById('remainingAppointments').innerText = data.totalRemainingAppointments || 0;
-
-    // Cập nhật danh sách lịch hẹn
-    allAppointments = data.remainingAppointments || [];
-    filterAppointments(); // Render với filter hiện tại
-  } catch (error) {
-    console.error('Error loading dashboard data:', error);
-    document.getElementById('appointmentsTable').innerHTML = '<div class="empty-state">⚠️ Failed to load appointments.</div>';
-  }
+// Cập nhật số liệu thống kê
+function updateStats() {
+  const upcoming = getUpcomingAppointments();
+  
+  // Total unique customers with appointments today
+  const uniqueCustomers = new Set(allAppointments.map(app => app.customer));
+  const totalCust = uniqueCustomers.size;
+  
+  // Total services booked today (count of appointments today)
+  const totalServ = allAppointments.length;
+  const remaining = upcoming.length;
+  
+  document.getElementById('totalCustomers').innerText = totalCust;
+  document.getElementById('totalServices').innerText = totalServ;
+  document.getElementById('remainingAppointments').innerText = remaining;
 }
 
 // Format tiền VND
@@ -539,15 +551,32 @@ function formatVND(price) {
   return price.toLocaleString('vi-VN') + 'đ';
 }
 
+// Map real status to CSS classes
+function getStatusClass(status) {
+  switch (status) {
+    case 'CONFIRMED':
+      return 'status-booked';
+    case 'PAID':
+      return 'status-paid';
+    case 'DONE':
+      return 'status-done';
+    case 'CANCELED':
+      return 'status-cancelled';
+    default:
+      return 'status-walkin';
+  }
+}
+
 // Render bảng lịch hẹn
 function renderAppointments(filterText = '') {
   const container = document.getElementById('appointmentsTable');
   let filtered = [...allAppointments];
 
   if (filterText) {
-    filtered = filtered.filter(app =>
-      (app.customer && app.customer.toLowerCase().includes(filterText.toLowerCase())) ||
-      (app.stylist && app.stylist.toLowerCase().includes(filterText.toLowerCase()))
+    filtered = filtered.filter(app => 
+      app.customer.toLowerCase().includes(filterText.toLowerCase()) ||
+      app.stylist.toLowerCase().includes(filterText.toLowerCase()) ||
+      app.service.toLowerCase().includes(filterText.toLowerCase())
     );
   }
 
@@ -564,12 +593,12 @@ function renderAppointments(filterText = '') {
       <tbody>
         ${filtered.map(app => `
           <tr>
-            <td style="font-weight: 600;">${app.time || '-'}</td>
-            <td><span class="status-badge ${app.status && app.status.includes('WALK') ? 'status-walkin' : 'status-booked'}">${app.status ? app.status.replace('_', '-') : '-'}</span></td>
-            <td><strong>${app.customer || '-'}</strong></td>
-            <td>✂️ ${app.service || '-'}</td>
-            <td>⏱ ${formatDuration(app.duration)}</td>
-            <td><span class="stylist-name">${app.stylist || '-'}</span></td>
+            <td style="font-weight: 600;">${app.time}</td>
+            <td><span class="status-badge ${getStatusClass(app.status)}">${app.status}</span></td>
+            <td><strong>${app.customer}</strong></td>
+            <td>✂️ ${app.service}</td>
+            <td>⏱ ${app.duration}</td>
+            <td><span class="stylist-name">${app.stylist}</span></td>
             <td class="price">${formatVND(app.price)}</td>
           </tr>
         `).join('')}
@@ -586,14 +615,112 @@ function filterAppointments() {
   renderAppointments(searchValue);
 }
 
-// Khởi tạo dashboard
-function init() {
-  loadDashboardData();
+// Fetch today's appointments
+async function fetchTodayAppointments() {
+  const headers = getAuthHeaders();
+  const pad = (n) => String(n).padStart(2, '0');
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
 
-  // Cập nhật real-time mỗi phút
-  setInterval(() => {
-    loadDashboardData();
-  }, 60000);
+  try {
+    const res = await fetch(`${API_BASE_URL}/appointments?startDate=${todayStr}&endDate=${todayStr}`, { headers });
+    if (!res.ok) {
+      console.error('Failed to fetch today\'s appointments:', res.status);
+      return;
+    }
+    const data = await res.json();
+
+    // Map to frontend representations with names
+    allAppointments = data.map(app => {
+      // Find customer name
+      const custObj = customersList.find(c => c.id === app.customerId);
+      const customerName = custObj ? `${custObj.firstName} ${custObj.lastName}` : `Customer #${app.customerId}`;
+
+      // Find stylist name
+      const staffObj = stylistsList.find(s => s.id === app.staffId);
+      const stylistName = staffObj ? `${staffObj.firstName} ${staffObj.lastName}` : `Stylist #${app.staffId}`;
+
+      // Services text & price
+      const services = app.services || [];
+      const serviceName = services.map(s => s.name).join(' & ') || 'No Service';
+      const totalPrice = services.reduce((sum, s) => sum + (s.price || 0), 0);
+
+      // Duration
+      const totalDurationMin = services.reduce((sum, s) => sum + (s.durationMinutes || 0), 0);
+      let durationStr = `${totalDurationMin}m`;
+      if (totalDurationMin >= 60) {
+        const hours = Math.floor(totalDurationMin / 60);
+        const mins = totalDurationMin % 60;
+        durationStr = mins > 0 ? `${hours}h${mins}` : `${hours}h`;
+      }
+
+      // Time formatting (HH:mm)
+      let timeStr = '00:00';
+      if (app.appointmentDateTime) {
+        const dtStr = app.appointmentDateTime.replace(' ', 'T');
+        const dt = new Date(dtStr);
+        if (!isNaN(dt.getTime())) {
+          timeStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        }
+      }
+
+      return {
+        id: app.id,
+        customer: customerName,
+        time: timeStr,
+        appointmentDateTime: app.appointmentDateTime,
+        status: app.status,
+        price: totalPrice,
+        service: serviceName,
+        duration: durationStr,
+        stylist: stylistName
+      };
+    });
+
+    updateStats();
+    renderAppointments();
+  } catch (error) {
+    console.error('Error fetching today\'s appointments:', error);
+  }
+}
+
+// Main initial load
+async function init() {
+  const headers = getAuthHeaders();
+  try {
+    // Show temporary loading states
+    document.getElementById('appointmentsTable').innerHTML = '<div class="empty-state">🔄 Loading appointments...</div>';
+    
+    // Fetch static entities concurrently
+    const [custRes, staffRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/customers`, { headers }),
+      fetch(`${API_BASE_URL}/staffs?role=STYLIST`, { headers })
+    ]);
+
+    if (!custRes.ok || !staffRes.ok) {
+      console.error('Failed to load customers or stylists.');
+      document.getElementById('appointmentsTable').innerHTML = '<div class="empty-state">⚠️ Error loading system data</div>';
+      return;
+    }
+
+    customersList = await custRes.json();
+    stylistsList = await staffRes.json();
+
+    // Fetch active bookings
+    await fetchTodayAppointments();
+
+    // Set real-time update interval
+    setInterval(async () => {
+      await fetchTodayAppointments();
+      const searchVal = document.getElementById('searchInput').value;
+      if (searchVal) {
+        filterAppointments();
+      }
+    }, 30000);
+  } catch (error) {
+    console.error('Initialization error:', error);
+    document.getElementById('appointmentsTable').innerHTML = '<div class="empty-state">❌ Connection error</div>';
+  }
 }
 
 init();

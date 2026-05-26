@@ -29,4 +29,10 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 
     @Query("SELECT b FROM Bill b WHERE b.appointment.id = :appointmentId AND b.paymentStatus != 'FAILED'")
     Optional<Bill> findActiveBillByAppointmentId(@Param("appointmentId") Long appointmentId);
+
+    @Query("SELECT SUM(b.totalAmount) FROM Bill b WHERE b.billDate >= :start AND b.billDate < :end AND b.paymentStatus = :status")
+    BigDecimal sumTotalAmountByBillDateBetweenAndPaymentStatus(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("status") PaymentStatus status);
 }
